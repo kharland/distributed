@@ -1,15 +1,18 @@
+import 'dart:async';
 import 'package:distributed/interfaces/node.dart';
-import 'package:distributed/platform/server/node.dart';
 
-enum DistributedPlatform { Server, Browser }
+typedef Future<Node> NodeProvider(String name, String hostname, String cookie,
+    {int port});
 
-DistributedPlatform _platform;
+NodeProvider _nodeProvider;
 
-void setPlatform(DistributedPlatform platform) {
-  if (_platform != null) {
+void setNodeProvider(NodeProvider nodeProvider) {
+  if (_nodeProvider != null) {
     throw new StateError('The platform is already initialized!');
   }
-  _platform = platform;
+  _nodeProvider = nodeProvider;
 }
 
-DistributedPlatform get platform => _platform;
+Future<Node> createNode(String name, String hostname, String cookie,
+        {int port}) =>
+    _nodeProvider(name, hostname, cookie, port: port);

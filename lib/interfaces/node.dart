@@ -1,16 +1,8 @@
 import 'dart:async';
 
-import 'event.dart';
-import 'peer.dart';
-
-/// A callback executed by a [Node] when [message] is received.
-typedef Future<Null> MessageHandler(String message);
-
-/// A filter returns true iff [message] is acceptable.
-///
-/// This callback is used by [Node] to decide which [MessageActions] should
-/// execute when [message] is received.
-typedef bool MessageFilter(String message);
+import 'package:distributed/interfaces/connection.dart';
+import 'package:distributed/interfaces/message.dart';
+import 'package:distributed/interfaces/peer.dart';
 
 /// A node participating in a distributed system.
 ///
@@ -19,7 +11,6 @@ typedef bool MessageFilter(String message);
 /// Upon creation, the node immediately begins listening for and accepting
 /// connection requests with a [cookie] matching this node's [cookie].
 abstract class Node {
-  static const int DEFAULT_PORT=9095;
   /// A string that another node must supply when requesting to connect with
   /// this node.
   String get cookie;
@@ -30,37 +21,46 @@ abstract class Node {
   /// This [Node]'s identifier.
   String get name;
 
-  /// Whether this node will attempt to connect to all other nodes in a [Peer]
-  /// network after a connection is established.
+  /// Whether this node will attempt to connect to all other nodes in a new
+  /// [Peer]'s network.
   bool get isHidden;
 
-  /// The list of peers in this node's network.
-  List<Peer> get peers;
+  /// The list of peers that are connected to this [Node].
+  Iterable<Peer> get peers;
 
   /// Emits events when this node connects to a [Peer].
-  Stream<ConnectionEvent> get onConnect;
+  Stream<Peer> get onConnect;
 
-  /// Emits events when this node disconnects to a [Peer].
-  Stream<DisconnectionEvent> get onDisconnect;
+  /// Emits events when this node disconnects from a [Peer].
+  Stream<Peer> get onDisconnect;
 
   /// Emits events when this node recieves a message.
-  Stream<String> get onMessage;
+  Stream<Message> get onMessage;
+
+  /// Completes when this node stops receiving and sending connections.
+  Future<Null> get onShutdown;
 
   /// Connects to the remote peer identified by [name] and [hostname].
-  Future<bool> connect(String name, String hostname);
+  Future<Null> createConnection(Peer peer);
+
+  /// Adds a pre-established [connection] to [peer] to this [Node].
+  void addConnection(Peer peer, Connection connection);
 
   /// Disconnects from the remote peer identified by [name] and [hostname].
-  Future<bool> disconnect(String name, String hostname);
+  Future<Null> disconnect(Peer peer);
 
   /// Sends [message] to [peer].
-  Future<Null> send(String message, Peer peer);
+  Future<Null> send(Message message, Peer peer);
 
-  /// Executes [handler] on all incoming messages that pass [filter].
-  void receive(MessageFilter filter, MessageHandler handler);
+  /// Sends [message] to all [peers].
+  Future<Null> broadcast(Message message);
 
   /// Closes all connections and disables the node. Be sure to call [disconnect]
   /// before calling [shutdown] to remove the node from any connected networks.
   Future<Null> shutdown();
+
+  /// Returns this [Node] as a [Peer].
+  Peer toPeer();
 }
 
 /// A [Node] that delegates to another [Node].
@@ -72,15 +72,17 @@ class DelegatingNode implements Node {
   DelegatingNode(this._delegate);
 
   @override
-  Future<bool> connect(String name, String hostname) =>
-      _delegate.connect(name, hostname);
+  Future<Null> createConnection(Peer peer) => _delegate.createConnection(peer);
+
+  @override
+  void addConnection(Peer peer, Connection connection) =>
+      _delegate.addConnection(peer, connection);
 
   @override
   String get cookie => _delegate.cookie;
 
   @override
-  Future<bool> disconnect(String name, String hostname) =>
-      _delegate.disconnect(name, hostname);
+  Future<Null> disconnect(Peer peer) => _delegate.disconnect(peer);
 
   @override
   String get hostname => _delegate.hostname;
@@ -92,23 +94,29 @@ class DelegatingNode implements Node {
   String get name => _delegate.name;
 
   @override
-  Stream<ConnectionEvent> get onConnect => _delegate.onConnect;
+  Stream<Peer> get onConnect => _delegate.onConnect;
 
   @override
-  Stream<DisconnectionEvent> get onDisconnect => _delegate.onDisconnect;
+  Stream<Peer> get onDisconnect => _delegate.onDisconnect;
 
   @override
-  Stream<String> get onMessage => _delegate.onMessage;
+  Stream<Message> get onMessage => _delegate.onMessage;
+
+  @override
+  Future<Null> get onShutdown => _delegate.onShutdown;
 
   @override
   List<Peer> get peers => _delegate.peers;
 
   @override
-  void receive(MessageFilter filter, MessageHandler handler) =>
-      _delegate.receive(filter, handler);
+  Peer toPeer() => _delegate.toPeer();
 
   @override
-  Future<Null> send(String message, Peer peer) => _delegate.send(message, peer);
+  Future<Null> send(Message message, Peer peer) =>
+      _delegate.send(message, peer);
+
+  @override
+  Future<Null> broadcast(Message message) => _delegate.broadcast(message);
 
   @override
   Future<Null> shutdown() => _delegate.shutdown();
