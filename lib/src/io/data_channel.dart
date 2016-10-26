@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:distributed/interfaces/connection.dart';
+import 'package:distributed/src/networking/connection/connection.dart';
 import 'package:distributed/interfaces/peer.dart';
+import 'package:distributed/src/networking/data_channel.dart';
 
 /// A [DataChannel] created when a [Peer] connects to a node running on the Dart
 /// VM.
@@ -12,7 +13,7 @@ import 'package:distributed/interfaces/peer.dart';
 class IODataChannel<T> implements DataChannel<T> {
   final WebSocket _webSocket;
   final StreamController<T> _onMessageController =
-      new StreamController<T>.broadcast();
+      new StreamController<T>();
   final Completer<Null> _onCloseCompleter = new Completer<Null>();
 
   StreamSubscription _webSocketSubscription;

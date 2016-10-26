@@ -1,8 +1,10 @@
 import 'dart:async';
 
-import 'package:distributed/interfaces/connection.dart';
+import 'package:distributed/src/networking/connection/connection.dart';
 import 'package:distributed/interfaces/message.dart';
 import 'package:distributed/interfaces/peer.dart';
+
+typedef void CommandHandler(Peer sender, Set arguments);
 
 /// A node participating in a distributed system.
 ///
@@ -34,9 +36,6 @@ abstract class Node {
   /// Emits events when this node disconnects from a [Peer].
   Stream<Peer> get onDisconnect;
 
-  /// Emits events when this node recieves a message.
-  Stream<Message> get onMessage;
-
   /// Completes when this node stops receiving and sending connections.
   Future<Null> get onShutdown;
 
@@ -49,8 +48,12 @@ abstract class Node {
   /// Disconnects from the remote peer identified by [name] and [hostname].
   Future<Null> disconnect(Peer peer);
 
-  /// Sends [message] to [peer].
-  Future<Null> send(Message message, Peer peer);
+  /// Send a command of type [commandType] to [peer] with [arguments].
+  void send(Peer peer, String commandType, Iterable<Object> arguments);
+
+  /// Register [callback] to be run on commands received with type
+  /// [commandType].
+  void receive(String commandType, CommandHandler callback);
 
   /// Sends [message] to all [peers].
   Future<Null> broadcast(Message message);
@@ -62,62 +65,69 @@ abstract class Node {
   /// Returns this [Node] as a [Peer].
   Peer toPeer();
 }
-
-/// A [Node] that delegates to another [Node].
-///
-/// Prefer extending this to add functionality to a [Node].
-class DelegatingNode implements Node {
-  final Node _delegate;
-
-  DelegatingNode(this._delegate);
-
-  @override
-  Future<Null> createConnection(Peer peer) => _delegate.createConnection(peer);
-
-  @override
-  void addConnection(Peer peer, Connection connection) =>
-      _delegate.addConnection(peer, connection);
-
-  @override
-  String get cookie => _delegate.cookie;
-
-  @override
-  Future<Null> disconnect(Peer peer) => _delegate.disconnect(peer);
-
-  @override
-  String get hostname => _delegate.hostname;
-
-  @override
-  bool get isHidden => _delegate.isHidden;
-
-  @override
-  String get name => _delegate.name;
-
-  @override
-  Stream<Peer> get onConnect => _delegate.onConnect;
-
-  @override
-  Stream<Peer> get onDisconnect => _delegate.onDisconnect;
-
-  @override
-  Stream<Message> get onMessage => _delegate.onMessage;
-
-  @override
-  Future<Null> get onShutdown => _delegate.onShutdown;
-
-  @override
-  List<Peer> get peers => _delegate.peers;
-
-  @override
-  Peer toPeer() => _delegate.toPeer();
-
-  @override
-  Future<Null> send(Message message, Peer peer) =>
-      _delegate.send(message, peer);
-
-  @override
-  Future<Null> broadcast(Message message) => _delegate.broadcast(message);
-
-  @override
-  Future<Null> shutdown() => _delegate.shutdown();
-}
+//
+///// A [Node] that delegates to another [Node].
+/////
+///// Prefer extending this to add functionality to a [Node].
+//class DelegatingNode implements Node {
+//  final Node _delegate;
+//
+//  DelegatingNode(this._delegate);
+//
+//  @override
+//  Future<Null> createConnection(Peer peer) => _delegate.createConnection(peer);
+//
+//  @override
+//  void addConnection(Peer peer, Connection connection) =>
+//      _delegate.addConnection(peer, connection);
+//
+//  @override
+//  String get cookie => _delegate.cookie;
+//
+//  @override
+//  Future<Null> disconnect(Peer peer) => _delegate.disconnect(peer);
+//
+//  @override
+//  String get hostname => _delegate.hostname;
+//
+//  @override
+//  bool get isHidden => _delegate.isHidden;
+//
+//  @override
+//  String get name => _delegate.name;
+//
+//  @override
+//  Stream<Peer> get onConnect => _delegate.onConnect;
+//
+//  @override
+//  Stream<Peer> get onDisconnect => _delegate.onDisconnect;
+//
+//  @override
+//  Stream<Message> get onMessage => _delegate.onMessage;
+//
+//  @override
+//  Future<Null> get onShutdown => _delegate.onShutdown;
+//
+//  @override
+//  List<Peer> get peers => _delegate.peers;
+//
+//  @override
+//  Peer toPeer() => _delegate.toPeer();
+//
+//  @override
+//  Future<Null> broadcast(Message message) => _delegate.broadcast(message);
+//
+//  @override
+//  Future<Null> shutdown() => _delegate.shutdown();
+//
+//  @override
+//  void receive(
+//      String type, Iterable<Type> parameters, CommandHandler callback) {
+//    _delegate.receive(type, parameters, callback);
+//  }
+//
+//  @override
+//  void send(Peer peer, Command command) {
+//    _delegate.send(peer, command);
+//  }
+//}

@@ -151,7 +151,8 @@ void main() {
         node.onConnect.take(2).last,
         remoteNodeA.onConnect.take(2).last,
         remoteNodeB.onConnect.take(2).last
-      ]).then((_) {
+        // ignore: strong_mode_down_cast_composite
+      ]).then(expectAsync((_) {
         node.disconnect(remoteNodeA.toPeer());
         node.disconnect(remoteNodeB.toPeer());
         Future.wait(<Future>[
@@ -159,16 +160,17 @@ void main() {
           remoteNodeA.onDisconnect.first,
           remoteNodeB.onDisconnect.first,
           // ignore: strong_mode_down_cast_composite
-        ]).then(expectAsync((_) {
+        ]).then(expectAsync((_) async {
           expect(remoteNodeA.peers, unorderedEquals([remoteNodeB.toPeer()]));
           expect(remoteNodeB.peers, unorderedEquals([remoteNodeA.toPeer()]));
           expect(node.peers, isEmpty);
           remoteNodeA.shutdown();
           remoteNodeB.shutdown();
-          return Future.wait([remoteNodeA.onShutdown, remoteNodeB.onShutdown]);
+          await Future.wait([remoteNodeA.onShutdown, remoteNodeB.onShutdown]);
         }, count: 1));
-      });
+      }));
 
+      //await new Future.delayed(const Duration(seconds: 3));
       remoteNodeA.createConnection(node.toPeer());
       remoteNodeB.createConnection(node.toPeer());
     });

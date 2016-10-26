@@ -1,14 +1,27 @@
 import 'dart:async';
 
-import 'package:distributed/interfaces/connection.dart';
 import 'package:distributed/interfaces/message.dart';
 import 'package:distributed/interfaces/peer.dart';
 
-import 'package:distributed/src/networking/json.dart';
 import 'package:seltzer/seltzer.dart';
 import 'package:seltzer/src/interface.dart';
 
-/// A Platform independent [DataChannel] between two peers.
+abstract class DataChannel<T> {
+  /// Creates a [PlatformDataChannel] between [sender] and [recipient].
+  static Future<DataChannel> connect(
+          String cookie, Peer sender, Peer recipient) async =>
+      new PlatformDataChannel(await SeltzerWebSocket.connect(recipient.url));
+
+  Stream<T> get onData;
+
+  Future<Null> get onClose;
+
+  void send(T data);
+
+  void close();
+}
+
+/// Default implementation of a platform-independent [DataChannel] between two peers.
 class PlatformDataChannel implements DataChannel<String> {
   static final StreamTransformer<SeltzerMessage, String>
       _seltzerMessageDecoder =
@@ -21,7 +34,6 @@ class PlatformDataChannel implements DataChannel<String> {
       new StreamController<Message>.broadcast();
   final Completer<Null> _onCloseCompleter = new Completer<Null>();
   final SeltzerWebSocket _webSocket;
-
   @override
   final Stream<String> onData;
 
@@ -40,15 +52,6 @@ class PlatformDataChannel implements DataChannel<String> {
       _onMessageController.close();
       _onCloseCompleter.complete();
     });
-  }
-
-  /// Creates a [PlatformDataChannel] between [sender] and [recipient].
-  static Future<PlatformDataChannel> connect(
-      String cookie, Peer sender, Peer recipient) async {
-    var webSocket = await SeltzerWebSocket.connect(recipient.url);
-    webSocket
-        .sendString(new ConnectMessage(cookie, sender, recipient).serialize());
-    return new PlatformDataChannel(webSocket);
   }
 
   @override

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:distributed/distributed.dart';
+import 'package:distributed/interfaces/command.dart';
 import 'package:distributed/platform/io.dart';
 
 import 'package:args/args.dart';
@@ -25,6 +26,7 @@ Future main(List<String> args) async {
         print('enter a command:');
         print('\tc <peer>\tConnect to <peer>');
         print('\td <peer>\tDisconnect from<peer>');
+        print('\ts <peer> <command> <args...>\tSend a command to a peer');
         print('\tl \tSee a list of all connected peers');
         print('\tq \tShutdown node and quit.');
       });
@@ -40,6 +42,17 @@ Future main(List<String> args) async {
 
   node.onShutdown.then((_) {
     repl.log('${nodeAsPeer.displayName} successfully shut down.');
+  });
+
+  node.receive('square', (Peer peer, Set params) {
+    int n = int.parse(params.elementAt(0));
+    print('$peer sent square with args $params');
+    node.send(peer, 'square_result', [n * n]);
+  });
+
+  node.receive('square_result', (Peer peer, Set params) {
+    print('$peer sent square_result with args $params');
+    print('remote node squared ${params.elementAt(0)}');
   });
 
   repl.onInput.listen((String input) {
@@ -67,6 +80,23 @@ Future main(List<String> args) async {
 
     if (args.first.trim() == 'd') {
       node.disconnect(peers[args.last]);
+    }
+
+    if (args.first.trim() == 's') {
+      if (!nodeNames.contains(args[1])) {
+        throw new ArgumentError('No peer named ${args[1]}');
+      }
+      var peer = peers[args[1]];
+      if (!node.peers.contains(peer)) {
+        node.createConnection(peer);
+        node.onConnect.take(1).last.then((_) {
+          node.send(peer, args[2], args.skip(3).toList());
+          repl.log('Sent ${peer.displayName} command');
+        });
+      } else {
+        node.send(peer, args[2], args.skip(3).toList());
+        repl.log('Sent ${peer.displayName} command');
+      }
     }
   });
 }

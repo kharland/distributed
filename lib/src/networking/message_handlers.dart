@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:distributed/interfaces/command.dart';
 import 'package:distributed/interfaces/message.dart';
 import 'package:distributed/interfaces/node.dart';
 
@@ -11,11 +12,11 @@ abstract class MessageHandler {
 }
 
 /// General message handler that filtes by message type.
-abstract class _FilterByTypeMessageHandler<T extends Message>
+abstract class _TypedMessageHandler<T extends Message>
     implements MessageHandler {
   final Node node;
 
-  _FilterByTypeMessageHandler(this.node);
+  _TypedMessageHandler(this.node);
 
   @override
   bool filter(Message message) => message is T;
@@ -24,8 +25,7 @@ abstract class _FilterByTypeMessageHandler<T extends Message>
   Future<Null> execute(Message message);
 }
 
-class PeerInfoMessageHandler
-    extends _FilterByTypeMessageHandler<PeerInfoMessage> {
+class PeerInfoMessageHandler extends _TypedMessageHandler<PeerInfoMessage> {
   PeerInfoMessageHandler(Node node) : super(node);
 
   @override
@@ -39,5 +39,27 @@ class PeerInfoMessageHandler
         }
       }
     }
+  }
+}
+
+class CommandMessageHandler extends _TypedMessageHandler<CommandMessage> {
+  final Map<String, CommandHandler> _commandHandlers =
+      <String, CommandHandler>{};
+
+  CommandMessageHandler(Node node) : super(node);
+
+  @override
+  Future<Null> execute(Message message) async {
+    print("IN COMMAND HANDLER");
+    var command = message as CommandMessage;
+    if (!_commandHandlers.containsKey(command.formatName)) {
+      throw new ArgumentError('No handler for ${command.formatName}');
+    }
+
+    _commandHandlers[command.formatName](message.sender, command.arguments);
+  }
+
+  void registerHandler(String format, CommandHandler handler) {
+    _commandHandlers[format] = handler;
   }
 }

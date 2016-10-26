@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io' as io;
-import 'package:distributed/interfaces/connection.dart';
+import 'package:distributed/src/networking/connection/connection.dart';
 import 'package:distributed/src/io/data_channel.dart';
-import 'package:distributed/src/networking/platform_data_channel.dart';
+import 'package:distributed/src/networking/data_channel.dart';
 import 'package:mockito/mockito.dart';
 import 'package:seltzer/seltzer.dart';
 import 'package:seltzer/src/interface.dart';

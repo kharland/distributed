@@ -1,14 +1,16 @@
 import 'dart:async';
 
 import 'dart:io';
-import 'package:distributed/interfaces/connection.dart';
+import 'package:distributed/interfaces/command.dart';
+import 'package:distributed/src/networking/connection/connection.dart';
 import 'package:distributed/interfaces/message.dart';
 import 'package:distributed/interfaces/node.dart';
 import 'package:distributed/interfaces/peer.dart';
 
 import 'package:distributed/src/io/data_channel.dart';
+import 'package:distributed/src/networking/formatted_message.dart';
 import 'package:distributed/src/networking/message_handlers.dart';
-import 'package:distributed/src/networking/platform_data_channel.dart';
+import 'package:distributed/src/networking/data_channel.dart';
 import 'package:meta/meta.dart';
 
 /// A node that runs on the Dart VM
@@ -25,7 +27,9 @@ class IONode implements Node {
       <Peer, StreamSubscription>{};
   final Map<Peer, Connection> _connections = <Peer, Connection>{};
   final _SocketHost _socketHost;
-  final int _port;
+  final Peer _asPeer;
+
+  CommandMessageHandler _commandMessageHandler;
 
   @override
   @virtual
@@ -46,23 +50,29 @@ class IONode implements Node {
   StreamSubscription<WebSocket> _socketSubscription;
 
   IONode._(int port, _SocketHost socketHost,
-      {this.name, this.hostname, this.cookie, this.isHidden})
-      : _port = port,
-        _socketHost = socketHost {
-    _messageHandlers..add(new PeerInfoMessageHandler(this));
+      {String name, String hostname, this.cookie, bool isHidden})
+      : name = name,
+        hostname = hostname,
+        isHidden = isHidden,
+        _socketHost = socketHost,
+        _asPeer = new Peer(name, hostname, port: port, isHidden: isHidden) {
+    _commandMessageHandler = new CommandMessageHandler(this);
+    _messageHandlers
+      ..add(new PeerInfoMessageHandler(this))
+      ..add(_commandMessageHandler);
     _socketSubscription =
         _socketHost.onSocketConnected.listen(_handleIncomingConnection);
   }
 
   /// Default constructor.
   ///
-  /// Parameters are named for convenience, but all are required.
+  /// Parameters are named for convenience. All except [isHidden] are required.
   static Future<IONode> create(
       {String name,
       String hostname,
       String cookie,
       int port,
-      bool isHidden}) async {
+      bool isHidden: false}) async {
     var socketHost = new _SocketHost(hostname, port: port);
     await socketHost.onStartup;
     return new IONode._(port, socketHost,
@@ -76,9 +86,6 @@ class IONode implements Node {
   Stream<Peer> get onDisconnect => _onDisconnectController.stream;
 
   @override
-  Stream<Message> get onMessage => _onMessageController.stream;
-
-  @override
   Future<Null> get onShutdown => _onShutdownCompleter.future;
 
   @override
@@ -86,9 +93,10 @@ class IONode implements Node {
 
   @override
   Future<Null> createConnection(Peer peer) async {
-    var connection = new Connection(
-        await PlatformDataChannel.connect(cookie, toPeer(), peer));
+    var connection = new Connection(await DataChannel.connect(
+        cookie, toPeer(), peer) as DataChannel<String>);
     addConnection(peer, connection);
+    connection.send(new ConnectMessage(cookie, toPeer(), peer));
     connection.send(new PeerInfoMessage(toPeer(), peers));
   }
 
@@ -123,15 +131,6 @@ class IONode implements Node {
   }
 
   @override
-  Future<Null> send(Message message, Peer peer) async {
-    if (peers.contains(peer)) {
-      _connections[peer].send(message);
-    } else {
-      throw new ArgumentError("Unknown peer ${peer.displayName}");
-    }
-  }
-
-  @override
   Future<Null> broadcast(Message message) async {
     for (Connection connection in _connections.values) {
       connection.send(message);
@@ -150,22 +149,36 @@ class IONode implements Node {
   }
 
   @override
-  Peer toPeer() => new Peer(name, hostname, port: _port, isHidden: isHidden);
+  Peer toPeer() => _asPeer;
 
   void _handleIncomingConnection(WebSocket webSocket) {
-    StreamSubscription<String> dataSubscription;
-    var dataChannel = new IODataChannel<String>(webSocket);
-    dataSubscription = dataChannel.onData.take(1).listen((String payload) {
-      var request = new ConnectMessage.fromString(payload);
-      if (request.cookie == cookie) {
-        var connection = new Connection(dataChannel);
-        addConnection(request.sender, connection);
+    var connection = new Connection(new IODataChannel<String>(webSocket));
+    connection.onMessage.take(1).last.then((Message message) {
+      var connectionRequest = message as ConnectMessage;
+      if (connectionRequest.cookie == cookie) {
+        addConnection(connectionRequest.sender, connection);
         connection.send(new PeerInfoMessage(toPeer(), peers));
       } else {
-        dataChannel.close();
+        connection.close();
       }
-      dataSubscription.cancel();
     });
+  }
+
+  // TODO: add callback to register custom parameter types.
+
+  @override
+  void receive(String commandType, CommandHandler callback) {
+    // Assume every element in parameters is registered for now.
+    _commandMessageHandler.registerHandler(commandType, callback);
+  }
+
+  @override
+  void send(Peer peer, String commandType, Iterable<Object> arguments) {
+    if (!peers.contains(peer)) {
+      throw new ArgumentError('Peer not found: ${peer.displayName}');
+    }
+    _connections[peer]
+        .send(new CommandMessage(toPeer(), commandType, arguments));
   }
 }
 

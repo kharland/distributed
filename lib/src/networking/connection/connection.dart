@@ -1,27 +1,9 @@
 import 'dart:async';
 
+import 'package:distributed/interfaces/command.dart';
 import 'package:distributed/interfaces/message.dart';
-import 'package:distributed/interfaces/peer.dart';
+import 'package:distributed/src/networking/data_channel.dart';
 import 'package:distributed/src/networking/json.dart';
-import 'package:distributed/src/networking/formatted_message.dart';
-import 'package:distributed/src/networking/message_decoders.dart';
-
-class ConnectionEvent {
-  final Peer peer;
-  final Connection connection;
-
-  const ConnectionEvent(this.peer, this.connection);
-}
-
-abstract class DataChannel<T> {
-  Stream<T> get onData;
-
-  Future<Null> get onClose;
-
-  void send(T data);
-
-  void close();
-}
 
 /// A direct connection between nodes.
 class Connection {
@@ -94,7 +76,6 @@ class _OpenConnectionModel implements _ConnectionModel {
   final StreamController<Message> _onMessageController =
       new StreamController<Message>.broadcast();
   final DataChannel<String> _dataChannel;
-  final MessageDecoder _messageDecoder = new MessageDecoder();
 
   bool _isOpen = true;
   StreamSubscription<String> _dataSubscription;
@@ -104,12 +85,18 @@ class _OpenConnectionModel implements _ConnectionModel {
       if (data is! String) {
         throw new FormatException(data);
       }
-      var message = new FormattedMessage.fromJson(Json.decode(data));
-      if (_messageDecoder.canDecode(message.format)) {
-        _onMessageController
-            .add(_messageDecoder.decode(message.format, message.message));
+      _Payload payload = _PayloadSerializer.deserialize(data);
+      Message message;
+      if (payload.format == 'PeerInfoMessage') {
+        message = new PeerInfoMessage.fromJson(Json.decode(payload.data));
+      } else if (payload.format == 'CommandMessage') {
+        message = new CommandMessage.fromJson(Json.decode(payload.data));
+      } else if (payload.format == 'ConnectMessage') {
+        message = new ConnectMessage.fromJson(Json.decode(payload.data));
       }
+      _onMessageController.add(message);
     });
+
     _dataChannel.onClose.then((_) {
       _isOpen = false;
       _dataSubscription.cancel();
@@ -134,8 +121,31 @@ class _OpenConnectionModel implements _ConnectionModel {
 
   @override
   void send(Message message) {
-    var rawMessage = new FormattedMessage(
-        message.runtimeType.toString(), message.serialize());
-    _dataChannel.send(rawMessage.serialize());
+    _dataChannel.send(_PayloadSerializer.serialize(
+        new _Payload(message.runtimeType.toString(), message.serialize())));
+  }
+}
+
+/// A wrapper to simplify [Message] [de]serialization.
+class _Payload {
+  /// A value that denotes how [data] should be parsed.
+  final String format;
+
+  /// The data contained in this message.
+  final String data;
+
+  _Payload(this.format, this.data);
+}
+
+typedef Message DecodeCallback(String message);
+
+abstract class _PayloadSerializer {
+  static String serialize(_Payload payload) => Json
+      .encode(<String, Object>{'format': payload.format, 'data': payload.data});
+
+  static _Payload deserialize(String payloadString) {
+    Map<String, Object> json = Json.decode(payloadString);
+    _Payload payload = new _Payload(json['format'], json['data']);
+    return payload;
   }
 }

@@ -2,12 +2,15 @@ import 'dart:typed_data';
 
 import 'package:distributed/interfaces/peer.dart';
 import 'package:distributed/src/networking/json.dart';
+import 'package:meta/meta.dart';
 
 /// A JSON compatible object that can be passed between nodes.
 ///
 /// Each message should define a constructor to recreate itself from its
 /// JSON representation.
 abstract class Message {
+  Peer get sender;
+
   /// Converts this [Message] to a JSON compatible format.
   Map<String, Object> toJson();
 
@@ -21,13 +24,15 @@ abstract class Message {
 /// A [Message] containing informatino about a peer and it's connected peers.
 class PeerInfoMessage extends Message {
   /// The [Peer] this message describes.
-  final Peer peer;
+  @override
+  @virtual
+  final Peer sender;
 
   /// The collection of peers connected to [Peer].
   final Iterable<Peer> connectedPeers;
 
   /// Default constructor.
-  PeerInfoMessage(this.peer, this.connectedPeers);
+  PeerInfoMessage(this.sender, this.connectedPeers);
 
   /// Creates a [PeerInfoMessage] from a JSON map.
   factory PeerInfoMessage.fromJson(Map<String, Object> json) {
@@ -47,7 +52,7 @@ class PeerInfoMessage extends Message {
 
   @override
   Map<String, Object> toJson() => <String, Object>{
-        'peer': peer.toJson(),
+        'peer': sender.toJson(),
         'connectedPeers': connectedPeers.map((peer) => peer.toJson()).toList()
       };
 }
@@ -63,6 +68,9 @@ class PeerInfoMessage extends Message {
 class ConnectMessage extends Message {
   final String cookie;
   final Peer peer;
+
+  @override
+  @virtual
   final Peer sender;
 
   ConnectMessage(this.cookie, this.sender, this.peer);

@@ -18,7 +18,7 @@ void main() {
       });
 
       test('should not connect to other peers if the node is hidden.', () {
-        when(mockMessage.peer).thenReturn(new Peer('foo', 'localhost'));
+        when(mockMessage.sender).thenReturn(new Peer('foo', 'localhost'));
         when(mockNode.isHidden).thenReturn(true);
         new PeerInfoMessageHandler(mockNode).execute(mockMessage);
         verifyNever(mockNode.createConnection(any));
@@ -27,7 +27,7 @@ void main() {
       test(
           'should transitively connect to new peers if the node is not hidden.',
           () async {
-        when(mockMessage.peer).thenReturn(new Peer('foo', 'localhost'));
+        when(mockMessage.sender).thenReturn(new Peer('foo', 'localhost'));
         when(mockMessage.connectedPeers).thenReturn([
           new Peer('bar', 'localhost'),
           new Peer('bang', 'localhost'),
