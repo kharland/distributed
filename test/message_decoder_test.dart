@@ -38,7 +38,6 @@ void main() {
 
   test('canDecode should return true iff the given format is registered', () {
     expect(decoder.canDecode('PeerInfoMessage'), isTrue);
-    expect(decoder.canDecode('DisconnectMessage'), isTrue);
     expect(decoder.canDecode('UnregisteredFormat'), isFalse);
 
     decoder.addFormat('UnregisteredFormat', (String _) => null);

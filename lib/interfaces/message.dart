@@ -12,7 +12,10 @@ abstract class Message {
   Map<String, Object> toJson();
 
   @override
-  String toString() => '$runtimeType ${Json.encode(toJson())}';
+  String toString() => '$runtimeType ${serialize()}';
+
+  /// Encodes this message as a JSON string.
+  String serialize() => Json.encode(toJson());
 }
 
 /// A [Message] containing informatino about a peer and it's connected peers.
@@ -43,26 +46,10 @@ class PeerInfoMessage extends Message {
       other is PeerInfoMessage && other.hashCode == hashCode;
 
   @override
-  String toString() => 'PeerInfoMessage ${Json.encode(toJson())}';
-
-  @override
   Map<String, Object> toJson() => <String, Object>{
         'peer': peer.toJson(),
         'connectedPeers': connectedPeers.map((peer) => peer.toJson()).toList()
       };
-}
-
-class DisconnectMessage extends Message {
-  final Peer peer;
-
-  DisconnectMessage(this.peer);
-
-  factory DisconnectMessage.fromJson(Map<String, Object> json) =>
-      new DisconnectMessage(
-          new Peer.fromJson(json['peer'] as Map<String, Object>));
-
-  @override
-  Map<String, Object> toJson() => <String, Object>{'peer': peer.toJson()};
 }
 
 /// A request to connect with a [Peer].
@@ -97,7 +84,4 @@ class ConnectMessage extends Message {
         'sender': sender.toJson(),
         'peer': peer.toJson()
       };
-
-  @override
-  String toString() => 'Request ${Json.encode(toJson())}';
 }

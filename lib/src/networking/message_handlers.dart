@@ -10,6 +10,7 @@ abstract class MessageHandler {
   Future<Null> execute(Message message);
 }
 
+/// General message handler that filtes by message type.
 abstract class _FilterByTypeMessageHandler<T extends Message>
     implements MessageHandler {
   final Node node;

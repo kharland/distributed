@@ -9,9 +9,7 @@ class MessageDecoder {
   final Map<String, DecodeCallback> _decodersByFormat =
       <String, DecodeCallback>{
     'PeerInfoMessage': (String message) =>
-        new PeerInfoMessage.fromJson(Json.decode(message)),
-    'DisconnectMessage': (String message) =>
-        new DisconnectMessage.fromJson(Json.decode(message))
+        new PeerInfoMessage.fromJson(Json.decode(message))
   };
 
   Message decode(String format, String data) {

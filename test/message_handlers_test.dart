@@ -45,5 +45,3 @@ void main() {
 class MockNode extends Mock implements Node {}
 
 class MockPeerInfoMessage extends Mock implements PeerInfoMessage {}
-
-class MockDisconnectMessage extends Mock implements DisconnectMessage {}

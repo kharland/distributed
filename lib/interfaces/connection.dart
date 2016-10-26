@@ -135,7 +135,7 @@ class _OpenConnectionModel implements _ConnectionModel {
   @override
   void send(Message message) {
     var rawMessage = new FormattedMessage(
-        message.runtimeType.toString(), Json.encode(message.toJson()));
-    _dataChannel.send(Json.encode(rawMessage.toJson()));
+        message.runtimeType.toString(), message.serialize());
+    _dataChannel.send(rawMessage.serialize());
   }
 }

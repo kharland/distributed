@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:distributed/distributed.dart';
 import 'package:distributed/platform/io.dart';
 
@@ -19,16 +18,18 @@ Future main(List<String> args) async {
     await node.createConnection(peers[peer]);
   }
 
-  var repl = new REPL((String prompt) {
-    stdout.writeln('enter a command:');
-    stdout.writeln('\tc <peer>\tConnect to <peer>');
-    stdout.writeln('\td <peer>\tDisconnect from<peer>');
-    stdout.writeln('\tl \tSee a list of all connected peers');
-    stdout.writeln('\tq \tShutdown node and quit.');
-    stdout.write(prompt);
-  });
+  var nodeAsPeer = node.toPeer();
+  var repl = new REPL(
+      prefix: '${nodeAsPeer.displayName}>> ',
+      printWelcome: () {
+        print('enter a command:');
+        print('\tc <peer>\tConnect to <peer>');
+        print('\td <peer>\tDisconnect from<peer>');
+        print('\tl \tSee a list of all connected peers');
+        print('\tq \tShutdown node and quit.');
+      });
 
-  repl.log('Node ${node.name}@${node.hostname} listening...');
+  repl.log('Node ${node.name} listening at ${nodeAsPeer.url}...');
   node.onConnect.listen((peer) {
     repl.log('connected to ${peer.displayName}');
   });
@@ -38,7 +39,7 @@ Future main(List<String> args) async {
   });
 
   node.onShutdown.then((_) {
-    repl.log('${node.toPeer().displayName} successfully shut down.');
+    repl.log('${nodeAsPeer.displayName} successfully shut down.');
   });
 
   repl.onInput.listen((String input) {

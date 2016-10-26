@@ -58,8 +58,6 @@ class IODataChannel<T> implements DataChannel<T> {
       _socketIsOpen = false;
       _webSocket.close();
     }
-//    _isOpen = false;
-//    _webSocketSubscription.cancel();
   }
 
   void _ensureIsOpen() {

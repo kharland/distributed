@@ -43,11 +43,11 @@ class PlatformDataChannel implements DataChannel<String> {
   }
 
   /// Creates a [PlatformDataChannel] between [sender] and [recipient].
-  static Future<PlatformDataChannel> open(
+  static Future<PlatformDataChannel> connect(
       String cookie, Peer sender, Peer recipient) async {
     var webSocket = await SeltzerWebSocket.connect(recipient.url);
-    webSocket.sendString(
-        Json.encode(new ConnectMessage(cookie, sender, recipient).toJson()));
+    webSocket
+        .sendString(new ConnectMessage(cookie, sender, recipient).serialize());
     return new PlatformDataChannel(webSocket);
   }
 

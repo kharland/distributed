@@ -86,8 +86,8 @@ class IONode implements Node {
 
   @override
   Future<Null> createConnection(Peer peer) async {
-    var connection =
-        new Connection(await PlatformDataChannel.open(cookie, toPeer(), peer));
+    var connection = new Connection(
+        await PlatformDataChannel.connect(cookie, toPeer(), peer));
     addConnection(peer, connection);
     connection.send(new PeerInfoMessage(toPeer(), peers));
   }

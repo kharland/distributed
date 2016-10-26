@@ -3,30 +3,35 @@ import 'dart:convert';
 import 'dart:io';
 
 class REPL {
-  static const String _bufferInit = '>> ';
+  static const String _prefix = '>> ';
 
+  final String prefix;
   StreamController<String> _onInputController = new StreamController<String>();
   StreamSubscription<String> _stdinSubscription;
-  String _buffer = _bufferInit;
+  String _currentBuffer = _prefix;
 
-  REPL(void printWelcome(String prompt)) {
+  REPL({void printWelcome(), this.prefix: _prefix}) {
     stdin.lineMode = false;
+    _currentBuffer = prefix;
     _stdinSubscription =
-        stdin.transform(new Utf8Decoder()).listen((String char) {
+        stdin.transform(new AsciiDecoder()).listen((String char) {
       if (char == '\n') {
-        _onInputController.add(_buffer.substring(_bufferInit.length).trim());
-        _buffer = _bufferInit;
+        _onInputController.add(_currentBuffer.substring(prefix.length).trim());
+        _currentBuffer = prefix;
       } else {
-        _buffer += char;
+        _currentBuffer += char;
+        stdout.write('\r$_currentBuffer');
       }
     });
-
-    printWelcome(_bufferInit);
+    if (printWelcome != null) {
+      printWelcome();
+    }
+    stdout.write(prefix);
   }
 
   void log(String message) {
     stdout.write('\r$message\n');
-    stdout.write(_buffer);
+    stdout.write(_currentBuffer);
   }
 
   void kill() {

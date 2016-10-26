@@ -1,7 +1,8 @@
+import 'package:distributed/interfaces/message.dart';
 import 'package:distributed/src/networking/json.dart';
 
 /// A wrapper to simplify [Message] decoding.
-class FormattedMessage {
+class FormattedMessage extends Message {
   /// A value that denotes how [message] should be parsed.
   final String format;
 
@@ -14,8 +15,6 @@ class FormattedMessage {
       new FormattedMessage(json['format'], json['data']);
 
   @override
-  String toString() => 'Message ${Json.encode(toJson())}';
-
   Map<String, Object> toJson() =>
       <String, Object>{'format': format, 'data': message};
 }
