@@ -8,6 +8,5 @@ abstract class Json {
   static Map<String, Object> decode(String json) =>
       _decoder.convert(json) as Map<String, Object>;
 
-  static String encode(Map<String, Object> json) =>
-    _encoder.convert(json);
+  static String encode(Map<String, Object> json) => _encoder.convert(json);
 }

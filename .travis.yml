@@ -3,5 +3,4 @@ sudo: false
 dart:
   - stable
   - dev
-with_content_shell: true
 script: ./tool/presubmit.sh

@@ -12,8 +12,7 @@ import 'package:distributed/src/networking/data_channel.dart';
 /// time this change is created.
 class IODataChannel<T> implements DataChannel<T> {
   final WebSocket _webSocket;
-  final StreamController<T> _onMessageController =
-      new StreamController<T>();
+  final StreamController<T> _onMessageController = new StreamController<T>();
   final Completer<Null> _onCloseCompleter = new Completer<Null>();
 
   StreamSubscription _webSocketSubscription;
