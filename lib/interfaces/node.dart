@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:distributed/src/networking/connection/connection.dart';
 import 'package:distributed/interfaces/message.dart';
 import 'package:distributed/interfaces/peer.dart';
+import 'package:distributed/src/repl.dart';
 
 typedef void CommandHandler(Peer sender, Set arguments);
 
@@ -40,13 +41,13 @@ abstract class Node {
   Future<Null> get onShutdown;
 
   /// Connects to the remote peer identified by [name] and [hostname].
-  Future<Null> createConnection(Peer peer);
+  void createConnection(Peer peer);
 
   /// Adds a pre-established [connection] to [peer] to this [Node].
   void addConnection(Peer peer, Connection connection);
 
   /// Disconnects from the remote peer identified by [name] and [hostname].
-  Future<Null> disconnect(Peer peer);
+  void disconnect(Peer peer);
 
   /// Send a command of type [commandType] to [peer] with [arguments].
   void send(Peer peer, String commandType, Iterable<Object> arguments);
@@ -56,7 +57,7 @@ abstract class Node {
   void receive(String commandType, CommandHandler callback);
 
   /// Sends [message] to all [peers].
-  Future<Null> broadcast(Message message);
+  void broadcast(Message message);
 
   /// Closes all connections and disables the node. Be sure to call [disconnect]
   /// before calling [shutdown] to remove the node from any connected networks.
@@ -65,69 +66,171 @@ abstract class Node {
   /// Returns this [Node] as a [Peer].
   Peer toPeer();
 }
-//
-///// A [Node] that delegates to another [Node].
-/////
-///// Prefer extending this to add functionality to a [Node].
-//class DelegatingNode implements Node {
-//  final Node _delegate;
-//
-//  DelegatingNode(this._delegate);
-//
-//  @override
-//  Future<Null> createConnection(Peer peer) => _delegate.createConnection(peer);
-//
-//  @override
-//  void addConnection(Peer peer, Connection connection) =>
-//      _delegate.addConnection(peer, connection);
-//
-//  @override
-//  String get cookie => _delegate.cookie;
-//
-//  @override
-//  Future<Null> disconnect(Peer peer) => _delegate.disconnect(peer);
-//
-//  @override
-//  String get hostname => _delegate.hostname;
-//
-//  @override
-//  bool get isHidden => _delegate.isHidden;
-//
-//  @override
-//  String get name => _delegate.name;
-//
-//  @override
-//  Stream<Peer> get onConnect => _delegate.onConnect;
-//
-//  @override
-//  Stream<Peer> get onDisconnect => _delegate.onDisconnect;
-//
-//  @override
-//  Stream<Message> get onMessage => _delegate.onMessage;
-//
-//  @override
-//  Future<Null> get onShutdown => _delegate.onShutdown;
-//
-//  @override
-//  List<Peer> get peers => _delegate.peers;
-//
-//  @override
-//  Peer toPeer() => _delegate.toPeer();
-//
-//  @override
-//  Future<Null> broadcast(Message message) => _delegate.broadcast(message);
-//
-//  @override
-//  Future<Null> shutdown() => _delegate.shutdown();
-//
-//  @override
-//  void receive(
-//      String type, Iterable<Type> parameters, CommandHandler callback) {
-//    _delegate.receive(type, parameters, callback);
-//  }
-//
-//  @override
-//  void send(Peer peer, Command command) {
-//    _delegate.send(peer, command);
-//  }
-//}
+
+/// A [Node] that delegates to another [Node].
+///
+/// Prefer extending this to add functionality to a [Node].
+class DelegatingNode implements Node {
+  final Node _delegate;
+
+  DelegatingNode(this._delegate);
+
+  @override
+  void createConnection(Peer peer) => _delegate.createConnection(peer);
+
+  @override
+  void addConnection(Peer peer, Connection connection) =>
+      _delegate.addConnection(peer, connection);
+
+  @override
+  String get cookie => _delegate.cookie;
+
+  @override
+  void disconnect(Peer peer) => _delegate.disconnect(peer);
+
+  @override
+  String get hostname => _delegate.hostname;
+
+  @override
+  bool get isHidden => _delegate.isHidden;
+
+  @override
+  String get name => _delegate.name;
+
+  @override
+  Stream<Peer> get onConnect => _delegate.onConnect;
+
+  @override
+  Stream<Peer> get onDisconnect => _delegate.onDisconnect;
+
+  @override
+  Future<Null> get onShutdown => _delegate.onShutdown;
+
+  @override
+  List<Peer> get peers => _delegate.peers;
+
+  @override
+  Peer toPeer() => _delegate.toPeer();
+
+  @override
+  void broadcast(Message message) => _delegate.broadcast(message);
+
+  @override
+  Future<Null> shutdown() => _delegate.shutdown();
+
+  @override
+  void send(Peer peer, String commandType, Iterable<Object> arguments) {
+    _delegate.send(peer, commandType, arguments);
+  }
+
+  @override
+  void receive(String commandType, CommandHandler callback) {
+    _delegate.receive(commandType, callback);
+  }
+}
+
+class InteractiveNode extends DelegatingNode {
+  final REPL _repl;
+  List<StreamSubscription> _nodeSubscriptions = <StreamSubscription>[];
+
+  InteractiveNode(Node node, {String prefix: '> ', String startupMessage: ''})
+      : _repl = new REPL(prefix: prefix, startupMessage: startupMessage),
+        super(node) {
+    _repl.log('Node ${node.name} listening at ${node.toPeer().url}...');
+    _nodeSubscriptions.addAll(<StreamSubscription>[
+      node.onConnect.listen((peer) {
+        _repl.log('connected to ${peer.displayName}');
+      }),
+      node.onDisconnect.listen((peer) {
+        _repl.log('disconnected from ${peer.displayName}');
+      }),
+    ]);
+    node.onShutdown.then((_) {
+      _repl.log('${node.toPeer().displayName} successfully shut down.');
+      _repl.stop();
+    });
+
+    Peer _parsePeer(String peerStr) {
+      var parts = peerStr.split('@');
+      if (parts.length < 2) {
+        _repl.log('Invalid peer name $peerStr.');
+        _repl.log('Specify a peer using the format: <name>@<hostname>:<port>');
+        _repl.log('The port number is optional (default 8080)');
+        return null;
+      }
+      var port = 8080;
+      var hostname = parts.last;
+      var hostnameParts = parts.last.split(':');
+      if (hostnameParts.length > 1) {
+        hostname = hostnameParts.first;
+        port = int.parse(hostnameParts.last);
+      }
+
+      return new Peer(parts.first, hostname, port: port);
+    }
+
+    _repl.onInput.listen((String input) {
+      if (input.trim() == 'quit') {
+        node.shutdown();
+      }
+      var args = input.split(' ').map((s) => s.trim()).toList();
+      if (args.first.trim() == 'connect') {
+        Peer peer = _parsePeer(args[1]);
+        if (peer == null) return;
+        if (!peers.contains(peer)) {
+          _repl.log('connecting to ${peer.displayName}');
+          try {
+            node.createConnection(peer);
+          } catch (_) {
+            _repl.log('unable to connect to $peer');
+          }
+        }
+        return;
+      }
+
+      if (args.first.trim() == 'list') {
+        _repl.log('Connected peers:');
+        for (int peerno = 0; peerno < peers.length; peerno++) {
+          var peer = peers[peerno];
+          _repl.log('${peerno+1}. ${peer.displayName} --> ${peer.url}');
+        }
+        return;
+      }
+
+      if (args.first.trim() == 'disconnect') {
+        Peer peer = _parsePeer(args[1]);
+        if (peer == null) return;
+        node.disconnect(peer);
+        return;
+      }
+
+      if (args.first.trim() == 'send') {
+        Peer peer = _parsePeer(args[1]);
+        if (peers.map((p) => p.name).contains(peer.name)) {
+          String command = args[2];
+          List<String> params = args.skip(3).toList();
+          node.send(peer, command, params);
+          _repl.log('Sent ${peer.displayName} command: $command $params');
+        } else {
+          _repl.log('Not connected to any peer named ${peer.name}');
+        }
+        return;
+      }
+    });
+  }
+
+  Stream<String> get onInput => _repl.onInput;
+
+  @override
+  Future<Null> shutdown() {
+    for (var subscription in _nodeSubscriptions) {
+      subscription.cancel();
+    }
+    _nodeSubscriptions.clear();
+    return super.shutdown();
+  }
+
+  void log(String message) {
+    _repl.log(message);
+  }
+}

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:distributed/interfaces/node.dart';
 
 typedef Future<Node> NodeProvider(String name, String hostname, String cookie,
-    {int port});
+    {int port, bool hidden});
 
 NodeProvider _nodeProvider;
 
@@ -14,5 +14,5 @@ void setNodeProvider(NodeProvider nodeProvider) {
 }
 
 Future<Node> createNode(String name, String hostname, String cookie,
-        {int port}) =>
-    _nodeProvider(name, hostname, cookie, port: port);
+        {int port, bool hidden}) =>
+    _nodeProvider(name, hostname, cookie, port: port, hidden: hidden);

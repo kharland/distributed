@@ -50,7 +50,6 @@ class CommandMessageHandler extends _TypedMessageHandler<CommandMessage> {
 
   @override
   Future<Null> execute(Message message) async {
-    print("IN COMMAND HANDLER");
     var command = message as CommandMessage;
     if (!_commandHandlers.containsKey(command.formatName)) {
       throw new ArgumentError('No handler for ${command.formatName}');

@@ -113,6 +113,7 @@ class _OpenConnectionModel implements _ConnectionModel {
 
   @override
   void close() {
+//    throw new Exception('');
     if (_isOpen) {
       _isOpen = false;
       _dataChannel.close();
@@ -126,7 +127,7 @@ class _OpenConnectionModel implements _ConnectionModel {
   }
 }
 
-/// A wrapper to simplify [Message] [de]serialization.
+/// A wrapper to simplify [Message] (de)serialization.
 class _Payload {
   /// A value that denotes how [data] should be parsed.
   final String format;

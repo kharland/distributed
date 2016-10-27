@@ -11,7 +11,7 @@ class CommandFormat {
 }
 
 class CommandMessage extends Message {
-  static final DartCoreSerializers _coreSerializers = new DartCoreSerializers();
+  static final DartCoreSerializer _coreSerializer = new DartCoreSerializer();
   final String formatName;
   final Iterable<Object> arguments;
 
@@ -22,27 +22,17 @@ class CommandMessage extends Message {
   CommandMessage(this.sender, this.formatName, this.arguments);
 
   factory CommandMessage.fromJson(Map<String, Object> json) {
-    var args = json['arguments'] as List<Map<String, Object>>;
+    var args = json['arguments'] as Iterable<String>;
     return new CommandMessage(
         new Peer.fromJson(json['sender'] as Map<String, Object>),
-        json['format'], args.map((Map<String, Object> arg) {
-      return _coreSerializers.deserialize(arg['type'], arg['value']);
-    }));
+        json['format'],
+        args.map(_coreSerializer.deserialize));
   }
 
   @override
   Map<String, Object> toJson() => <String, Object>{
         'format': formatName,
         'sender': sender.toJson(),
-        'arguments': arguments
-            .map((arg) => {
-                  'type': arg.runtimeType.toString(),
-                  'value': _serializeArg(arg)
-                })
-            .toList()
+        'arguments': arguments.map(_coreSerializer.serialize).toList()
       };
-
-  String _serializeArg(Object arg) {
-    return _coreSerializers.serialize(arg);
-  }
 }

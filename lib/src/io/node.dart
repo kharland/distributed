@@ -8,7 +8,6 @@ import 'package:distributed/interfaces/node.dart';
 import 'package:distributed/interfaces/peer.dart';
 
 import 'package:distributed/src/io/data_channel.dart';
-import 'package:distributed/src/networking/formatted_message.dart';
 import 'package:distributed/src/networking/message_handlers.dart';
 import 'package:distributed/src/networking/data_channel.dart';
 import 'package:meta/meta.dart';
@@ -20,7 +19,9 @@ class IONode implements Node {
   final StreamController<Peer> _onConnectController =
       new StreamController<Peer>.broadcast();
   final StreamController<Peer> _onDisconnectController =
-      new StreamController<Peer>();
+      new StreamController<Peer>.broadcast();
+  final StreamController<Null> _onLastConnectionClosedController =
+      new StreamController<Null>.broadcast();
   final Completer<Null> _onShutdownCompleter = new Completer<Null>();
   final List<MessageHandler> _messageHandlers = <MessageHandler>[];
   final Map<Peer, StreamSubscription> _connectionSubscriptions =
@@ -55,7 +56,7 @@ class IONode implements Node {
         hostname = hostname,
         isHidden = isHidden,
         _socketHost = socketHost,
-        _asPeer = new Peer(name, hostname, port: port, isHidden: isHidden) {
+        _asPeer = new Peer(name, hostname, port: port) {
     _commandMessageHandler = new CommandMessageHandler(this);
     _messageHandlers
       ..add(new PeerInfoMessageHandler(this))
@@ -89,15 +90,17 @@ class IONode implements Node {
   Future<Null> get onShutdown => _onShutdownCompleter.future;
 
   @override
-  Iterable<Peer> get peers => _connections.keys;
+  Iterable<Peer> get peers => new List.unmodifiable(_connections.keys);
 
   @override
-  Future<Null> createConnection(Peer peer) async {
-    var connection = new Connection(await DataChannel.connect(
-        cookie, toPeer(), peer) as DataChannel<String>);
-    addConnection(peer, connection);
-    connection.send(new ConnectMessage(cookie, toPeer(), peer));
-    connection.send(new PeerInfoMessage(toPeer(), peers));
+  void createConnection(Peer peer) {
+    Connection connection;
+    DataChannel.connect(cookie, toPeer(), peer).then((DataChannel dataChannel) {
+      connection = new Connection(dataChannel as DataChannel<String>);
+      connection.send(new ConnectMessage(cookie, toPeer(), peer));
+      connection.send(new PeerInfoMessage(toPeer(), peers));
+      addConnection(peer, connection);
+    });
   }
 
   @override
@@ -115,23 +118,26 @@ class IONode implements Node {
     });
     connection.onClose.then((_) {
       _connections.remove(peer);
-      _connectionSubscriptions.remove(peer)..cancel();
+      _connectionSubscriptions.remove(peer).cancel();
       _onDisconnectController.add(peer);
+      if (_connectionSubscriptions.isEmpty) {
+        _onLastConnectionClosedController.add(null);
+      }
     });
     _onConnectController.add(peer);
   }
 
   @override
-  Future<Null> disconnect(Peer peer) async {
+  void disconnect(Peer peer) {
+    // Actual cleanup happens inside the callback to the given connection's
+    // onClose future.
     if (peers.contains(peer)) {
-      var connection = _connections.remove(peer);
-      connection.close();
-      await connection.onClose;
+      _connections.remove(peer).close();
     }
   }
 
   @override
-  Future<Null> broadcast(Message message) async {
+  void broadcast(Message message) {
     for (Connection connection in _connections.values) {
       connection.send(message);
     }
@@ -141,9 +147,12 @@ class IONode implements Node {
   Future<Null> shutdown() async {
     await _socketSubscription.cancel();
     await _socketHost.close();
-    await Future.wait(peers.map(disconnect));
     _onMessageController.close();
     _onConnectController.close();
+    if (peers.isNotEmpty) {
+      peers.forEach(disconnect);
+      await _onLastConnectionClosedController.stream.take(1).last;
+    }
     _onDisconnectController.close();
     _onShutdownCompleter.complete();
   }
@@ -156,8 +165,8 @@ class IONode implements Node {
     connection.onMessage.take(1).last.then((Message message) {
       var connectionRequest = message as ConnectMessage;
       if (connectionRequest.cookie == cookie) {
-        addConnection(connectionRequest.sender, connection);
         connection.send(new PeerInfoMessage(toPeer(), peers));
+        addConnection(connectionRequest.sender, connection);
       } else {
         connection.close();
       }

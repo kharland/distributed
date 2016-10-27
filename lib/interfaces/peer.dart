@@ -1,15 +1,13 @@
-/// A lightweight view of a [Node] used to represent a remote peer.
+/// A lightweight view of a node used to represent a remote peer.
 class Peer {
   final String name;
   final String hostname;
-  final bool isHidden;
   final int port;
 
-  const Peer(this.name, this.hostname, {this.port, this.isHidden: false});
+  const Peer(this.name, this.hostname, {this.port});
 
   factory Peer.fromJson(Map<String, Object> json) {
-    return new Peer(json['name'], json['hostname'],
-        port: json['port'], isHidden: json['isHidden']);
+    return new Peer(json['name'], json['hostname'], port: json['port']);
   }
 
   String get url => 'ws://$hostname:$port';
@@ -25,10 +23,6 @@ class Peer {
   @override
   bool operator ==(Object other) => other is Peer && other.hashCode == hashCode;
 
-  Map<String, Object> toJson() => <String, Object>{
-        'name': name,
-        'hostname': hostname,
-        'port': port,
-        'isHidden': isHidden
-      };
+  Map<String, Object> toJson() =>
+      <String, Object>{'name': name, 'hostname': hostname, 'port': port};
 }

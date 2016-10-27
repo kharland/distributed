@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:distributed/src/networking/connection/connection.dart';
 import 'package:distributed/interfaces/peer.dart';
 import 'package:distributed/src/networking/data_channel.dart';
 

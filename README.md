@@ -1,6 +1,8 @@
 # distributed_dart
 Simple distributed programming in Dart. (Work in Progress).
 
+[![Build Status](https://travis-ci.org/kharland/distributed_dart.svg?branch=master)](https://travis-ci.org/kharland/distributed_dart)
+
 ## Quickstart
 
 A distributed system is comprised of a number of independent *Nodes*.  A Node

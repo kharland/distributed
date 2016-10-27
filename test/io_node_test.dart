@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:distributed/src/io/node.dart';
 import 'package:distributed/platform/io.dart';
 import 'package:test/test.dart';
@@ -124,7 +123,11 @@ void main() {
         expect(node.peers, unorderedEquals([remoteNodeA.toPeer()]));
         remoteNodeA.shutdown();
         remoteNodeB.shutdown();
-        return Future.wait([remoteNodeA.onShutdown, remoteNodeB.onShutdown]);
+        return Future.wait([
+          remoteNodeA.onShutdown,
+          remoteNodeB.onShutdown,
+          node.onDisconnect.take(2).last
+        ]);
       }));
 
       remoteNodeA.createConnection(node.toPeer());
