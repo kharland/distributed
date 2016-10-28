@@ -12,13 +12,14 @@ Future main(List<String> args) async {
   Node nnode = await createNode(
       params['name'], params['hostname'], params['cookie'],
       port: int.parse(params['port']), hidden: params['hidden'] != null);
-  InteractiveNode node = new InteractiveNode(nnode,
-      prefix: '${nnode.toPeer().displayName}>> ', startupMessage: '');
+
+  InteractiveNode node =
+      new InteractiveNode(nnode, prompt: '${nnode.toPeer().displayName}>> ');
 
   node.receive('square', (Peer peer, Set params) {
     int n = int.parse(params.elementAt(0));
     int result = n * n;
-    node.log('${peer.displayName} asked us to square ${params.elementAt(0)}');
+    node.log('${peer.displayName} asked us to square $n}');
     node.log('responding to ${peer.displayName} with $result');
     node.send(peer, 'square_result', [result]);
   });
@@ -47,13 +48,3 @@ final ArgParser _argParser = new ArgParser()
   ..addOption('hostname', defaultsTo: 'localhost')
   ..addOption('hidden', defaultsTo: null)
   ..addOption('port', defaultsTo: '8080');
-
-//Map<String, Function> nodes = new Map.fromIterable(nodeNames,
-//    key: (name) => name,
-//    value: (name) => () => createNode(name, 'localhost', 'cookie',
-//        port: minPort + nodeNames.indexOf(name)));
-//
-//Map<String, Peer> peers = new Map.fromIterable(nodeNames,
-//    key: (name) => name,
-//    value: (name) =>
-//        new Peer(name, 'localhost', port: minPort + nodeNames.indexOf(name)));

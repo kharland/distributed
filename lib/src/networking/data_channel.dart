@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:distributed/interfaces/message.dart';
+import 'package:distributed/src/networking/message.dart';
 import 'package:distributed/interfaces/peer.dart';
 
 import 'package:seltzer/seltzer.dart';

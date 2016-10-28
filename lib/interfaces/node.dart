@@ -1,11 +1,11 @@
 import 'dart:async';
 
+import 'package:distributed/interfaces/command.dart';
+import 'package:distributed/src/command.dart';
 import 'package:distributed/src/networking/connection/connection.dart';
-import 'package:distributed/interfaces/message.dart';
+import 'package:distributed/src/networking/message.dart';
 import 'package:distributed/interfaces/peer.dart';
 import 'package:distributed/src/repl.dart';
-
-typedef void CommandHandler(Peer sender, Set arguments);
 
 /// A node participating in a distributed system.
 ///
@@ -107,7 +107,7 @@ class DelegatingNode implements Node {
   Future<Null> get onShutdown => _delegate.onShutdown;
 
   @override
-  List<Peer> get peers => _delegate.peers;
+  Iterable<Peer> get peers => _delegate.peers;
 
   @override
   Peer toPeer() => _delegate.toPeer();
@@ -129,108 +129,93 @@ class DelegatingNode implements Node {
   }
 }
 
-class InteractiveNode extends DelegatingNode {
-  final REPL _repl;
-  List<StreamSubscription> _nodeSubscriptions = <StreamSubscription>[];
+/// TODO: delete when I have internet access and can look up
+/// an existing class which implements StringSink.
+class _StringSink implements StringSink {
+  StreamController<String> _onMessageController =
+      new StreamController<String>();
 
-  InteractiveNode(Node node, {String prefix: '> ', String startupMessage: ''})
-      : _repl = new REPL(prefix: prefix, startupMessage: startupMessage),
-        super(node) {
-    _repl.log('Node ${node.name} listening at ${node.toPeer().url}...');
-    _nodeSubscriptions.addAll(<StreamSubscription>[
-      node.onConnect.listen((peer) {
-        _repl.log('connected to ${peer.displayName}');
-      }),
-      node.onDisconnect.listen((peer) {
-        _repl.log('disconnected from ${peer.displayName}');
-      }),
-    ]);
-    node.onShutdown.then((_) {
-      _repl.log('${node.toPeer().displayName} successfully shut down.');
-      _repl.stop();
-    });
+  Stream<String> get onMessage => _onMessageController.stream;
 
-    Peer _parsePeer(String peerStr) {
-      var parts = peerStr.split('@');
-      if (parts.length < 2) {
-        _repl.log('Invalid peer name $peerStr.');
-        _repl.log('Specify a peer using the format: <name>@<hostname>:<port>');
-        _repl.log('The port number is optional (default 8080)');
-        return null;
-      }
-      var port = 8080;
-      var hostname = parts.last;
-      var hostnameParts = parts.last.split(':');
-      if (hostnameParts.length > 1) {
-        hostname = hostnameParts.first;
-        port = int.parse(hostnameParts.last);
-      }
+  @override
+  void write(Object obj) {
+    _onMessageController.add(obj);
+  }
 
-      return new Peer(parts.first, hostname, port: port);
+  @override
+  void writeAll(Iterable objects, [String separator = ""]) {
+    for (int i = 0; i < objects.length - 1; i++) {
+      write('${objects.elementAt(i)}$separator');
     }
+    write('${objects.last}');
+  }
 
-    _repl.onInput.listen((String input) {
-      if (input.trim() == 'quit') {
-        node.shutdown();
-      }
-      var args = input.split(' ').map((s) => s.trim()).toList();
-      if (args.first.trim() == 'connect') {
-        Peer peer = _parsePeer(args[1]);
-        if (peer == null) return;
-        if (!peers.contains(peer)) {
-          _repl.log('connecting to ${peer.displayName}');
-          try {
-            node.createConnection(peer);
-          } catch (_) {
-            _repl.log('unable to connect to $peer');
-          }
-        }
-        return;
-      }
+  @override
+  void writeCharCode(int charCode) {
+    throw new UnimplementedError();
+  }
 
-      if (args.first.trim() == 'list') {
-        _repl.log('Connected peers:');
-        for (int peerno = 0; peerno < peers.length; peerno++) {
-          var peer = peers[peerno];
-          _repl.log('${peerno+1}. ${peer.displayName} --> ${peer.url}');
-        }
-        return;
-      }
+  @override
+  void writeln([Object obj = ""]) {
+    throw new UnimplementedError();
+  }
 
-      if (args.first.trim() == 'disconnect') {
-        Peer peer = _parsePeer(args[1]);
-        if (peer == null) return;
-        node.disconnect(peer);
-        return;
-      }
+  void close() {
+    _onMessageController.close();
+  }
+}
 
-      if (args.first.trim() == 'send') {
-        Peer peer = _parsePeer(args[1]);
-        if (peers.map((p) => p.name).contains(peer.name)) {
-          String command = args[2];
-          List<String> params = args.skip(3).toList();
-          node.send(peer, command, params);
-          _repl.log('Sent ${peer.displayName} command: $command $params');
-        } else {
-          _repl.log('Not connected to any peer named ${peer.name}');
-        }
-        return;
-      }
+/// A Node that launches an interactive shell and accepts commands.
+class InteractiveNode extends DelegatingNode {
+  CommandRunner _commandRunner;
+  final _StringSink _errorSink = new _StringSink();
+  final _StringSink _logSink = new _StringSink();
+
+  final REPL _repl;
+  final List<StreamSubscription> _subscriptions = <StreamSubscription>[];
+
+  InteractiveNode(Node node, {String prompt: '> '})
+      : _repl = new REPL(prompt),
+        super(node) {
+    _commandRunner = new CommandRunner()
+      ..addCommand(new ConnectCommand(this, _errorSink))
+      ..addCommand(new DisconnectCommand(this, _errorSink))
+      ..addCommand(new SendCommand(this, _errorSink))
+      ..addCommand(new ListCommand(this, _logSink))
+      ..addCommand(new QuitCommand(this));
+
+    onShutdown.then((_) {
+      _subscriptions.forEach((s) => s.cancel());
+      _repl.stop();
+      print('${toPeer().displayName} successfully shut down.');
     });
+
+    _subscriptions.addAll(<StreamSubscription>[
+      _errorSink.onMessage.listen(logError),
+      _logSink.onMessage.listen(log),
+      onConnect.listen((peer) {
+        log('connected to ${peer.displayName}');
+      }),
+      onDisconnect.listen((peer) {
+        log('disconnected from ${peer.displayName}');
+      }),
+      _repl.onInput.listen((String input) {
+        var args = input.split(' ').map((s) => s.trim()).toList();
+        _commandRunner.parseAndRun(args);
+      })
+    ]);
+
+    _repl.start();
+    log('Node $name listening at ${toPeer().url}...');
   }
 
   Stream<String> get onInput => _repl.onInput;
 
-  @override
-  Future<Null> shutdown() {
-    for (var subscription in _nodeSubscriptions) {
-      subscription.cancel();
-    }
-    _nodeSubscriptions.clear();
-    return super.shutdown();
-  }
-
   void log(String message) {
     _repl.log(message);
+  }
+  
+  void logError(String message) {
+    _repl.log('[Error] $message');
   }
 }

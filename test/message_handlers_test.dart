@@ -1,6 +1,6 @@
 @TestOn('vm')
 import 'package:distributed/interfaces/node.dart';
-import 'package:distributed/interfaces/message.dart';
+import 'package:distributed/src/networking/message.dart';
 import 'package:distributed/interfaces/peer.dart';
 import 'package:distributed/src/networking/message_handlers.dart';
 import 'package:test/test.dart';

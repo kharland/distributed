@@ -17,4 +17,5 @@ dependencies:
 dev_dependencies:
   test:
   mockito:
+  console:
   dart_style:

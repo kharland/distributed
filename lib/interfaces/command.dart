@@ -1,14 +1,9 @@
-import 'package:distributed/interfaces/message.dart';
+import 'package:distributed/src/networking/message.dart';
 import 'package:distributed/interfaces/peer.dart';
 import 'package:distributed/interfaces/serializer.dart';
 import 'package:meta/meta.dart';
 
-class CommandFormat {
-  final String name;
-  final Iterable<Type> parameterTypes;
-
-  CommandFormat(this.name, this.parameterTypes);
-}
+typedef void CommandHandler(Peer sender, Set arguments);
 
 class CommandMessage extends Message {
   static final DartCoreSerializer _coreSerializer = new DartCoreSerializer();
@@ -36,3 +31,4 @@ class CommandMessage extends Message {
         'arguments': arguments.map(_coreSerializer.serialize).toList()
       };
 }
+

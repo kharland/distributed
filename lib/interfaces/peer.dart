@@ -10,6 +10,31 @@ class Peer {
     return new Peer(json['name'], json['hostname'], port: json['port']);
   }
 
+  /// Creates a peer from [namesAndPort].
+  ///
+  /// The format of [namesAndPort] is: <name>@<hostname>:<port>
+  ///
+  /// port is optional and defalts to 8080.
+  ///
+  /// Throws a [FormatException] if [namesAndPort] is invaild
+  factory Peer.fromNamesAndPort(String namesAndPort) {
+    var parts = namesAndPort.split(':');
+    var nameParts = parts.first.split('@');
+    var port = 8080;
+    if (parts.length > 1) {
+      try {
+        port = int.parse(parts.last);
+      } on FormatException catch (_) {
+        throw new FormatException('Invalid port number: ${parts.last}');
+      }
+    }
+    if (nameParts.length != 2) {
+      throw new FormatException('Name or Hostname missing from $namesAndPort');
+    } else {
+      return new Peer(nameParts.first, nameParts.last, port: port);
+    }
+  }
+
   String get url => 'ws://$hostname:$port';
 
   String get displayName => "$name@$hostname";

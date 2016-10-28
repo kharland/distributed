@@ -3,7 +3,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:distributed/interfaces/command.dart';
 import 'package:distributed/src/networking/connection/connection.dart';
-import 'package:distributed/interfaces/message.dart';
+import 'package:distributed/src/networking/message.dart';
 import 'package:distributed/interfaces/node.dart';
 import 'package:distributed/interfaces/peer.dart';
 
@@ -131,6 +131,8 @@ class IONode implements Node {
   void disconnect(Peer peer) {
     // Actual cleanup happens inside the callback to the given connection's
     // onClose future.
+    //
+    // This is imperative because the peer might close the connection first.
     if (peers.contains(peer)) {
       _connections.remove(peer).close();
     }
@@ -164,7 +166,8 @@ class IONode implements Node {
     var connection = new Connection(new IODataChannel<String>(webSocket));
     connection.onMessage.take(1).last.then((Message message) {
       var connectionRequest = message as ConnectMessage;
-      if (connectionRequest.cookie == cookie) {
+      if (connectionRequest.cookie == cookie &&
+          connectionRequest.peer.name == name) {
         connection.send(new PeerInfoMessage(toPeer(), peers));
         addConnection(connectionRequest.sender, connection);
       } else {
@@ -173,11 +176,8 @@ class IONode implements Node {
     });
   }
 
-  // TODO: add callback to register custom parameter types.
-
   @override
   void receive(String commandType, CommandHandler callback) {
-    // Assume every element in parameters is registered for now.
     _commandMessageHandler.registerHandler(commandType, callback);
   }
 

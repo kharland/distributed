@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:distributed/interfaces/command.dart';
-import 'package:distributed/interfaces/message.dart';
+import 'package:distributed/src/networking/message.dart';
 import 'package:distributed/src/networking/data_channel.dart';
 import 'package:distributed/src/networking/json.dart';
 

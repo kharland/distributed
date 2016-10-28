@@ -1,91 +1,73 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
-import 'package:collection/collection.dart';
 
+import 'package:distributed/src/user_input/editor.dart';
+
+/// Read-Eval-Print loop used by an [InteractiveNode].
+///
+/// The [REPL] disables the echo and line modes of stdin. The client should
+/// call [close] when finished to avoid hanging and misconfiguration of the
+/// the shell.
+///
+/// On Mac/Linux, terminal after-effects can be fixed using the shell utility
+/// `reset`.
 class REPL {
-  final _LineEditor _editor;
-  StreamSubscription<String> _editorSubscription;
+  static final _StreamSplitter<List<int>> _streamSplitter =
+      new _StreamSplitter<List<int>>(stdin);
+  InputEditorControls _editorControls;
+  InputEditor _editor;
 
-  REPL({String startupMessage: '', String prefix: '>> '})
-      : _editor = new _LineEditor(stdin, prefix) {
-    stdout.write(startupMessage);
-    _editorSubscription = _editor.onInput.listen((_) {
-      stdout.writeln();
-    });
+  /// Creates and starts [REPL] with the given prompt/
+  REPL([String prompt = '> ']) : _editor = new InputEditor(prompt: prompt);
+
+  /// Stream of user-input lines.
+  Stream<String> get onInput => _editor.lines;
+
+  /// Launches the CLI Read-Eval-Print loop.
+  ///
+  /// Do not forget to call [stop] after calling [start] when you are finished.
+  void start() {
+    stdin.echoMode = false;
+    stdin.lineMode = false;
+    _editorControls?.disable();
+    _editorControls = new InputEditorControls(_editor);
+    _editorControls.enable(_streamSplitter.stream);
+    _editor.prompt();
   }
 
-  Stream<String> get onInput => _editor.onInput;
-
-  void log(String message) {
-    stdout.writeln('\r$message');
-    stdout.write(_editor.currentBuffer);
-  }
-
+  /// Stops the loop and restores stdin.
   void stop() {
-    _editorSubscription.cancel();
-    _editor.close();
+    stdin.echoMode = true;
+    stdin.lineMode = true;
+    _streamSplitter.close();
+    _editorControls?.disable();
+  }
+
+  /// Log a message in this [REPL].
+  ///
+  /// Unlike a normal shell, the message is logged above the user's input to
+  /// preserve the current input buffer.
+  void log(String message) {
+    _editor.log(message);
   }
 }
 
-class _LineEditor {
-  static final _listeq = const ListEquality().equals;
-  static const _backspace = const [127];
-  static const _up = const [27, 91, 65];
-  static const _down = const [27, 91, 66];
-  static const _prefix = '> ';
+/// Converts a single subscription stream into a broadcast stream.
+///
+/// Unlike a broadcast stream created using [Stream.asBroadcastStream] The
+/// original [StreamSubscription] can be cancelled via [_StreamSplitter.close].
+class _StreamSplitter<T> {
+  final StreamController<T> _outStream;
+  StreamSubscription<T> _streamSub;
 
-  final Stdin _stdin;
-  final String prefix;
-
-  int _bufferCachePos = 0;
-  List<String> _bufferCache;
-  StreamController<String> _onInputController =
-      new StreamController<String>.broadcast();
-  StreamSubscription<String> _stdinSubscription;
-
-  _LineEditor(this._stdin, [this.prefix = _prefix]) {
-    _stdin.echoMode = false;
-    _stdin.lineMode = false;
-    _bufferCache = <String>[prefix];
-    _stdinSubscription =
-        _stdin.transform(new AsciiDecoder()).listen((String char) {
-      if (char == '\n') {
-        _onInputController.add(_buffer.substring(prefix.length).trim());
-        _bufferCache.add(prefix);
-        _bufferCachePos++;
-      } else if (_listeq(char.codeUnits, _backspace)) {
-        if (_buffer.length > prefix.length) {
-          _buffer = _buffer.substring(0, _buffer.length - 1);
-        }
-      } else if (_listeq(char.codeUnits, _up) && _bufferCachePos > 0) {
-        _bufferCachePos--;
-      } else if (_listeq(char.codeUnits, _down) &&
-          _bufferCachePos < _bufferCache.length - 1) {
-        _bufferCachePos++;
-      } else {
-        _buffer += char;
-      }
-      // clear current line.
-      stdout.write('\r${' ' * _buffer.length}');
-      stdout.write('\r$_buffer');
-    });
+  _StreamSplitter(Stream<T> stream)
+      : _outStream = new StreamController<T>.broadcast() {
+    _streamSub = stream.listen(_outStream.add);
   }
 
-  String get currentBuffer => _buffer;
-
-  Stream<String> get onInput => _onInputController.stream;
-
-  String get _buffer => _bufferCache[_bufferCachePos];
-
-  set _buffer(String value) {
-    _bufferCache[_bufferCachePos] = value;
-  }
+  Stream<T> get stream => _outStream.stream;
 
   void close() {
-    _onInputController.close();
-    _stdinSubscription.cancel();
-    _stdin.echoMode = true;
-    _stdin.lineMode = true;
+    _streamSub.cancel();
   }
 }

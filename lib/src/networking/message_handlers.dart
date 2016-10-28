@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:distributed/interfaces/command.dart';
-import 'package:distributed/interfaces/message.dart';
+import 'package:distributed/src/networking/message.dart';
 import 'package:distributed/interfaces/node.dart';
 
 /// Handles messages from a peer.
