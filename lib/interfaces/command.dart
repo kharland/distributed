@@ -31,4 +31,3 @@ class CommandMessage extends Message {
         'arguments': arguments.map(_coreSerializer.serialize).toList()
       };
 }
-

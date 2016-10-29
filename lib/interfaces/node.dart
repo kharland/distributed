@@ -214,7 +214,7 @@ class InteractiveNode extends DelegatingNode {
   void log(String message) {
     _repl.log(message);
   }
-  
+
   void logError(String message) {
     _repl.log('[Error] $message');
   }
