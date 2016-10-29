@@ -2,11 +2,6 @@ import 'package:args/args.dart';
 import 'package:distributed/interfaces/node.dart';
 import 'package:distributed/interfaces/peer.dart';
 
-void main() {
-  var parser = new ArgParser();
-  var result = parser.parse(['send bob@localhost:80801 reverse [1, 2, 3]']);
-}
-
 /// Parses and runs commands for an [InteractiveNode].
 class CommandRunner {
   final ArgParser _parser = new ArgParser();

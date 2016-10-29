@@ -364,7 +364,9 @@ class Keyboard {
   Stream<String> onKeySet(List<Key> keys) =>
       _onKeyController.stream.where(keys.contains).map((k) => k.value);
 
-  /// Takes control of standard input and starts listening for key presses.
+  /// Listens for keypresses on [input].
+  ///
+  /// Clients should call [deactivate] when they are finished.
   void activate(Stream<List<int>> input) {
     _inputSub = input.listen((List<int> codeUnits) {
       var key = KeySet.all.firstWhere(
