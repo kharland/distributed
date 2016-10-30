@@ -63,7 +63,6 @@ class InputEditor {
 
   /// Write a single character to the editor.
   void put(int codeUnit) {
-    var val = _value;
     var char = new String.fromCharCode(codeUnit);
 
     if ('\n' == char) {
@@ -71,17 +70,18 @@ class InputEditor {
       _value = '';
       _cursor.write(char);
       prompt();
-    } else if (val.isEmpty) {
+    } else if (_value.isEmpty) {
       _value = char;
       _cursor.write(char);
     } else {
       var column = _cursor.position.column - _column0;
       if (column >= _value.length) {
+        // i.e. if the cursor is past the end of the word.
         _value = '$_value$char';
         _cursor.write(char);
       } else {
-        var prefix = val.substring(0, column);
-        var suffix = val.substring(column);
+        var prefix = _value.substring(0, column);
+        var suffix = _value.substring(column);
         _value = '$prefix$char$suffix';
         _cursor
           ..writeAt(_column0 + column, _cursor.position.row, '$char$suffix')

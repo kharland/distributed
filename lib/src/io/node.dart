@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'dart:io';
 import 'package:distributed/interfaces/command.dart';
-import 'package:distributed/src/networking/connection/connection.dart';
+import 'package:distributed/src/networking/connection.dart';
 import 'package:distributed/src/networking/message.dart';
 import 'package:distributed/interfaces/node.dart';
 import 'package:distributed/interfaces/peer.dart';

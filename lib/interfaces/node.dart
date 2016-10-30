@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:distributed/interfaces/command.dart';
 import 'package:distributed/src/command.dart';
-import 'package:distributed/src/networking/connection/connection.dart';
+import 'package:distributed/src/networking/connection.dart';
 import 'package:distributed/src/networking/message.dart';
 import 'package:distributed/interfaces/peer.dart';
 import 'package:distributed/src/repl.dart';
@@ -129,8 +129,6 @@ class DelegatingNode implements Node {
   }
 }
 
-/// TODO: delete when I have internet access and can look up
-/// an existing class which implements StringSink.
 class _StringSink implements StringSink {
   StreamController<String> _onMessageController =
       new StreamController<String>();

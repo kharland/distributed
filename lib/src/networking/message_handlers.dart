@@ -6,47 +6,49 @@ import 'package:distributed/interfaces/node.dart';
 /// Handles messages from a peer.
 abstract class MessageHandler {
   /// Returns true iff this executes on [message].
-  bool filter(Message message);
+  bool filter(Message message) => true;
 
-  Future<Null> execute(Message message);
+  /// Called when a message that passes [filter] is received.
+  Future<Null> execute(Message message) => null;
 }
 
-/// General message handler that filtes by message type.
-abstract class _TypedMessageHandler<T extends Message>
-    implements MessageHandler {
-  final Node node;
-
-  _TypedMessageHandler(this.node);
-
+/// Mixin to filter Messages by Type.
+abstract class _FilterByType<T extends Message> implements MessageHandler {
   @override
   bool filter(Message message) => message is T;
-
-  @override
-  Future<Null> execute(Message message);
 }
 
-class PeerInfoMessageHandler extends _TypedMessageHandler<PeerInfoMessage> {
-  PeerInfoMessageHandler(Node node) : super(node);
+/// Finalizes a connection between two nodes when a [PeerInfoMessage] is
+/// received.
+class PeerInfoMessageHandler extends MessageHandler
+    with _FilterByType<PeerInfoMessage> {
+  final Node _node;
+
+  PeerInfoMessageHandler(this._node);
 
   @override
   Future<Null> execute(Message message) async {
     PeerInfoMessage remoteInfo = message;
-    if (!node.isHidden) {
+    if (!_node.isHidden) {
       for (var remotePeer in remoteInfo.connectedPeers) {
-        if (!node.peers.contains(remotePeer) &&
-            node.toPeer().name != remotePeer.name) {
-          node.createConnection(remotePeer);
+        if (!_node.peers.contains(remotePeer) &&
+            _node.toPeer().name != remotePeer.name) {
+          _node.createConnection(remotePeer);
         }
       }
     }
   }
 }
 
-class CommandMessageHandler extends _TypedMessageHandler<CommandMessage> {
+/// Tells a [Node] to execute a specific command when a [CommandMessage] is
+/// received.
+class CommandMessageHandler extends MessageHandler
+    with _FilterByType<CommandMessage> {
+  final Node _node;
   final Map<String, CommandHandler> _commandHandlers =
       <String, CommandHandler>{};
 
-  CommandMessageHandler(Node node) : super(node);
+  CommandMessageHandler(this._node);
 
   @override
   Future<Null> execute(Message message) async {
