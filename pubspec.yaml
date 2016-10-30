@@ -14,6 +14,7 @@ homepage: https://github.com/kharland/distributed_dart
 dependencies:
   seltzer: "0.2.1-alpha"
   meta:
+  key_listener:
 dev_dependencies:
   test:
   mockito:

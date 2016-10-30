@@ -1,45 +1,45 @@
 import 'dart:async';
 import 'package:console/console.dart' show Cursor;
-import 'package:distributed/src/user_input/keyboard.dart';
+import 'package:key_listener/key_listener.dart';
 
 /// Executes actions on an [InputEditor] according to data recieved on some
 /// input stream.
 class InputEditorControls {
   final InputEditor _editor;
-  final Keyboard _keyboard = new Keyboard();
   final List<StreamSubscription> _subscriptions = <StreamSubscription>[];
+  KeyListener _keyListener;
 
   InputEditorControls(this._editor);
 
   /// Attaches Keyboard listeners and callbacks for the given [InputEditor].
   void enable(Stream<List<int>> input) {
-    _keyboard.activate(input);
+    _keyListener = new KeyListener(input);
     _subscriptions.addAll([
-      _keyboard.onKeySet(KeySet.visible).listen((String value) {
+      _keyListener.onKeySet(KeySet.visible).listen((String value) {
         _editor.write(value);
       }),
-      _keyboard.onKey(Key.space).listen((String value) {
+      _keyListener.onKey(Key.space).listen((String value) {
         _editor.write(value);
       }),
-      _keyboard.onKey(Key.enter).listen((_) {
+      _keyListener.onKey(Key.enter).listen((_) {
         _editor.write('\n');
       }),
-      _keyboard.onKey(Key.del).listen((_) {
+      _keyListener.onKey(Key.del).listen((_) {
         _editor.backspace();
       }),
-      _keyboard.onKey(Key.left).listen((_) {
+      _keyListener.onKey(Key.left).listen((_) {
         _editor.cursorLeft();
       }),
-      _keyboard.onKey(Key.right).listen((_) {
+      _keyListener.onKey(Key.right).listen((_) {
         _editor.cursorRight();
       })
     ]);
   }
 
-  /// Disables [Keyboard] handlers. Do not forget to call this.
+  /// Disables [KeyListener] handlers. Do not forget to call this.
   void disable() {
     _subscriptions.forEach((s) => s.cancel());
-    _keyboard?.deactivate();
+    _keyListener?.deactivate();
   }
 }
 

@@ -25,8 +25,13 @@ class CommandRunner {
 }
 
 abstract class Command {
+  /// The name of this command, which the user passes to a [REPL].
   String get name;
+
+  /// The parser for this command's arguments.
   ArgParser get parser;
+
+  /// Runs this command with [args] as arguments.
   void execute(ArgResults args);
 
   /// Helper to parse a [Peer] from [name] while handling errors.
@@ -206,8 +211,7 @@ class SendCommand implements Command {
         var peers = _node.peers.where((p) => p.name == name);
         if (peers.length > 1) {
           _errorSink
-              .write('Multiple peers named ${peers.first.name}. Use --peer to'
-                  'disambiguate.');
+              .write('Many peers named $name. Use --peer to disambiguate.');
           return;
         } else if (peers.isEmpty) {
           _errorSink.write('Not connected to any peer named ${args['name']}');

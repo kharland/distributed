@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:distributed/src/user_input/editor.dart';
+import 'package:distributed/src/editor.dart';
 
 /// Read-Eval-Print loop used by an [InteractiveNode].
 ///

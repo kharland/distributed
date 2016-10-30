@@ -129,46 +129,11 @@ class DelegatingNode implements Node {
   }
 }
 
-class _StringSink implements StringSink {
-  StreamController<String> _onMessageController =
-      new StreamController<String>();
-
-  Stream<String> get onMessage => _onMessageController.stream;
-
-  @override
-  void write(Object obj) {
-    _onMessageController.add(obj);
-  }
-
-  @override
-  void writeAll(Iterable objects, [String separator = ""]) {
-    for (int i = 0; i < objects.length - 1; i++) {
-      write('${objects.elementAt(i)}$separator');
-    }
-    write('${objects.last}');
-  }
-
-  @override
-  void writeCharCode(int charCode) {
-    throw new UnimplementedError();
-  }
-
-  @override
-  void writeln([Object obj = ""]) {
-    throw new UnimplementedError();
-  }
-
-  void close() {
-    _onMessageController.close();
-  }
-}
-
 /// A Node that launches an interactive shell and accepts commands.
 class InteractiveNode extends DelegatingNode {
   CommandRunner _commandRunner;
   final _StringSink _errorSink = new _StringSink();
   final _StringSink _logSink = new _StringSink();
-
   final REPL _repl;
   final List<StreamSubscription> _subscriptions = <StreamSubscription>[];
 
@@ -215,5 +180,39 @@ class InteractiveNode extends DelegatingNode {
 
   void logError(String message) {
     _repl.log('[Error] $message');
+  }
+}
+
+class _StringSink implements StringSink {
+  StreamController<String> _onMessageController =
+      new StreamController<String>();
+
+  Stream<String> get onMessage => _onMessageController.stream;
+
+  @override
+  void write(Object obj) {
+    _onMessageController.add(obj);
+  }
+
+  @override
+  void writeAll(Iterable objects, [String separator = ""]) {
+    for (int i = 0; i < objects.length - 1; i++) {
+      write('${objects.elementAt(i)}$separator');
+    }
+    write('${objects.last}');
+  }
+
+  @override
+  void writeCharCode(int charCode) {
+    throw new UnimplementedError();
+  }
+
+  @override
+  void writeln([Object obj = ""]) {
+    throw new UnimplementedError();
+  }
+
+  void close() {
+    _onMessageController.close();
   }
 }
