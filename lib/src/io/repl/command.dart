@@ -1,8 +1,8 @@
+import 'dart:convert';
 import 'package:args/args.dart';
 import 'package:distributed/interfaces/node.dart';
 import 'package:distributed/interfaces/peer.dart';
 
-/// Parses and runs commands for an [InteractiveNode].
 class CommandRunner {
   final ArgParser _parser = new ArgParser();
   final Map<String, Command> _commandsByName = <String, Command>{};
@@ -26,7 +26,11 @@ class CommandRunner {
 
 abstract class Command {
   String get name;
+
+  /// The parser for this command's arguments.
   ArgParser get parser;
+
+  /// Runs this command with [args] as arguments.
   void execute(ArgResults args);
 
   /// Helper to parse a [Peer] from [name] while handling errors.
@@ -156,7 +160,7 @@ class ConnectCommand implements Command {
           _errorSink.write('Unable to parse peer $name');
           return;
         }
-        _node.createConnection(peer);
+        _node.connectTo(peer);
       });
     } else {
       _errorSink.write('No peer specified.');
@@ -191,9 +195,8 @@ class SendCommand implements Command {
 
   @override
   void execute(ArgResults args) {
-    Peer peer;
     if (args.wasParsed('peer')) {
-      peer = Command._tryToParsePeer(args['peer'], _errorSink);
+      // do nothing.
     } else if (args.wasParsed('name')) {
       if (args.rest.isEmpty) {
         _errorSink.write('Cannot send an empty command');
@@ -206,14 +209,13 @@ class SendCommand implements Command {
         var peers = _node.peers.where((p) => p.name == name);
         if (peers.length > 1) {
           _errorSink
-              .write('Multiple peers named ${peers.first.name}. Use --peer to'
-                  'disambiguate.');
+              .write('Many peers named $name. Use --peer to disambiguate.');
           return;
         } else if (peers.isEmpty) {
           _errorSink.write('Not connected to any peer named ${args['name']}');
           return;
         }
-        _node.send(peers.single, userCommand, params);
+        _node.send(peers.single, userCommand, JSON.encode(params));
       });
     } else {
       _errorSink.write('No peer specified.');

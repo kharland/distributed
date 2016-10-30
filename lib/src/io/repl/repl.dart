@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:distributed/src/user_input/editor.dart';
+import 'package:distributed/src/io/repl/editor.dart';
 
-/// Read-Eval-Print loop used by an [InteractiveNode].
+/// Read-Eval-Print loop for use in a UNIX-based terminal environment.
 ///
 /// The [REPL] disables the echo and line modes of stdin. The client should
-/// call [close] when finished to avoid hanging and misconfiguration of the
+/// call close when finished to avoid hanging and misconfiguration of the
 /// the shell.
 ///
 /// On Mac/Linux, terminal after-effects can be fixed using the shell utility

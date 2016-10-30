@@ -1,21 +1,19 @@
 name: 'distributed'
 version: 0.0.0
-description: >
-  A cross-platform distributed-computing framework for dart.
-
-  Nodes in a distributed network may be browser or server based. True
-  peer-to-peer communication is only supported between server --> browser or
-  server --> server connections, but browser --> browser communication is
-  possible by allowing a server-based node to act as a relay, forwarding
-  messages between peers.
+description: A cross-platform distributed-computing framework for dart.
 authors:
   - Kendal Harland <kjharland@google.com>
 homepage: https://github.com/kharland/distributed_dart
 dependencies:
-  seltzer: "0.2.1-alpha"
+  seltzer: "0.2.1-alpha < 1.0.0"
+  web_socket_channel: "<=2.0.0"
   meta:
+  key_listener:
+  console:
 dev_dependencies:
+  dart_coveralls: 
   test:
   mockito:
-  console:
   dart_style:
+  echo_server:
+    git: git://github.com/kharland/echo_server.git

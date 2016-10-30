@@ -40,7 +40,7 @@ class Peer {
   String get displayName => "$name@$hostname";
 
   @override
-  String toString() => 'Peer ${toJson()}';
+  String toString() => displayName;
 
   @override
   int get hashCode => toString().hashCode;
