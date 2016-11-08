@@ -12,10 +12,11 @@ authors:
   - Kendal Harland <kjharland@google.com>
 homepage: https://github.com/kharland/distributed_dart
 dependencies:
-  seltzer: "0.2.1-alpha"
+  seltzer: "0.2.1-alpha < 1.0.0"
   meta:
   key_listener:
 dev_dependencies:
+  dart_coveralls: 
   test:
   mockito:
   console:
