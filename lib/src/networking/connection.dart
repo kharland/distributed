@@ -1,11 +1,12 @@
 import 'dart:async';
 
+import 'package:distributed/interfaces/node.dart';
 import 'package:distributed/interfaces/command.dart';
 import 'package:distributed/src/networking/message.dart';
 import 'package:distributed/src/networking/data_channel.dart';
 import 'package:distributed/src/networking/json.dart';
 
-/// A direct connection between nodes.
+/// A direct connection between two [Node]s.
 class Connection {
   _ConnectionModel _model;
   bool _isClosing = false;
@@ -113,7 +114,6 @@ class _OpenConnectionModel implements _ConnectionModel {
 
   @override
   void close() {
-//    throw new Exception('');
     if (_isOpen) {
       _isOpen = false;
       _dataChannel.close();

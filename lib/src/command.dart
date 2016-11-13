@@ -25,7 +25,6 @@ class CommandRunner {
 }
 
 abstract class Command {
-  /// The name of this command, which the user passes to a [REPL].
   String get name;
 
   /// The parser for this command's arguments.
