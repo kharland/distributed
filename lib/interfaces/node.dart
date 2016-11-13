@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:distributed/interfaces/command.dart';
-import 'package:distributed/src/command.dart';
+import 'package:distributed/src/io/command.dart';
 import 'package:distributed/src/networking/connection.dart';
 import 'package:distributed/src/networking/message.dart';
 import 'package:distributed/interfaces/peer.dart';

@@ -8,10 +8,10 @@ export 'package:distributed/src/io/node_repl.dart' show NodeREPL;
 
 void configureDistributed() {
   useSeltzerInTheServer();
-  setNodeProvider(new IONodeProvider());
+  setNodeProvider(new _IONodeProvider());
 }
 
-class IONodeProvider implements NodeProvider {
+class _IONodeProvider implements NodeProvider {
   @override
   Future<IONode> create(String name, String hostname, String cookie,
           {int port: 9095, bool hidden: false}) =>

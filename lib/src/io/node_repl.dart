@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:distributed/interfaces/node.dart';
-import 'package:distributed/src/command.dart';
+import 'package:distributed/src/io/command.dart';
 import 'package:distributed/src/io/repl.dart';
 
 /// A Node that launches an interactive shell and accepts commands.
