@@ -129,10 +129,6 @@ class IONode implements Node {
 
   @override
   void disconnect(Peer peer) {
-    // Actual cleanup happens inside the callback to the given connection's
-    // onClose future.
-    //
-    // This is imperative because the peer might close the connection first.
     if (peers.contains(peer)) {
       _connections.remove(peer).close();
     }
@@ -221,6 +217,6 @@ class _SocketHost {
   Future<Null> close() async {
     await _serverSubscription.cancel();
     await _onSocketConnectedController.close();
-    await _httpServer.close(force: true);
+    await _httpServer.close();
   }
 }

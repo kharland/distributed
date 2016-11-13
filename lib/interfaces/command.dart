@@ -3,10 +3,11 @@ import 'package:distributed/interfaces/peer.dart';
 import 'package:distributed/interfaces/serializer.dart';
 import 'package:meta/meta.dart';
 
-typedef void CommandHandler(Peer sender, Set arguments);
+typedef void CommandHandler(Peer sender, Set<Object> arguments);
 
 class CommandMessage extends Message {
   static final DartCoreSerializer _coreSerializer = new DartCoreSerializer();
+
   final String formatName;
   final Iterable<Object> arguments;
 
