@@ -1,7 +1,7 @@
 import 'dart:async';
 
+import 'package:distributed/interfaces/message.dart';
 import 'package:distributed/interfaces/peer.dart';
-import 'package:distributed/src/networking/message_channel.dart';
 
 /// A node participating in a distributed system.
 ///
@@ -28,7 +28,7 @@ abstract class Node {
   bool get isHidden;
 
   /// The list of peers that are connected to this [Node].
-  Iterable<Peer> get peers;
+  List<Peer> get peers;
 
   /// Emits events when this node connects to a [Peer].
   Stream<Peer> get onConnect;
@@ -58,4 +58,3 @@ abstract class Node {
   /// before calling [shutdown] to remove the node from any connected networks.
   Future<Null> shutdown();
 }
-

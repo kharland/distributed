@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:distributed/interfaces/message.dart';
 import 'package:distributed/interfaces/node.dart';
-import 'package:distributed/interfaces/peer.dart';
-import 'package:distributed/src/networking/system_payloads.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'package:web_socket_channel/web_socket_channel.dart';
 
@@ -21,7 +20,8 @@ class MessageChannel {
     subscription = _webSocketChannel
         .cast/*<String>*/()
         .stream
-        .map(Message.fromJsonString)
+        .map((json) =>
+            new Message.fromJson(JSON.decode(json) as Map<String, Object>))
         .listen(_onMessage.add, onDone: () {
       _isOpen = false;
       subscription.cancel();
@@ -43,23 +43,4 @@ class MessageChannel {
   void send(Message message) {
     _webSocketChannel.sink.add(JSON.encode(message.toJson()));
   }
-}
-
-class Message {
-  final Peer sender;
-  final String action;
-  final String data;
-
-  Message(this.sender, this.action, this.data);
-
-  factory Message.fromJson(Map<String, Object> json) => new Message(
-      new Peer.fromJson(json['sender'] as Map<String, Object>),
-      json['action'],
-      json['data']);
-
-  static Message fromJsonString(String json) =>
-      new Message.fromJson(JSON.decode(json) as Map<String, Object>);
-
-  Map<String, Object> toJson() =>
-      {'sender': sender.toJson(), 'action': action, 'data': data};
 }

@@ -1,7 +1,7 @@
 import 'dart:async';
 
+import 'package:distributed/interfaces/message.dart';
 import 'package:distributed/interfaces/peer.dart';
-import 'package:distributed/src/networking/system_payloads.dart';
 import 'package:distributed/src/networking/message_channel.dart';
 import 'package:echo_server/websocket.dart';
 import 'package:test/test.dart';
@@ -26,7 +26,8 @@ void testChannel(
 
     tearDown(() async {
       echoServer.closeConnections();
-      return Future.wait([channel.onClose, remoteChannel.onClose]);
+      return Future
+          .wait([channel.onClose, remoteChannel.onClose] as Iterable<Future>);
     });
 
     test('onData should emit when data is recieved', () async {

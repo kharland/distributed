@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'dart:convert';
 import 'dart:io';
+import 'package:distributed/interfaces/message.dart';
 import 'package:distributed/src/networking/message_channel.dart';
 import 'package:distributed/src/networking/system_payloads.dart';
 import 'package:distributed/interfaces/node.dart';
@@ -98,7 +99,7 @@ class IONode implements Node {
   Future<Null> get onShutdown => _onShutdown.future;
 
   @override
-  Iterable<Peer> get peers => new List.unmodifiable(_channels.keys);
+  List<Peer> get peers => new List.unmodifiable(_channels.keys);
 
   @override
   void connectTo(Peer peer) {
