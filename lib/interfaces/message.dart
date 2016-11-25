@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:distributed/interfaces/peer.dart';
 
 class Message {
@@ -12,6 +13,11 @@ class Message {
       json['action'],
       json['data']);
 
+  static Message fromJsonString(String json) =>
+      new Message.fromJson(JSON.decode(json) as Map<String, Object>);
+
   Map<String, Object> toJson() =>
       {'sender': sender.toJson(), 'action': action, 'data': data};
+
+  String toJsonString() => JSON.encode(toJson());
 }

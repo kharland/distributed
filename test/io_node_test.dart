@@ -7,176 +7,111 @@ void main() {
   configureDistributed();
 
   group('$IONode', () {
-    IONode node;
+    int testPort;
+    List<IONode> testNodes = <IONode>[];
+
+    Future<IONode> createNode(String name,
+        {String cookie: 'test', bool isHidden: false}) async {
+      testNodes.add(new IONode(
+          name: name,
+          hostname: 'localhost',
+          port: testPort++,
+          cookie: cookie,
+          isHidden: isHidden));
+      await testNodes.last.onStartup;
+      return testNodes.last;
+    }
 
     setUp(() async {
-      node = await IONode.create(
-          name: 'TestNode',
-          hostname: 'localhost',
-          port: 8080,
-          cookie: 'A',
-          isHidden: false);
+      testPort = 8080;
+      testNodes.clear();
     });
 
     tearDown(() async {
-      node.shutdown();
-      await node.onShutdown;
+      for (var node in testNodes) {
+        node.shutdown();
+        await node.onShutdown;
+      }
     });
 
     test('should reject a connection if the provided cookie does not match',
         () async {
-      var remoteNode = await IONode.create(
-          name: 'A',
-          hostname: 'localhost',
-          port: node.toPeer().port + 1,
-          cookie: 'different-${node.cookie}',
-          isHidden: false);
-      remoteNode.connectTo(node.toPeer());
-      await remoteNode.onDisconnect.first;
-      expect(remoteNode.peers.contains(node.toPeer()), isFalse);
-      expect(node.peers.contains(remoteNode.toPeer()), isFalse);
-      remoteNode.shutdown();
-      return remoteNode.onShutdown;
+      var a = await createNode('a');
+      var b = await createNode('b', cookie: 'different');
+
+      Future.wait([a.onConnectFailed.first, b.onConnectFailed.first]).then(
+          expectAsync((_) async {
+        expect(a.peers, isEmpty);
+        expect(b.peers, isEmpty);
+      }));
+
+      a.connect(b);
     });
 
     test('should accept a connection if the provided cookie matches', () async {
-      var remoteNode = await IONode.create(
-          name: 'A',
-          hostname: 'localhost',
-          port: node.toPeer().port + 1,
-          cookie: node.cookie,
-          isHidden: false);
+      var a = await createNode('a');
+      var b = await createNode('b');
 
-      Future.wait([remoteNode.onConnect.first, node.onConnect.first])
-          // ignore: strong_mode_down_cast_composite
-          .then(expectAsync((_) async {
-        expect(remoteNode.peers.contains(node.toPeer()), isTrue);
-        expect(node.peers.contains(remoteNode.toPeer()), isTrue);
-        remoteNode.shutdown();
-        await remoteNode.onShutdown;
+      Future.wait([a.onConnect.first, b.onConnect.first]).then(
+          expectAsync((_) async {
+        expect(a.peers.contains(b), isTrue);
+        expect(b.peers.contains(a), isTrue);
       }));
-
-      remoteNode.connectTo(node.toPeer());
+      a.connect(b);
     });
 
-//    test("should connect to a new Peer's peers if it is not hidden", () async {
-//      var remoteNodeA = await IONode.create(
-//          name: 'A',
-//          hostname: 'localhost',
-//          port: node.toPeer().port + 1,
-//          cookie: node.cookie,
-//          isHidden: false);
-//      var remoteNodeB = await IONode.create(
-//          name: 'B',
-//          hostname: 'localhost',
-//          port: remoteNodeA.toPeer().port + 1,
-//          cookie: node.cookie,
-//          isHidden: false);
-//
-//      Future.wait([
-//        node.onConnect.take(2).last,
-//        remoteNodeB.onConnect.take(2).last,
-//        remoteNodeA.onConnect.take(2).last,
-//        // ignore: strong_mode_down_cast_composite
-//      ]).then(expectAsync((_) async {
-//        expect(remoteNodeA.peers,
-//            unorderedEquals([node.toPeer(), remoteNodeB.toPeer()]));
-//        expect(remoteNodeB.peers,
-//            unorderedEquals([node.toPeer(), remoteNodeA.toPeer()]));
-//        expect(node.peers,
-//            unorderedEquals([remoteNodeA.toPeer(), remoteNodeB.toPeer()]));
-//        remoteNodeA.shutdown();
-//        await remoteNodeA.onShutdown;
-//        remoteNodeB.shutdown();
-//        await remoteNodeB.onShutdown;
-//      }, count: 1));
-//
-//      remoteNodeA.connectTo(node.toPeer());
-//      await remoteNodeA.onConnect.first;
-//      print('here');
-//      remoteNodeB.connectTo(remoteNodeA.toPeer());
-//      print('here');
-//    });
+    test("should connect to a new Peer's peers if it is not hidden", () async {
+      var a = await createNode('a');
+      var b = await createNode('b');
+      var c = await createNode('c');
 
-//    test("should not connect to a new Peer's peers if it is not hidden",
-//        () async {
-//      var remoteNodeA = await IONode.create(
-//          name: 'A',
-//          hostname: 'localhost',
-//          port: node.toPeer().port + 1,
-//          cookie: node.cookie,
-//          isHidden: false);
-//      var remoteNodeB = await IONode.create(
-//          name: 'B',
-//          hostname: 'localhost',
-//          port: remoteNodeA.toPeer().port + 1,
-//          cookie: node.cookie,
-//          isHidden: true);
-//
-//      Future.wait([
-//        node.onConnect.first,
-//        remoteNodeA.onConnect.take(2).last,
-//        remoteNodeB.onConnect.first
-//        // ignore: strong_mode_down_cast_composite
-//      ]).then(expectAsync((_) {
-//        expect(remoteNodeA.peers,
-//            unorderedEquals([node.toPeer(), remoteNodeB.toPeer()]));
-//        expect(remoteNodeB.peers, unorderedEquals([remoteNodeA.toPeer()]));
-//        expect(node.peers, unorderedEquals([remoteNodeA.toPeer()]));
-//        remoteNodeA.shutdown();
-//        remoteNodeB.shutdown();
-//        return Future.wait([
-//          remoteNodeA.onShutdown,
-//          remoteNodeB.onShutdown,
-//          node.onDisconnect.take(2).last
-//        ]);
-//      }));
-//
-//      remoteNodeA.connectTo(node.toPeer());
-//      await remoteNodeA.onConnect.first;
-//      remoteNodeB.connectTo(remoteNodeA.toPeer());
-//    });
-//
-//    test('should update its list of peers when a node is disconnnected.',
-//        () async {
-//      var remoteNodeA = await IONode.create(
-//          name: 'A',
-//          hostname: 'localhost',
-//          port: node.toPeer().port + 1,
-//          cookie: node.cookie,
-//          isHidden: false);
-//      var remoteNodeB = await IONode.create(
-//          name: 'B',
-//          hostname: 'localhost',
-//          port: remoteNodeA.toPeer().port + 1,
-//          cookie: node.cookie,
-//          isHidden: false);
-//
-//      Future.wait(<Future>[
-//        node.onConnect.take(2).last,
-//        remoteNodeA.onConnect.take(2).last,
-//        remoteNodeB.onConnect.take(2).last
-//        // ignore: strong_mode_down_cast_composite
-//      ]).then(expectAsync((_) {
-//        node.disconnect(remoteNodeA.toPeer());
-//        node.disconnect(remoteNodeB.toPeer());
-//        Future.wait(<Future>[
-//          node.onDisconnect.take(2).last,
-//          remoteNodeA.onDisconnect.first,
-//          remoteNodeB.onDisconnect.first,
-//          // ignore: strong_mode_down_cast_composite
-//        ]).then(expectAsync((_) async {
-//          expect(remoteNodeA.peers, unorderedEquals([remoteNodeB.toPeer()]));
-//          expect(remoteNodeB.peers, unorderedEquals([remoteNodeA.toPeer()]));
-//          expect(node.peers, isEmpty);
-//          remoteNodeA.shutdown();
-//          remoteNodeB.shutdown();
-//          await Future.wait([remoteNodeA.onShutdown, remoteNodeB.onShutdown]);
-//        }, count: 1));
-//      }));
-//
-//      remoteNodeA.connectTo(node.toPeer());
-//      remoteNodeB.connectTo(node.toPeer());
-//    });
+      Future.wait([
+        a.onConnect.take(2).last,
+        b.onConnect.take(2).last,
+        c.onConnect.take(2).last,
+      ]).then(expectAsync((_) async {
+        expect(a.peers, unorderedEquals([b, c]));
+        expect(b.peers, unorderedEquals([a, c]));
+        expect(c.peers, unorderedEquals([a, b]));
+      }));
+
+      a.connect(c);
+      await a.onConnect.first;
+      a.connect(b);
+    });
+
+    test("should not connect to a new Peer's peers if it is hidden", () async {
+      var a = await createNode('a');
+      var b = await createNode('b', isHidden: true);
+      var c = await createNode('c');
+
+      Future.wait([
+        a.onConnect.take(2).last,
+        b.onConnect.first,
+        c.onConnect.first
+      ]).then(expectAsync((_) {
+        expect(a.peers, unorderedEquals([c, b]));
+        expect(b.peers, unorderedEquals([a]));
+        expect(c.peers, unorderedEquals([a]));
+      }));
+
+      a.connect(c);
+      await a.onConnect.first;
+      b.connect(a);
+    });
+
+    test('should update its list of peers when a node is disconnnected.',
+        () async {
+      var a = await createNode('a');
+      var b = await createNode('b');
+
+      a.connect(b);
+      await Future.wait([a.onConnect.first, b.onConnect.first]);
+      a.disconnect(b);
+      await Future.wait([a.onDisconnect.first, b.onDisconnect.first]);
+
+      expect(a.peers, isEmpty);
+      expect(b.peers, isEmpty);
+    });
   });
 }

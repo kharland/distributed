@@ -27,8 +27,7 @@ Future main(List<String> args) async {
 }
 
 Future greeterNode() async {
-  var node = await createNode(greeter.name, greeter.hostname, 'cookie',
-      port: greeter.port);
+  var node = new Node.fromPeer(greeter, cookie: 'cookie');
 
   node.receive('greet').listen((Message message) {
     print("Saying Hello! to ${message.sender}");
@@ -37,14 +36,13 @@ Future greeterNode() async {
 }
 
 Future greeteeNode() async {
-  var node = await createNode(greetee.name, greetee.hostname, 'cookie',
-      port: greetee.port);
+  var node = new Node.fromPeer(greetee, cookie: 'cookie');
 
   node.receive('greetings').listen((Message message) {
     print("${message.sender} says: '${message.data}'");
   });
 
-  node.connectTo(greeter);
+  node.connect(greeter);
   await node.onConnect.first;
   node.send(greeter, 'greet', '');
 }

@@ -11,7 +11,7 @@ void testChannel(
   group('', () {
     WebSocketEchoServer echoServer;
     MessageChannel channel;
-    MessageChannel remoteChannel;
+    MessageChannel testChannel;
 
     setUpAll(() {
       echoServer = new WebSocketEchoServer('localhost', 8085)..start();
@@ -19,21 +19,20 @@ void testChannel(
 
     setUp(() async {
       channel = await createChannel(echoServer);
-      remoteChannel = await createChannel(echoServer);
+      testChannel = await createChannel(echoServer);
     });
 
     tearDownAll(() => echoServer.stop());
 
     tearDown(() async {
       echoServer.closeConnections();
-      return Future
-          .wait([channel.onClose, remoteChannel.onClose] as Iterable<Future>);
+      return Future.wait([channel.onClose, testChannel.onClose]);
     });
 
     test('onData should emit when data is recieved', () async {
       var message = new Message(new Peer('a', 'b'), '', 'A');
 
-      remoteChannel.send(message);
+      testChannel.send(message);
       expect((await channel.onMessage.first).data, message.data);
     });
 
@@ -41,11 +40,20 @@ void testChannel(
       var message = new Message(new Peer('a', 'b'), '', 'A');
 
       channel.send(message);
-      expect((await remoteChannel.onMessage.first).data, message.data);
+      expect((await testChannel.onMessage.first).data, message.data);
     });
 
     test('close should close the channel', () async {
       channel.close();
+      expect(channel.onClose, completes);
+    });
+
+    test('should close when the remote closes the connection', () async {
+      // TODO(kharland): find a better way to ensure closeConnection() is called
+      // after the message channel is connected.
+      channel.send(new Message(new Peer('a', 'b'), '', 'A'));
+      await testChannel.onMessage.first;
+      echoServer.closeConnections();
       expect(channel.onClose, completes);
     });
   });

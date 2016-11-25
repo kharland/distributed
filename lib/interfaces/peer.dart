@@ -1,38 +1,35 @@
-/// A lightweight view of a node used to represent a remote peer.
+/// A remote node in a distributed system.
+
+import 'dart:convert';
+
+import 'package:meta/meta.dart';
+
 class Peer {
+  @virtual
   final String name;
+
+  /// This [Peer]'s hostname.
+  @virtual
   final String hostname;
+
+  /// This [Peer]'s port.
+  @virtual
   final int port;
 
-  const Peer(this.name, this.hostname, {this.port});
+  /// Whether this node will attempt to connect to all other nodes in a new
+  /// [Peer]'s network.
+  @virtual
+  final bool isHidden;
+
+  const Peer(this.name, this.hostname, {this.port, this.isHidden});
 
   factory Peer.fromJson(Map<String, Object> json) {
-    return new Peer(json['name'], json['hostname'], port: json['port']);
-  }
-
-  /// Creates a peer from [namesAndPort].
-  ///
-  /// The format of [namesAndPort] is: <name>@<hostname>:<port>
-  ///
-  /// port is optional and defalts to 8080.
-  ///
-  /// Throws a [FormatException] if [namesAndPort] is invaild
-  factory Peer.fromNamesAndPort(String namesAndPort) {
-    var parts = namesAndPort.split(':');
-    var nameParts = parts.first.split('@');
-    var port = 8080;
-    if (parts.length > 1) {
-      try {
-        port = int.parse(parts.last);
-      } on FormatException catch (_) {
-        throw new FormatException('Invalid port number: ${parts.last}');
-      }
-    }
-    if (nameParts.length != 2) {
-      throw new FormatException('Name or Hostname missing from $namesAndPort');
-    } else {
-      return new Peer(nameParts.first, nameParts.last, port: port);
-    }
+    return new Peer(
+      json['name'],
+      json['hostname'],
+      port: json['port'],
+      isHidden: json['isHidden'],
+    );
   }
 
   String get url => 'ws://$hostname:$port';
@@ -43,11 +40,15 @@ class Peer {
   String toString() => displayName;
 
   @override
-  int get hashCode => toString().hashCode;
+  int get hashCode => JSON.encode(toJson()).hashCode;
 
   @override
   bool operator ==(Object other) => other is Peer && other.hashCode == hashCode;
 
-  Map<String, Object> toJson() =>
-      <String, Object>{'name': name, 'hostname': hostname, 'port': port};
+  Map<String, Object> toJson() => <String, Object>{
+        'name': name,
+        'hostname': hostname,
+        'port': port,
+        'isHidden': isHidden
+      };
 }

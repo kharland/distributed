@@ -1,22 +1,18 @@
-import 'dart:async';
-
 import 'package:distributed/interfaces/node.dart';
+import 'package:distributed/interfaces/peer.dart';
 
 abstract class NodeProvider {
-  /// Creates a new [Node] identified by [name] and [hostname].
-  Future<Node> create(String name, String hostname, String cookie,
-      {int port, bool hidden});
+  Node create(String name, String hostname, String cookie,
+      {int port, bool isHidden});
+
+  Node createFromPeer(Peer peer, {String cookie: ''});
 }
 
-NodeProvider _nodeProvider;
+NodeProvider nodeProvider;
 
-void setNodeProvider(NodeProvider nodeProvider) {
-  if (_nodeProvider != null) {
+void setNodeProvider(NodeProvider provider) {
+  if (nodeProvider != null) {
     throw new StateError('The platform is already initialized!');
   }
-  _nodeProvider = nodeProvider;
+  nodeProvider = provider;
 }
-
-Future<Node> createNode(String name, String hostname, String cookie,
-        {int port: 9095, bool hidden: false}) =>
-    _nodeProvider.create(name, hostname, cookie, port: port, hidden: hidden);

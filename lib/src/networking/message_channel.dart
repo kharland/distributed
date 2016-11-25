@@ -20,14 +20,13 @@ class MessageChannel {
     subscription = _webSocketChannel
         .cast/*<String>*/()
         .stream
-        .map((json) =>
-            new Message.fromJson(JSON.decode(json) as Map<String, Object>))
+        .map(Message.fromJsonString)
         .listen(_onMessage.add, onDone: () {
       _isOpen = false;
       subscription.cancel();
       _onMessage.close();
       _onClose.complete();
-    });
+    }, cancelOnError: true);
   }
 
   Stream<Message> get onMessage => _onMessage.stream;
