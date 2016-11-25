@@ -1,9 +1,8 @@
-/// A remote node in a distributed system.
-
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
 
+/// A remote node in a distributed system.
 class Peer {
   @virtual
   final String name;
