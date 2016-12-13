@@ -10,6 +10,8 @@ dependencies:
   meta:
   key_listener:
   console:
+  fixnum:
+  statemachine:
 dev_dependencies:
   dart_coveralls: 
   test:

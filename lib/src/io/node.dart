@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:distributed/interfaces/message.dart';
 import 'package:distributed/interfaces/node.dart';
 import 'package:distributed/interfaces/peer.dart';
 import 'package:distributed/src/io/handshake.dart';
+import 'package:distributed/src/networking/channel_server.dart';
 import 'package:distributed/src/networking/message_channel.dart';
 import 'package:meta/meta.dart';
 import 'package:web_socket_channel/io.dart';
@@ -25,7 +25,7 @@ class IONode extends Peer implements Node {
   final Completer<Null> _onShutdown = new Completer<Null>();
 
   final Map<Peer, MessageChannel> _channels = <Peer, MessageChannel>{};
-  final _ChannelServer _channelHost;
+  final ChannelServer _channelHost;
 
   @override
   @virtual
@@ -42,8 +42,8 @@ class IONode extends Peer implements Node {
       String hostname,
       int port,
       bool isHidden: false,
-      this.cookie: ''})
-      : _channelHost = new _ChannelServer(hostname, port),
+      this.cookie: '',})
+      : _channelHost = new ChannelServer(hostname, port),
         super(name, hostname, port: port, isHidden: isHidden) {
     _channelSubscription = _channelHost.onChannel.listen(_handshake);
   }
@@ -95,7 +95,7 @@ class IONode extends Peer implements Node {
   @override
   Future<Null> shutdown() async {
     await _channelSubscription.cancel();
-    await _channelHost.close();
+    await _channelHost.stop();
     _onMessage.close();
     _onConnect.close();
     if (peers.isNotEmpty) {
@@ -151,38 +151,5 @@ class IONode extends Peer implements Node {
     });
 
     _onConnect.add(peer);
-  }
-}
-
-/// Listens for new WebSocket connections.
-class _ChannelServer {
-  final StreamController<WebSocketChannel> _onChannel =
-      new StreamController<WebSocketChannel>();
-  final Completer<Null> _onStartup = new Completer<Null>();
-  StreamSubscription<HttpRequest> _serverSubscription;
-  HttpServer _httpServer;
-
-  _ChannelServer(String hostname, [int port = 9095]) {
-    HttpServer.bind(hostname, port).then((HttpServer httpServer) {
-      _httpServer = httpServer;
-      _onStartup.complete();
-      _serverSubscription = _httpServer.listen((HttpRequest request) async {
-        if (WebSocketTransformer.isUpgradeRequest(request)) {
-          _onChannel.add(new IOWebSocketChannel(
-              await WebSocketTransformer.upgrade(request)));
-        }
-      });
-    });
-  }
-
-  Future<Null> get onStartup => _onStartup.future;
-
-  Stream<WebSocketChannel> get onChannel => _onChannel.stream;
-
-  /// Stops listening for incoming connections.
-  Future<Null> close() async {
-    await _serverSubscription?.cancel();
-    await _onChannel.close();
-    await _httpServer.close();
   }
 }
