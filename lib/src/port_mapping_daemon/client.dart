@@ -3,34 +3,35 @@ import 'dart:io';
 
 import 'package:distributed/src/port_mapping_daemon/info.dart';
 import 'package:distributed/src/port_mapping_daemon/api/api.dart';
-import 'package:distributed/src/port_mapping_daemon/src/utils.dart';
 import 'package:path/path.dart';
 
 /// A handle for communicating with a [PortMappingDaemon] (PMD) running as a
 /// separate process on the local machine.
-class DaemonHandle {
+class DaemonClient {
+  static const _defaultTimeout = const Duration(seconds: 1);
   final DaemonSocket _channel;
   final DaemonInfo _info;
 
-  DaemonHandle._(this._channel, this._info);
+  DaemonClient._(this._channel, this._info);
 
-  static Future<DaemonHandle> connect(DaemonInfo info) async {
+  static Future<DaemonClient> connect(DaemonInfo info) async {
     assert(await isDaemonRunning(info));
-    return new DaemonHandle._(
-        await DaemonSocket.createFromUrl(info.url), info);
+    return new DaemonClient._(await DaemonSocket.createFromUrl(info.url), info);
   }
 
   static Future<bool> isDaemonRunning(DaemonInfo info) async {
     var resultCompleter = new Completer<bool>();
-    var channel = await DaemonSocket.createFromUrl(info.url);
+    var channel = await DaemonSocket
+        .createFromUrl(info.url, idleTimeout: _defaultTimeout, onTimeout: () {
+      resultCompleter.complete(false);
+    });
 
     try {
-      nextElement(channel.stream, onTimeout: () {
-        resultCompleter.complete(false);
-      }, onData: (_) {
+      channel.stream.take(1).first.then((_) {
         resultCompleter.complete(true);
       });
-      channel.sendRequestInitiation(RequestType.ping, 'cookie');
+
+      channel.sendRequestInitiation(RequestType.ping, info.cookie);
       channel.close();
       return resultCompleter.future;
     } on SocketException catch (_) {
@@ -52,11 +53,6 @@ class DaemonHandle {
   /// Returns a future that completes with the node's registration information.
   Future<RegistrationResult> registerNode(String name) async {
     var resultCompleter = new Completer<RegistrationResult>();
-
-    nextElement(_channel.stream, onTimeout: () {
-      resultCompleter.complete(const RegistrationResult.failure());
-    });
-
     _channel.sendRequestInitiation(RequestType.register, _info.cookie);
     _channel.sendRegistrationRequest(name);
     return resultCompleter.future;

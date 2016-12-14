@@ -4,23 +4,11 @@ import 'package:distributed/src/port_mapping_daemon/api/api.dart';
 import 'package:distributed/src/port_mapping_daemon/daemon.dart';
 import 'package:distributed/src/port_mapping_daemon/handshake/daemon.dart';
 import 'package:distributed/src/port_mapping_daemon/handshake/src/handshake_impl.dart';
-import 'package:distributed/src/port_mapping_daemon/src/utils.dart';
-
-class HandshakeResult {
-  final bool isError;
-  final String message;
-
-  HandshakeResult(this.message) : isError = false;
-
-  HandshakeResult.error(this.message) : isError = true;
-}
 
 abstract class Handshake {
   void start(DaemonSocket socket);
 
-  Future<HandshakeResult> get failure;
-
-  Future<HandshakeResult> get success;
+  Future<HandshakeResult> get done;
 }
 
 Handshake receiveHandshake(PortMappingDaemon daemon) =>
@@ -28,22 +16,14 @@ Handshake receiveHandshake(PortMappingDaemon daemon) =>
 
 class _InitiatingHandshake extends HandshakeImpl {
   final PortMappingDaemon _daemon;
+  StreamSubscription<String> _subscription;
 
   _InitiatingHandshake(this._daemon);
 
   @override
   void start(DaemonSocket socket) {
-    wait(socket.stream, 1)
-      ..timeout.then((_) {
-
-      })
-      ..data.then((_) {
-
-      });
-
-    nextElement(socket.stream, onTimeout: () {
-      fail('Timed out');
-    }, onData: (String payload) {
+    _subscription = socket.stream.listen((String payload) {
+      _subscription.cancel();
       Handshake delegate;
 
       if (!Entity.canParseAs(RequestInitiation, payload)) {

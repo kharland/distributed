@@ -5,13 +5,13 @@ import 'package:args/args.dart';
 import 'package:distributed/distributed.dart';
 import 'package:distributed/platform/io.dart';
 import 'package:distributed/src/port_mapping_daemon/daemon.dart';
-import 'package:distributed/src/port_mapping_daemon/handle.dart';
+import 'package:distributed/src/port_mapping_daemon/client.dart';
 import 'package:distributed/src/port_mapping_daemon/info.dart';
 
 Future main(List<String> args) async {
   configureDistributed();
 
-  DaemonHandle localDaemon;
+  DaemonClient localDaemon;
   var argResults = _parseArgs(args);
   var nodeName = args.first;
   var localDaemonInfo = new DaemonInfo(
@@ -20,16 +20,16 @@ Future main(List<String> args) async {
     PortMappingDaemon.defaultCookie,
   );
 
-  if (!await DaemonHandle.isDaemonRunning(localDaemonInfo)) {
+  if (!await DaemonClient.isDaemonRunning(localDaemonInfo)) {
     print('No PortMappingDaemon detected. Starting new daemon...');
-    var daemonProcess = await DaemonHandle.spawnDaemon(localDaemonInfo);
+    var daemonProcess = await DaemonClient.spawnDaemon(localDaemonInfo);
     if (daemonProcess.pid > 0) {
       print('Port mapping daemon is running at ${localDaemonInfo.url}');
       print('Kill it with `kill ${daemonProcess.pid}`');
     }
   }
 
-  localDaemon = await DaemonHandle.connect(localDaemonInfo);
+  localDaemon = await DaemonClient.connect(localDaemonInfo);
   var registrationResult = await localDaemon.registerNode(nodeName);
   if (registrationResult.failed) {
     stderr.writeln('Unable to register node $nodeName');

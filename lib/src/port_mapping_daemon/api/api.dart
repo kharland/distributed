@@ -4,50 +4,92 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:async/async.dart';
 import 'package:meta/meta.dart';
+import 'package:web_socket_channel/status.dart' as status;
 
-enum RequestType {
-  ping,
-  register,
-  deregister,
-  connect,
-  list,
-}
+enum RequestType { ping, register, deregister, connect, list, }
 
 class DaemonSocket {
   final StreamSplitter<String> _splitter;
   final WebSocket _socket;
+  final Duration _idleTimeout;
+  final Function _onTimeout;
 
-  DaemonSocket(WebSocket socket)
-      : _socket = socket,
-        _splitter = new StreamSplitter(socket as Stream<String>);
+  bool _isOpen = true;
+  Timer _idleTimer;
+  StreamSubscription<String> _idleSubscription;
 
-  static Future<DaemonSocket> createFromUrl(String url) async =>
-      new DaemonSocket(await WebSocket.connect(url));
-  
+  /// Creates a new socket that wraps [socket].
+  ///
+  /// If [idleTimeout] is non-zero, the socket will automatically close after no
+  /// messages are sent or received on the socket for longer than [idleTimeout].
+  DaemonSocket(WebSocket socket,
+      {Duration idleTimeout: Duration.ZERO, void onTimeout()})
+      : _idleTimeout = idleTimeout,
+        _onTimeout = onTimeout,
+        _socket = socket,
+        _splitter = new StreamSplitter(socket as Stream<String>) {
+    if (idleTimeout.compareTo(Duration.ZERO) > 0) {
+      _idleSubscription = stream.listen((_) {
+        _restartTimer();
+      });
+      _restartTimer();
+    }
+  }
+
+  static Future<DaemonSocket> createFromUrl(String url,
+          {Duration idleTimeout: Duration.ZERO, void onTimeout()}) async =>
+      new DaemonSocket(await WebSocket.connect(url),
+          idleTimeout: idleTimeout, onTimeout: onTimeout);
+
   Stream<String> get stream => _splitter.split();
 
   void send(String value) {
-    _socket.add(value);  
+    _send(value);
   }
-  
+
+  void sendHandshakeSucceeded([String message='']) {
+    _send(new HandshakeResult(message).toString());
+  }
+
+  void sendHandshakeFailed([String message='']) {
+    _send(new HandshakeResult.error(message).toString());
+  }
+
   void sendPing() {
-    _socket.add(const Ping().toString());
+    _send(const Ping().toString());
   }
 
   void sendRequestInitiation(RequestType type, String cookie) {
-    _socket.add(new RequestInitiation(type, cookie).toString());
+    _send(new RequestInitiation(type, cookie).toString());
   }
 
   void sendRegistrationRequest(String name) {
-    _socket.add(new RegistrationRequest(name).toString());
+    _send(new RegistrationRequest(name).toString());
   }
 
   void sendRegistrationInfo(String name, int port) {
-    _socket.add(new RegistrationResult(name, port).toString());
+    _send(new RegistrationResult(name, port).toString());
   }
 
   void close([int closeCode]) {
+    _idleTimer?.cancel();
+    _idleSubscription?.cancel();
     _socket.close(closeCode);
+    _isOpen = false;
+  }
+
+  void _send(String data) {
+    if (!_isOpen) throw new StateError('Socket is closed');
+    _restartTimer();
+    _socket.add(data);
+  }
+
+  void _restartTimer() {
+    _idleTimer?.cancel();
+    _idleTimer = new Timer(_idleTimeout, () {
+      close(status.normalClosure);
+      if (_onTimeout != null) _onTimeout();
+    });
   }
 }
 
@@ -75,6 +117,27 @@ class Ping extends Entity {
 
   static Ping fromString(_) => new Ping();
 }
+
+
+class HandshakeResult implements Entity {
+  final bool isError;
+  final String message;
+
+  @literal
+  const HandshakeResult(this.message) : isError = false;
+
+  @literal
+  const HandshakeResult.error(this.message) : isError = true;
+
+  factory HandshakeResult.fromJson(Map<String, Object> json) => json['isError']
+      ? new HandshakeResult.error(json['message'])
+      : new HandshakeResult(json['message']);
+
+  @override
+  Map<String, Object> toJson() =>
+      <String, Object>{'isError': isError, 'message': message};
+}
+
 
 class RequestInitiation extends Entity {
   final RequestType type;
@@ -113,7 +176,6 @@ class RegistrationRequest extends Entity {
   Map<String, Object> toJson() => {'nodeName': nodeName};
 }
 
-// TODO: change to registration response.
 class RegistrationResult extends Entity {
   final String name;
   final int port;

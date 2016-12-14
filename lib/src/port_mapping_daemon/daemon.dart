@@ -55,7 +55,7 @@ class PortMappingDaemon {
   /// No other node named [name] may register itself with this daemon while some
   /// node is registered under the same [name].
   Future<bool> registerNode(String name) async {
-    if (getPortFor(name) > 0) {
+    if (getPort(name) > 0) {
       return false;
     }
     _nodeRegistry[name] = await _getUnusedPort();
@@ -70,7 +70,7 @@ class PortMappingDaemon {
   /// Returns the port for the node named [nodeName].
   ///
   /// If no node is found, returns -1.
-  int getPortFor(String nodeName) =>
+  int getPort(String nodeName) =>
       _nodeRegistry.containsKey(nodeName) ? _nodeRegistry[nodeName] : -1;
 
   /// Returns the next available unused port.
@@ -85,13 +85,13 @@ class PortMappingDaemon {
     var socket = new DaemonSocket(rawSocket);
     var handshake = receiveHandshake(this)..start(socket);
 
-    handshake.failure.then((result) {
-      print('Handshake failed: ${result.message}');
-      socket.close(status.policyViolation);
-    });
-
-    handshake.success.then((result) {
-      print(result.message);
+    handshake.done.then((result) {
+      if (result.isError) {
+        print('Handshake failed: ${result.message}');
+        socket.close(status.policyViolation);
+      } else {
+        print(result.message);
+      }
     });
   }
 }
