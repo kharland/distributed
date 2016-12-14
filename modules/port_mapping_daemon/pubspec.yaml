@@ -1,0 +1,21 @@
+name: distributed.port_mapping_daemon
+
+version: 0.0.0
+description: A cross-platform distributed-computing framework for dart.
+authors:
+  - Kendal Harland <kjharland@google.com>
+homepage: https://github.com/kharland/distributed_dart
+dependencies:
+  web_socket_channel: "<=2.0.0"
+  meta:
+  fixnum:
+  statemachine:
+  distributed.node:
+    path: ../node
+dev_dependencies:
+  dart_coveralls:
+  test:
+  mockito:
+  dart_style:
+  echo_server:
+    git: git://github.com/kharland/echo_server.git

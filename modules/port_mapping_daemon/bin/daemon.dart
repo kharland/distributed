@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:args/args.dart';
-import 'package:distributed.port_mapping_daemon/daemon.dart';
+import 'package:distributed/src/port_mapping_daemon/daemon.dart';
 
 /// Starts a pmd on the default port.
 Future main(List<String> args) async {
