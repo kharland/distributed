@@ -2,46 +2,46 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:args/args.dart';
-import 'package:distributed/distributed.dart';
-import 'package:distributed/platform/io.dart';
-import 'package:distributed/src/port_mapping_daemon/daemon.dart';
-import 'package:distributed/src/port_mapping_daemon/client.dart';
-import 'package:distributed/src/port_mapping_daemon/info.dart';
+import 'package:distributed.node/node.dart';
+import 'package:distributed.node/platform/io.dart';
+import 'package:distributed.port_mapping_daemon/daemon.dart';
+import 'package:distributed.port_mapping_daemon/client.dart';
 
 Future main(List<String> args) async {
   configureDistributed();
 
-  DaemonClient localDaemon;
   var argResults = _parseArgs(args);
   var nodeName = args.first;
-  var localDaemonInfo = new DaemonInfo(
+
+  DaemonClient daemonClient;
+  var daemonInfo = new DaemonHandle(
     PortMappingDaemon.defaultHost,
     PortMappingDaemon.defaultPort,
     PortMappingDaemon.defaultCookie,
   );
 
-  if (!await DaemonClient.isDaemonRunning(localDaemonInfo)) {
+  if (!await DaemonClient.isDaemonRunning(daemonInfo)) {
     print('No PortMappingDaemon detected. Starting new daemon...');
-    var daemonProcess = await DaemonClient.spawnDaemon(localDaemonInfo);
+    var daemonProcess = await DaemonClient.spawnDaemon(daemonInfo);
     if (daemonProcess.pid > 0) {
-      print('Port mapping daemon is running at ${localDaemonInfo.url}');
+      print('Port mapping daemon is listening at ${daemonInfo.url}');
       print('Kill it with `kill ${daemonProcess.pid}`');
     }
   }
 
-  localDaemon = await DaemonClient.connect(localDaemonInfo);
-  var registrationResult = await localDaemon.registerNode(nodeName);
+  daemonClient = await DaemonClient.connect(daemonInfo);
+  var registrationResult = await daemonClient.registerNode(nodeName);
   if (registrationResult.failed) {
     stderr.writeln('Unable to register node $nodeName');
     exit(0);
   } else {
-    print('Registered $nodeName with daemon at ${localDaemonInfo.url}');
+    print('Registered $nodeName with daemon at ${daemonInfo.url}');
   }
 
   new Node(
     registrationResult.name,
     'localhost',
-    argResults['node-cookie'],
+    argResults['cookie'],
     port: registrationResult.port,
   );
 }
