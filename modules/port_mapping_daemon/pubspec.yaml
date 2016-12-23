@@ -9,7 +9,9 @@ dependencies:
   web_socket_channel: "<=2.0.0"
   meta:
   fixnum:
-  statemachine:
+  express:
+  seltzer:
+    git: git://github.com/kharland/seltzer.git
   distributed.node:
     path: ../node
 dev_dependencies:

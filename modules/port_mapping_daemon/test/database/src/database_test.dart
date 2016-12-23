@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:distributed.port_mapping_daemon/src/database/lib/database.dart';
+import 'package:distributed.port_mapping_daemon/src/database/database.dart';
 @TestOn('vm')
 import 'package:test/test.dart';
 

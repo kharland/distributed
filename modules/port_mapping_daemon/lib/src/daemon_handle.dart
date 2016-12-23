@@ -1,19 +1,16 @@
-import 'package:distributed.port_mapping_daemon/daemon.dart';
 import 'package:meta/meta.dart';
 
-class DaemonHandle {
+class DaemonServerHandle {
+  static const Default = const DaemonServerHandle('localhost', 4369, '');
+  
   final String hostname;
   final String cookie;
   final int port;
 
   @literal
-  const DaemonHandle(this.hostname, this.port, this.cookie);
+  const DaemonServerHandle(this.hostname, this.port, this.cookie);
 
-  String get url => 'ws://$hostname:$port';
+  String get serverUrl => 'http://$hostname:$port';
 }
 
-const defaultHandle = const DaemonHandle(
-    PortMappingDaemon.defaultHost,
-    PortMappingDaemon.defaultPort,
-    PortMappingDaemon.defaultCookie,
-    );
+

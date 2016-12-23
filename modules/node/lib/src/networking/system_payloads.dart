@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:distributed.node/interfaces/peer.dart';
 
-/// A [Payload] containing information about a peer and it's connected peers.
+/// A message containing information about a peer and it's connected peers.
 class NetworkInfo {
   /// The collection of peers connected to [Peer].
   final Iterable<Peer> connectedPeers;
@@ -25,7 +25,6 @@ class NetworkInfo {
   bool operator ==(Object other) =>
       other is NetworkInfo && other.hashCode == hashCode;
 
-  @override
   Map<String, Object> toJson() => <String, Object>{
         'connectedPeers': connectedPeers.map((peer) => peer.toJson()).toList()
       };

@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:distributed.port_mapping_daemon/src/database/lib/database.dart';
-import 'package:distributed.port_mapping_daemon/src/database/lib/serializer.dart';
+import 'package:distributed.port_mapping_daemon/src/database/database.dart';
+import 'package:distributed.port_mapping_daemon/src/database/serializer.dart';
 import 'src/database_test.dart';
 
 import 'package:test/test.dart';

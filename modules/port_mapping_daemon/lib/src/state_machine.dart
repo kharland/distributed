@@ -31,6 +31,10 @@ class StateMachine<T> {
 
   State _currentState;
 
+  set state(State state) {
+    _currentState = state;
+  }
+
   void addStateChange(State oldState, State newState, InputFilter<T> filter) {
     assert(oldState != State.trap);
     _stateChanges[oldState] = {filter: newState};

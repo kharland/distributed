@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:distributed.port_mapping_daemon/src/database/lib/serializer.dart';
+import 'package:distributed.port_mapping_daemon/src/database/serializer.dart';
 
 /// A very naive key-value store.
 abstract class Database<K, V> {
@@ -124,8 +124,6 @@ class MemoryDatabase<K, V> implements Database<K, V> {
     return results;
   }
 
-
-  /// Writes the contents of the database to the file supplied at construction.
   void save() {
     var data = '';
     _records.forEach((K key, V value) {
