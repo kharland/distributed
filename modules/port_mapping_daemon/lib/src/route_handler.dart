@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:distributed.port_mapping_daemon/daemon.dart';
 import 'package:distributed.port_mapping_daemon/src/api.dart';
 import 'package:express/express.dart';
-import 'package:meta/meta.dart';
+import 'package:fixnum/fixnum.dart';
 
 //TODO: Add logging support to this library
 
@@ -14,16 +14,31 @@ abstract class RouteHandler {
   static const delete = 'delete';
   static const patch = 'patch';
 
+  static const ACCEPT_ALL_COOKIE = '';
+
+  final String _cookie;
+
+  RouteHandler._([this._cookie=ACCEPT_ALL_COOKIE]);
+
   String get method;
 
   String get route;
 
-  void run(HttpContext ctx);
+  void execute(HttpContext ctx) {
+    if (_cookie == ACCEPT_ALL_COOKIE || ctx.params['cookie'] == _cookie) {
+      executeChild(ctx);
+    } else {
+      fail(ctx, 'Invalid cookie');
+    }
+  }
+
+  void executeChild(HttpContext ctx);
+
+  void fail(HttpContext ctx, String reason);
 }
 
-class PingHandler implements RouteHandler {
-  @literal
-  const PingHandler();
+class PingHandler extends RouteHandler {
+  PingHandler() : super._();
 
   @override
   String get method => RouteHandler.get;
@@ -32,17 +47,21 @@ class PingHandler implements RouteHandler {
   String get route => '/ping';
 
   @override
-  void run(HttpContext ctx) {
+  void executeChild(HttpContext ctx) {
     ctx.sendBytes([1]);
     ctx.end();
   }
+
+  @override
+  void fail(HttpContext ctx, String reason) {
+    throw new UnimplementedError();
+  }
 }
 
-class RegisterNodeHandler implements RouteHandler {
+class RegisterNodeHandler extends RouteHandler {
   final Daemon _daemon;
 
-  @literal
-  const RegisterNodeHandler(this._daemon);
+  RegisterNodeHandler(this._daemon, String cookie) : super._(cookie);
 
   @override
   String get method => RouteHandler.post;
@@ -51,23 +70,29 @@ class RegisterNodeHandler implements RouteHandler {
   String get route => '/node/:name';
 
   @override
-  void run(HttpContext ctx) {
+  void executeChild(HttpContext ctx) {
     String name = ctx.params['name'];
-    _daemon.registerNode(name).then((int port) {
+    _daemon.registerNode(name).then((Int64 port) {
       ctx.sendText(new RegistrationResult(name, port).toString());
       ctx.end();
-    }).catchError((e) {
-      ctx.sendText(new RegistrationResult.failure().toString());
-      ctx.end();
+    }).catchError((e, stacktrace) {
+      print(e);
+      print(stacktrace);
+      fail(ctx, e.toString());
     });
+  }
+
+  @override
+  void fail(HttpContext ctx, String reason) {
+    ctx.sendText(new RegistrationResult.failure().toString());
+    ctx.end();
   }
 }
 
-class DeregisterNodeHandler implements RouteHandler {
+class DeregisterNodeHandler extends RouteHandler {
   final Daemon _daemon;
 
-  @literal
-  const DeregisterNodeHandler(this._daemon);
+  DeregisterNodeHandler(this._daemon, String cookie) : super._(cookie);
 
   @override
   String get method => RouteHandler.delete;
@@ -76,23 +101,27 @@ class DeregisterNodeHandler implements RouteHandler {
   String get route => '/node/:name';
 
   @override
-  void run(HttpContext ctx) {
+  void executeChild(HttpContext ctx) {
     String name = ctx.params['name'];
     _daemon.deregisterNode(name).then((_) {
       ctx.sendText(new DeregistrationResult(name, false).toString());
       ctx.end();
     }).catchError((e) {
-      ctx.sendText(new DeregistrationResult(name, true).toString());
-      ctx.end();
+      fail(ctx, name);
     });
+  }
+
+  @override
+  void fail(HttpContext ctx, String reason) {
+    ctx.sendText(new DeregistrationResult(reason, true).toString());
+    ctx.end();
   }
 }
 
-class LookupNodeHandler implements RouteHandler {
+class LookupNodeHandler extends RouteHandler {
   final Daemon _daemon;
 
-  @literal
-  const LookupNodeHandler(this._daemon);
+  LookupNodeHandler(this._daemon, String cookie) : super._(cookie);
 
   @override
   String get method => RouteHandler.get;
@@ -101,19 +130,24 @@ class LookupNodeHandler implements RouteHandler {
   String get route => '/node/:name';
 
   @override
-  void run(HttpContext ctx) {
-    _daemon.lookupPort(ctx.params['name']).then((int port) {
+  void executeChild(HttpContext ctx) {
+    _daemon.lookupPort(ctx.params['name']).then((Int64 port) {
       ctx.sendText(port.toString());
       ctx.end();
     });
   }
+
+  @override
+  void fail(HttpContext ctx, String reason) {
+    ctx.sendText(reason);
+    ctx.end();
+  }
 }
 
-class ListNodesHandler implements RouteHandler {
+class ListNodesHandler extends RouteHandler {
   final Daemon _daemon;
 
-  @literal
-  const ListNodesHandler(this._daemon);
+  ListNodesHandler(this._daemon, String cookie) : super._(cookie);
 
   @override
   String get method => RouteHandler.get;
@@ -122,7 +156,7 @@ class ListNodesHandler implements RouteHandler {
   String get route => '/list/node';
 
   @override
-  void run(HttpContext ctx) {
+  void executeChild(HttpContext ctx) {
     var nodes = _daemon.nodes;
     Future.wait(nodes.map(_daemon.lookupPort)).then((List<int> ports) {
       var assignments = <String, int>{};
@@ -132,5 +166,11 @@ class ListNodesHandler implements RouteHandler {
       ctx.sendText(new PortAssignmentList(assignments));
       ctx.end();
     });
+  }
+
+  @override
+  void fail(HttpContext ctx, String reason) {
+    ctx.sendText(reason);
+    ctx.end();
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:fixnum/fixnum.dart';
 import 'package:meta/meta.dart';
 
 abstract class Message {
@@ -21,22 +22,21 @@ abstract class Message {
 
 class RegistrationResult extends Message {
   final String name;
-  final int port;
+  final Int64 port;
   final bool _failed;
 
   @literal
   const RegistrationResult(this.name, this.port) : _failed = false;
 
-  @literal
-  const RegistrationResult.failure()
+  RegistrationResult.failure()
       : name = '',
-        port = -1,
+        port = new Int64(-1),
         _failed = true;
 
   factory RegistrationResult.fromJson(Map<String, Object> json) =>
       json['failed']
           ? new RegistrationResult.failure()
-          : new RegistrationResult(json['name'], json['port']);
+          : new RegistrationResult(json['name'], new Int64(json['port']));
 
   factory RegistrationResult.fromString(String string) =>
       new RegistrationResult.fromJson(
@@ -46,7 +46,7 @@ class RegistrationResult extends Message {
 
   @override
   Map<String, Object> toJson() =>
-      {'name': name, 'port': port, 'failed': _failed};
+      {'name': name, 'port': port.toInt(), 'failed': _failed};
 }
 
 class DeregistrationResult extends Message {

@@ -16,12 +16,22 @@ import 'package:distributed.node/src/configuration.dart';
 /// If a peer is hidden, a node will not share that peer's information with
 /// other peers when a new connection is made.
 abstract class Node extends Peer {
-  static const defaultCookie = 'cookie';
+  static const defaultCookie = '';
+  static const defaultHostname = 'localhost';
+  static const defaultPort = 9000;
 
-  factory Node(String name, String hostname, String cookie,
-          {int port, bool isHidden}) =>
-      nodeProvider.create(name, hostname, cookie,
-          port: port, isHidden: isHidden);
+  factory Node(String name,
+          {String hostname: defaultHostname,
+          String cookie: defaultCookie,
+          int port: defaultPort,
+          bool isHidden: false}) =>
+      nodeProvider.create(
+        name,
+        hostname: hostname,
+        cookie: cookie,
+        port: port,
+        isHidden: isHidden,
+      );
 
   /// Creates a node with the same information as [peer].
   factory Node.fromPeer(Peer peer, {String cookie: ''}) =>

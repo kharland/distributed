@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:distributed.port_mapping_daemon/daemon.dart';
+import 'package:distributed.port_mapping_daemon/src/daemon_handle.dart';
 import 'package:distributed.port_mapping_daemon/src/http_client.dart';
 import 'package:distributed.port_mapping_daemon/src/http_server.dart';
 import 'package:seltzer/platform/vm.dart';
@@ -10,7 +11,7 @@ import 'package:test/test.dart';
 void main() {
   useSeltzerInVm();
 
-  group('$DaemonClient and $DaemonServer', () {
+  group('$DaemonServer', () {
     DaemonServer server;
     DaemonClient client;
     Daemon daemon;
@@ -23,8 +24,11 @@ void main() {
       }
 
       daemon = new Daemon(new NodeDatabase(dbFile));
-      server = new DaemonServerBuilder().setDaemon(daemon).build();
-      client = new DaemonClient(server.handle, new VmSeltzerHttp());
+      server = (new DaemonServerBuilder()
+            ..setCookie('test')
+            ..setDaemon(daemon))
+          .build();
+      client = new DaemonClient(new VmSeltzerHttp(), cookie: server.cookie);
       server.start();
     });
 
@@ -34,6 +38,14 @@ void main() {
     });
 
     tearDown(() => Future.wait(daemon.nodes.map(daemon.deregisterNode)));
+
+    test('should reject requests with a bad cookie', () async {
+      var badClient = new DaemonClient(
+        new VmSeltzerHttp(),
+        cookie: 'bad${server.cookie}'
+      );
+      expect(await badClient.registerNode('A'), lessThan(0));
+    });
 
     test('should be able to ping each other', () async {
       expect(await client.isDaemonRunning(), isTrue);
@@ -62,6 +74,14 @@ void main() {
       expect(await client.registerNode('A'), greaterThan(0));
       expect(await client.registerNode('B'), greaterThan(0));
       expect((await client.listNodes()).keys, unorderedEquals(['A', 'B']));
+    });
+
+    test("should exchange a node's information", () async {
+      expect(await client.lookupNode('A'), lessThan(0));
+      var port = await client.registerNode('A');
+      expect(port, greaterThan(0));
+      expect(await daemon.lookupPort('A'), port);
+      expect(await client.lookupNode('A'), port);
     });
   });
 }

@@ -1,15 +1,22 @@
 import 'dart:async';
 
 import 'package:distributed.port_mapping_daemon/src/api.dart';
-import 'package:distributed.port_mapping_daemon/src/daemon_handle.dart';
+import 'package:distributed.port_mapping_daemon/src/http_server.dart';
 import 'package:seltzer/seltzer.dart';
 
 class DaemonClient {
-  final DaemonServerHandle serverHandle;
   final HttpWithTimeout _http = new HttpWithTimeout();
   final SeltzerHttp _seltzer;
+  final String cookie;
+  final String hostname;
+  final int port;
 
-  DaemonClient(this.serverHandle, this._seltzer);
+  DaemonClient(
+    this._seltzer, {
+    this.hostname: DaemonServer.defaultHostname,
+    this.port: DaemonServer.defaultPort,
+    this.cookie: DaemonServer.defaultCookie,
+  });
 
   /// Pings the daemon server.
   ///
@@ -20,7 +27,7 @@ class DaemonClient {
       await _http.send(_seltzer.get(_url('ping')));
       responseCompleter.complete(true);
     }, onError: (error) {
-      log(error);
+      log('[ERROR]: $error');
       responseCompleter.complete(false);
     });
     return responseCompleter.future;
@@ -92,7 +99,7 @@ class DaemonClient {
   }
 
   String _url(String route) =>
-      '${serverHandle.serverUrl}/$route/${serverHandle.cookie}';
+      '${DaemonServer.url(hostname, port)}/$route/$cookie';
 }
 
 class HttpWithTimeout {

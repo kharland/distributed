@@ -3,11 +3,12 @@ import 'dart:io';
 
 import 'package:distributed.port_mapping_daemon/src/database/database.dart';
 import 'package:distributed.port_mapping_daemon/src/database/serializer.dart';
+import 'package:fixnum/fixnum.dart';
 
 /// An interface for interacting with the database of nodes registered to the
 /// local port mapping daemon.
 class Daemon {
-  final Database<String, int> _database;
+  final Database<String, Int64> _database;
 
   Daemon(this._database);
 
@@ -17,8 +18,8 @@ class Daemon {
   /// Assigns a port to a new node named [name].
   ///
   /// Returns a future that completes with the port number.
-  Future<int> registerNode(String name) async {
-    int port;
+  Future<Int64> registerNode(String name) async {
+    Int64 port;
     if ((port = await lookupPort(name)) > 0) {
       throw new ArgumentError('$name is already registered to port $port');
     }
@@ -38,19 +39,19 @@ class Daemon {
   /// Returns the port for the node named [nodeName].
   ///
   /// If no node is found, returns -1.
-  Future<int> lookupPort(String nodeName) async =>
+  Future<Int64> lookupPort(String nodeName) async =>
       await _database.get(nodeName) ?? -1;
 
   /// Returns the next available unused port.
-  Future<int> _getUnusedPort() =>
+  Future<Int64> _getUnusedPort() =>
       ServerSocket.bind('localhost', 0).then((socket) {
         var port = socket.port;
         socket.close();
-        return port;
+        return new Int64(port);
       });
 }
 
-class NodeDatabase extends MemoryDatabase<String, int> {
+class NodeDatabase extends MemoryDatabase<String, Int64> {
   NodeDatabase(File databaseFile)
       : super(databaseFile,
             recordSerializer: new RecordSerializer(

@@ -8,8 +8,13 @@ void configureDistributed() {
 
 class _IONodeProvider implements NodeProvider {
   @override
-  IONode create(String name, String hostname, String cookie,
-          {int port: 9095, bool isHidden: false}) =>
+  IONode create(
+    String name, {
+    String hostname,
+    String cookie,
+    int port: 9095,
+    bool isHidden: false,
+  }) =>
       new IONode(
           name: name,
           hostname: hostname,

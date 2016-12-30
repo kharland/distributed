@@ -6,13 +6,14 @@ authors:
   - Kendal Harland <kjharland@google.com>
 homepage: https://github.com/kharland/distributed_dart
 dependencies:
-  web_socket_channel: "<=2.0.0"
-  meta:
-  fixnum:
-  seltzer:
-      git: git://github.com/kharland/seltzer.git
   distributed.port_mapping_daemon:
     path: ../port_mapping_daemon
+  fixnum:
+  meta:
+  resource:
+  seltzer:
+      git: git://github.com/kharland/seltzer.git
+  web_socket_channel: "<=2.0.0"
 dev_dependencies:
   dart_coveralls: 
   test:

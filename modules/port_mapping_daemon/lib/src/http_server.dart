@@ -1,29 +1,28 @@
 import 'dart:io';
 
 import 'package:distributed.port_mapping_daemon/daemon.dart';
-import 'package:distributed.port_mapping_daemon/src/daemon_handle.dart';
 import 'package:distributed.port_mapping_daemon/src/route_handler.dart';
 import 'package:express/express.dart';
 
 class DaemonServerBuilder {
-  int _port = DaemonServerHandle.Default.port;
-  String _hostname = DaemonServerHandle.Default.hostname;
-  String _cookie = DaemonServerHandle.Default.cookie;
+  int port = DaemonServer.defaultPort;
+  String hostname = DaemonServer.defaultHostname;
+  String cookie = DaemonServer.defaultCookie;
   Daemon _daemon;
 
   DaemonServerBuilder setCookie(String value) {
-    _cookie = value;
+    cookie = value;
     return this;
   }
 
   DaemonServerBuilder setPort(int value) {
     assert(value > 0);
-    _port = value;
+    port = value;
     return this;
   }
 
   DaemonServerBuilder setHost(String hostname) {
-    _hostname = hostname;
+    hostname = hostname;
     return this;
   }
 
@@ -33,37 +32,46 @@ class DaemonServerBuilder {
   }
 
   DaemonServer build() {
-    assert(_port != null &&
-        _hostname != null &&
-        _cookie != null &&
-        _daemon != null);
+    assert(
+        port != null && hostname != null && cookie != null && _daemon != null);
     return new DaemonServer._(
-        _daemon, new DaemonServerHandle(_hostname, _port, _cookie));
+      _daemon,
+      hostname,
+      port,
+      cookie,
+    );
   }
 }
 
 class DaemonServer {
+  static const int defaultPort = 4369;
+  static const String defaultHostname = 'localhost';
+  static const String defaultCookie = RouteHandler.ACCEPT_ALL_COOKIE;
+
+  static String url(String hostname, int port) => 'http://$hostname:$port';
+
   final Express _express = new Express();
   final Daemon _daemon;
-  final DaemonServerHandle handle;
+  final String cookie;
+  final String hostname;
+  final int port;
 
-  DaemonServer._(this._daemon, this.handle);
+  DaemonServer._(this._daemon, this.hostname, this.port, this.cookie);
 
   /// Starts listening for requests.
   ///
   /// Returns a future that completes when the server is ready for connections.
   void start() {
     [
-      const PingHandler(),
-      new RegisterNodeHandler(_daemon),
-      new DeregisterNodeHandler(_daemon),
-      new LookupNodeHandler(_daemon),
-      new ListNodesHandler(_daemon)
+      new PingHandler(),
+      new RegisterNodeHandler(_daemon, cookie),
+      new DeregisterNodeHandler(_daemon, cookie),
+      new LookupNodeHandler(_daemon, cookie),
+      new ListNodesHandler(_daemon, cookie)
     ].forEach((route) {
-      _installRoute(route, _express, cookie: handle.cookie);
+      _installRoute(route, _express, cookie: cookie);
     });
-    _express.listen(InternetAddress.LOOPBACK_IP_V4.host, handle.port);
-
+    _express.listen(InternetAddress.LOOPBACK_IP_V4.host, port);
   }
 
   /// Stops listening for new connections.
@@ -94,10 +102,6 @@ class DaemonServer {
         throw new UnimplementedError(route.method);
     }
 
-    installer('${route.route}/:cookie', (HttpContext ctx) {
-      if (cookie.isEmpty || ctx.params['cookie'] == cookie) {
-        route.run(ctx);
-      }
-    });
+    installer('${route.route}/:cookie', route.execute);
   }
 }
