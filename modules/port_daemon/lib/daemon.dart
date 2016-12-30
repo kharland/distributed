@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:distributed.port_mapping_daemon/src/database/database.dart';
-import 'package:distributed.port_mapping_daemon/src/database/serializer.dart';
 import 'package:fixnum/fixnum.dart';
+import 'src/database/database.dart';
+import 'src/database/serializer.dart';
 
 /// An interface for interacting with the database of nodes registered to the
 /// local port mapping daemon.

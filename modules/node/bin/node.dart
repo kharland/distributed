@@ -4,8 +4,8 @@ import 'dart:io';
 import 'package:args/args.dart';
 import 'package:distributed.node/node.dart';
 import 'package:distributed.node/platform/io.dart';
-import 'package:distributed.port_mapping_daemon/src/http_client.dart';
-import 'package:distributed.port_mapping_daemon/src/http_server.dart';
+import 'package:distributed.port_daemon/src/http_client.dart';
+import 'package:distributed.port_daemon/src/http_server.dart';
 import 'package:seltzer/platform/vm.dart';
 
 Future main(List<String> args) async {

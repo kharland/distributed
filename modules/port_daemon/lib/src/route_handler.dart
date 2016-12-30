@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:distributed.port_mapping_daemon/daemon.dart';
-import 'package:distributed.port_mapping_daemon/src/api.dart';
+import 'package:distributed.port_daemon/daemon.dart';
+import 'package:distributed.port_daemon/src/api.dart';
 import 'package:express/express.dart';
 import 'package:fixnum/fixnum.dart';
 

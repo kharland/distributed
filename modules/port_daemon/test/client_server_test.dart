@@ -1,12 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:distributed.port_mapping_daemon/daemon.dart';
-import 'package:distributed.port_mapping_daemon/src/daemon_handle.dart';
-import 'package:distributed.port_mapping_daemon/src/http_client.dart';
-import 'package:distributed.port_mapping_daemon/src/http_server.dart';
-import 'package:seltzer/platform/vm.dart';
+import 'package:distributed.port_daemon/daemon.dart';
+import 'package:distributed.port_daemon/src/http_client.dart';
+import 'package:distributed.port_daemon/src/http_server.dart';
 import 'package:test/test.dart';
+import 'package:seltzer/platform/vm.dart';
 
 void main() {
   useSeltzerInVm();

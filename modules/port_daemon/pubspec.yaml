@@ -1,7 +1,7 @@
-name: distributed.port_mapping_daemon
+name: distributed.port_daemon
 
 version: 0.0.0
-description: A cross-platform distributed-computing framework for dart.
+description: The distributed_dart port mapping daemon
 authors:
   - Kendal Harland <kjharland@google.com>
 homepage: https://github.com/kharland/distributed_dart

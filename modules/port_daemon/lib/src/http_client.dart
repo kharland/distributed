@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:distributed.port_mapping_daemon/src/api.dart';
-import 'package:distributed.port_mapping_daemon/src/http_server.dart';
+import 'package:distributed.port_daemon/src/api.dart';
+import 'package:distributed.port_daemon/src/http_server.dart';
 import 'package:seltzer/seltzer.dart';
 
 class DaemonClient {

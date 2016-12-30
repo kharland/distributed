@@ -2,8 +2,9 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:args/args.dart';
-import 'package:distributed.port_mapping_daemon/daemon.dart';
-import 'package:distributed.port_mapping_daemon/src/http_server.dart';
+
+import '../lib/daemon.dart';
+import '../lib/src/http_server.dart';
 
 Future main(List<String> args) async {
   var argResults = _parseArgs(args);

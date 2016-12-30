@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:distributed.port_mapping_daemon/src/database/database.dart';
-import 'package:distributed.port_mapping_daemon/src/database/serializer.dart';
-import 'src/database_test.dart';
-
+import 'package:distributed.port_daemon/src/database/database.dart';
+import 'package:distributed.port_daemon/src/database/serializer.dart';
 import 'package:test/test.dart';
+
+import 'src/database_test.dart';
 
 void main() {
   group('$MemoryDatabase', () {

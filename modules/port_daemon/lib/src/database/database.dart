@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:distributed.port_mapping_daemon/src/database/serializer.dart';
+import 'package:distributed.port_daemon/src/database/serializer.dart';
 
 /// A very naive key-value store.
 abstract class Database<K, V> {

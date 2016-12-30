@@ -1,7 +1,7 @@
+@TestOn('vm')
 import 'dart:async';
 
-import 'package:distributed.port_mapping_daemon/src/database/database.dart';
-@TestOn('vm')
+import 'package:distributed.port_daemon/src/database/database.dart';
 import 'package:test/test.dart';
 
 /// Factory for [Database] instances.

@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:distributed.port_mapping_daemon/daemon.dart';
-import 'package:distributed.port_mapping_daemon/src/route_handler.dart';
+import 'package:distributed.port_daemon/daemon.dart';
+import 'package:distributed.port_daemon/src/route_handler.dart';
 import 'package:express/express.dart';
 
 class DaemonServerBuilder {
