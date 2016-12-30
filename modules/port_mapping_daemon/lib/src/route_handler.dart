@@ -18,7 +18,7 @@ abstract class RouteHandler {
 
   final String _cookie;
 
-  RouteHandler._([this._cookie=ACCEPT_ALL_COOKIE]);
+  RouteHandler._([this._cookie = ACCEPT_ALL_COOKIE]);
 
   String get method;
 

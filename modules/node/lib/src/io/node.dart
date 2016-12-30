@@ -37,12 +37,13 @@ class IONode extends Peer implements Node {
   /// Creates a new [IONode].
   ///
   /// Parameters are named for convenience. All except [isHidden] are required.
-  IONode(
-      {String name,
-      String hostname,
-      int port,
-      bool isHidden: false,
-      this.cookie: '',})
+  IONode({
+    String name,
+    String hostname,
+    int port,
+    bool isHidden: false,
+    this.cookie: '',
+  })
       : _channelHost = new ChannelServer(hostname, port),
         super(name, hostname, port: port, isHidden: isHidden) {
     _channelSubscription = _channelHost.onChannel.listen(_handshake);

@@ -40,10 +40,8 @@ void main() {
     tearDown(() => Future.wait(daemon.nodes.map(daemon.deregisterNode)));
 
     test('should reject requests with a bad cookie', () async {
-      var badClient = new DaemonClient(
-        new VmSeltzerHttp(),
-        cookie: 'bad${server.cookie}'
-      );
+      var badClient =
+          new DaemonClient(new VmSeltzerHttp(), cookie: 'bad${server.cookie}');
       expect(await badClient.registerNode('A'), lessThan(0));
     });
 

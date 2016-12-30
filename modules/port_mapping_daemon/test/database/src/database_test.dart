@@ -18,7 +18,8 @@ void testDatabase(DatabaseProvider setup, Future<Null> teardown()) {
 
     tearDown(() => teardown());
 
-    test('containsKey should return true if the database contains an entry for '
+    test(
+        'containsKey should return true if the database contains an entry for '
         'the given key', () async {
       await database.insert('A', 'B');
       await database.insert('C', 'D');

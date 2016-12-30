@@ -3,7 +3,8 @@ import 'package:distributed.node/interfaces/message.dart';
 import 'package:distributed.node/interfaces/node.dart';
 import 'package:distributed.node/interfaces/peer.dart';
 import 'package:distributed.node/src/networking/message_channel.dart';
-import 'package:distributed.node/src/networking/handshake_action.dart' as handshake;
+import 'package:distributed.node/src/networking/handshake_action.dart'
+    as handshake;
 import 'package:distributed.node/src/networking/system_payloads.dart';
 
 enum _State {
