@@ -1,5 +1,7 @@
 #!/bin/bash
 
+pub get
+
 echo "Checking dartfmt..."
 
 NEEDS_DARTFMT="$(pub run dart_style:format -n .)"
