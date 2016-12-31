@@ -11,8 +11,6 @@ dependencies:
   fixnum:
   meta:
   resource:
-  echo_server:
-    git: git://github.com/kharland/echo_server.git
   seltzer:
     git: git://github.com/kharland/seltzer.git
   web_socket_channel: "<=2.0.0"
@@ -20,3 +18,5 @@ dev_dependencies:
   dart_style:
   test:
   mockito:
+  echo_server:
+    git: git://github.com/kharland/echo_server.git

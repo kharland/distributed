@@ -3,18 +3,18 @@ import 'dart:async';
 import 'package:distributed.node/interfaces/message.dart';
 import 'package:distributed.node/interfaces/peer.dart';
 import 'package:distributed.node/src/networking/message_channel.dart';
-import 'package:echo_server/websocket.dart';
+import 'package:echo_server/echo_server.dart';
 import 'package:test/test.dart';
 
 void testChannel(
-    {Future<MessageChannel> createChannel(WebSocketEchoServer echoServer)}) {
+    {Future<MessageChannel> createChannel(EchoServer echoServer)}) {
   group('', () {
-    WebSocketEchoServer echoServer;
+    EchoServer echoServer;
     MessageChannel channel;
     MessageChannel testChannel;
 
     setUpAll(() {
-      echoServer = new WebSocketEchoServer('localhost', 8085)..start();
+      echoServer = new EchoServer(port: 8085)..start();
     });
 
     setUp(() async {
