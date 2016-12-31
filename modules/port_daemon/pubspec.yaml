@@ -1,0 +1,22 @@
+name: distributed.port_daemon
+
+version: 0.0.0
+description: The distributed_dart port mapping daemon
+authors:
+  - Kendal Harland <kjharland@google.com>
+homepage: https://github.com/kharland/distributed_dart
+dependencies:
+  web_socket_channel: "<=2.0.0"
+  meta:
+  fixnum:
+  express:
+  seltzer:
+    git: git://github.com/kharland/seltzer.git
+  distributed.node:
+    path: ../node
+dev_dependencies:
+  dart_style:
+  test:
+  mockito:
+  echo_server:
+    git: git://github.com/kharland/echo_server.git

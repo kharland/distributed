@@ -3,3 +3,5 @@
 *packages*
 pubspec.lock
 .pub
+.trash
+.db

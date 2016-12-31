@@ -1,0 +1,22 @@
+name: distributed.node
+
+version: 0.0.0
+description: A cross-platform distributed-computing framework for dart.
+authors:
+  - Kendal Harland <kjharland@google.com>
+homepage: https://github.com/kharland/distributed_dart
+dependencies:
+  distributed.port_daemon:
+    path: ../port_daemon
+  fixnum:
+  meta:
+  resource:
+  seltzer:
+    git: git://github.com/kharland/seltzer.git
+  web_socket_channel: "<=2.0.0"
+dev_dependencies:
+  dart_style:
+  test:
+  mockito:
+  echo_server:
+    git: git://github.com/kharland/echo_server.git
