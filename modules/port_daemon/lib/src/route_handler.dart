@@ -76,8 +76,6 @@ class RegisterNodeHandler extends RouteHandler {
       ctx.sendText(new RegistrationResult(name, port).toString());
       ctx.end();
     }).catchError((e, stacktrace) {
-      print(e);
-      print(stacktrace);
       fail(ctx, e.toString());
     });
   }
@@ -106,7 +104,7 @@ class DeregisterNodeHandler extends RouteHandler {
     _daemon.deregisterNode(name).then((_) {
       ctx.sendText(new DeregistrationResult(name, false).toString());
       ctx.end();
-    }).catchError((e) {
+    }).catchError((e, stacktrace) {
       fail(ctx, name);
     });
   }
@@ -158,8 +156,8 @@ class ListNodesHandler extends RouteHandler {
   @override
   void executeChild(HttpContext ctx) {
     var nodes = _daemon.nodes;
-    Future.wait(nodes.map(_daemon.lookupPort)).then((List<int> ports) {
-      var assignments = <String, int>{};
+    Future.wait(nodes.map(_daemon.lookupPort)).then((List<Int64> ports) {
+      var assignments = <String, Int64>{};
       for (int i = 0; i < nodes.length; i++) {
         assignments[nodes.elementAt(i)] = ports[i];
       }

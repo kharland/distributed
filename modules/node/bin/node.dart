@@ -6,6 +6,7 @@ import 'package:distributed.node/node.dart';
 import 'package:distributed.node/platform/io.dart';
 import 'package:distributed.port_daemon/src/http_client.dart';
 import 'package:distributed.port_daemon/src/http_server.dart';
+import 'package:fixnum/fixnum.dart';
 import 'package:seltzer/platform/vm.dart';
 
 Future main(List<String> args) async {
@@ -29,7 +30,7 @@ Future main(List<String> args) async {
     exit(0);
   }
 
-  int port;
+  Int64 port;
   if ((port = await daemonClient.lookupNode(nodeName)) < 0) {
     if ((port = await daemonClient.registerNode(nodeName)) < 0) {
       print('Unable to register node $nodeName');
@@ -42,7 +43,7 @@ Future main(List<String> args) async {
   new Node(
     nodeName,
     hostname: 'localhost',
-    port: port,
+    port: port.toInt(),
     cookie: argResults['cookie'],
   );
 }

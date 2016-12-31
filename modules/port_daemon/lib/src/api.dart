@@ -68,14 +68,19 @@ class DeregistrationResult extends Message {
 }
 
 class PortAssignmentList extends Message {
-  final Map<String, int> assignments;
+  final Map<String, Int64> assignments;
 
   @literal
   const PortAssignmentList(this.assignments);
 
-  factory PortAssignmentList.fromString(String s) =>
-      new PortAssignmentList(Message.parseJson(PortAssignmentList, s));
+  factory PortAssignmentList.fromString(String s) {
+    var assignmentsWithIntPorts = Message.parseJson(PortAssignmentList, s);
+    return new PortAssignmentList(new Map.fromIterables(
+        assignmentsWithIntPorts.keys,
+        assignmentsWithIntPorts.values.map((i) => new Int64(i))));
+  }
 
   @override
-  Map<String, int> toJson() => assignments;
+  Map<String, int> toJson() => new Map.fromIterables(
+      assignments.keys, assignments.values.map((i) => i.toInt()));
 }

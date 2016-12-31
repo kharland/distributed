@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:distributed.port_daemon/src/api.dart';
 import 'package:distributed.port_daemon/src/http_server.dart';
+import 'package:distributed.port_daemon/src/ports.dart';
+import 'package:fixnum/fixnum.dart';
 import 'package:seltzer/seltzer.dart';
 
 class DaemonClient {
@@ -9,14 +11,15 @@ class DaemonClient {
   final SeltzerHttp _seltzer;
   final String cookie;
   final String hostname;
-  final int port;
+  final Int64 port;
 
   DaemonClient(
     this._seltzer, {
     this.hostname: DaemonServer.defaultHostname,
-    this.port: DaemonServer.defaultPort,
-    this.cookie: DaemonServer.defaultCookie,
-  });
+    int port: DaemonServer.defaultPort,
+    this.cookie: DaemonServer.defaultCookie
+  })
+      : this.port = new Int64(port);
 
   /// Pings the daemon server.
   ///
@@ -52,15 +55,15 @@ class DaemonClient {
 
   /// Request the port for the node named [name].
   ///
-  /// Returns -1 if no such node is registered with the daemon.
-  Future<int> lookupNode(String name, [void log(String message) = print]) {
-    var portCompleter = new Completer<int>();
+  /// Returns Ports.INVALID_PORT if no such node is registered with the daemon.
+  Future<Int64> lookupNode(String name, [void log(String message) = print]) {
+    var portCompleter = new Completer<Int64>();
     runZoned(() async {
       var response = await _http.send(_seltzer.get(_url('node/$name')));
-      portCompleter.complete(int.parse(response.readAsString()));
+      portCompleter.complete(Int64.parseInt(response.readAsString()));
     }, onError: (error) {
       log(error);
-      portCompleter.complete(-1);
+      portCompleter.complete(Ports.INVALID_PORT);
     });
     return portCompleter.future;
   }
@@ -68,16 +71,16 @@ class DaemonClient {
   /// Instructs the daemon server to register [name] under a new port.
   ///
   /// Returns a Future that completes with the new port if registration
-  /// succeeded or -1 if it failed.
-  Future<int> registerNode(String name, [void log(String message) = print]) {
-    var portCompleter = new Completer<int>();
+  /// succeeded or Ports.INVALID_PORT if it failed.
+  Future<Int64> registerNode(String name, [void log(String message) = print]) {
+    var portCompleter = new Completer<Int64>();
     runZoned(() async {
       var response = await _http.send(_seltzer.post(_url('node/$name')));
       var result = new RegistrationResult.fromString(response.readAsString());
       portCompleter.complete(result.port);
     }, onError: (error) {
       log(error);
-      portCompleter.complete(-1);
+      portCompleter.complete(Ports.INVALID_PORT);
     });
     return portCompleter.future;
   }

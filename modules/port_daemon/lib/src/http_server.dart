@@ -1,67 +1,36 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:distributed.port_daemon/daemon.dart';
 import 'package:distributed.port_daemon/src/route_handler.dart';
 import 'package:express/express.dart';
-
-class DaemonServerBuilder {
-  int port = DaemonServer.defaultPort;
-  String hostname = DaemonServer.defaultHostname;
-  String cookie = DaemonServer.defaultCookie;
-  Daemon _daemon;
-
-  DaemonServerBuilder setCookie(String value) {
-    cookie = value;
-    return this;
-  }
-
-  DaemonServerBuilder setPort(int value) {
-    assert(value > 0);
-    port = value;
-    return this;
-  }
-
-  DaemonServerBuilder setHost(String hostname) {
-    hostname = hostname;
-    return this;
-  }
-
-  DaemonServerBuilder setDaemon(Daemon daemon) {
-    _daemon = daemon;
-    return this;
-  }
-
-  DaemonServer build() {
-    assert(
-        port != null && hostname != null && cookie != null && _daemon != null);
-    return new DaemonServer._(
-      _daemon,
-      hostname,
-      port,
-      cookie,
-    );
-  }
-}
+import 'package:fixnum/fixnum.dart';
 
 class DaemonServer {
   static const int defaultPort = 4369;
   static const String defaultHostname = 'localhost';
   static const String defaultCookie = RouteHandler.ACCEPT_ALL_COOKIE;
 
-  static String url(String hostname, int port) => 'http://$hostname:$port';
+  static String url(String hostname, Int64 port) => 'http://$hostname:$port';
 
   final Express _express = new Express();
   final Daemon _daemon;
   final String cookie;
   final String hostname;
-  final int port;
+  final Int64 port;
 
-  DaemonServer._(this._daemon, this.hostname, this.port, this.cookie);
+  DaemonServer(this._daemon,
+      {this.hostname: DaemonServer.defaultHostname,
+      int port: DaemonServer.defaultPort,
+      this.cookie: DaemonServer.defaultCookie})
+      : this.port = new Int64(port) {
+    logger = (_) {};
+  }
 
   /// Starts listening for requests.
   ///
   /// Returns a future that completes when the server is ready for connections.
-  void start() {
+  Future<Null> start() async {
     [
       new PingHandler(),
       new RegisterNodeHandler(_daemon, cookie),
@@ -71,7 +40,7 @@ class DaemonServer {
     ].forEach((route) {
       _installRoute(route, _express, cookie: cookie);
     });
-    _express.listen(InternetAddress.LOOPBACK_IP_V4.host, port);
+    await _express.listen(InternetAddress.LOOPBACK_IP_V4.host, port.toInt());
   }
 
   /// Stops listening for new connections.

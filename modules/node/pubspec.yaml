@@ -18,6 +18,5 @@ dev_dependencies:
   dart_coveralls: 
   test:
   mockito:
-  dart_style:
   echo_server:
     git: git://github.com/kharland/echo_server.git

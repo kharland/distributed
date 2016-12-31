@@ -11,11 +11,11 @@ Future main(List<String> args) async {
   var port = int.parse(argResults['port']);
   var cookie = argResults['cookie'];
 
-  var server = (new DaemonServerBuilder()
-        ..setPort(port)
-        ..setCookie(cookie)
-        ..setDaemon(new Daemon(new NodeDatabase(new File('.node.db')))))
-      .build();
+  var server = new DaemonServer(
+    new Daemon(new NodeDatabase(new File('.node.db'))),
+    port: port,
+    cookie: cookie,
+  );
 
   // spawn daemon
   server.start();

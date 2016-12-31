@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:distributed.port_daemon/daemon.dart';
 import 'package:distributed.port_daemon/src/http_client.dart';
 import 'package:distributed.port_daemon/src/http_server.dart';
+import 'package:distributed.port_daemon/src/ports.dart';
 import 'package:test/test.dart';
 import 'package:seltzer/platform/vm.dart';
 
@@ -16,27 +17,23 @@ void main() {
     Daemon daemon;
     File dbFile;
 
-    setUpAll(() async {
+    setUp(() async {
       dbFile = new File('.test.db');
       if (dbFile.existsSync()) {
         dbFile.deleteSync();
       }
 
       daemon = new Daemon(new NodeDatabase(dbFile));
-      server = (new DaemonServerBuilder()
-            ..setCookie('test')
-            ..setDaemon(daemon))
-          .build();
+      server = new DaemonServer(daemon, cookie: 'test');
       client = new DaemonClient(new VmSeltzerHttp(), cookie: server.cookie);
-      server.start();
+      await server.start();
     });
 
-    tearDownAll(() async {
+    tearDown(() {
       server.stop();
       dbFile.deleteSync();
+      Future.wait(daemon.nodes.map(daemon.deregisterNode));
     });
-
-    tearDown(() => Future.wait(daemon.nodes.map(daemon.deregisterNode)));
 
     test('should reject requests with a bad cookie', () async {
       var badClient =
@@ -55,14 +52,14 @@ void main() {
 
     test('should fail to register a currently registered node', () async {
       expect(await client.registerNode('A'), greaterThan(0));
-      expect(await client.registerNode('A'), -1);
+      expect(await client.registerNode('A'), Ports.INVALID_PORT);
     });
 
     test('should deregister a node', () async {
       expect(await client.registerNode('A'), greaterThan(0));
       expect(await daemon.lookupPort('A'), greaterThan(0));
       expect(await client.deregisterNode('A'), true);
-      expect(await daemon.lookupPort('A'), -1);
+      expect(await daemon.lookupPort('A'), Ports.INVALID_PORT);
     });
 
     test('should exchange the list of nodes registered on the server',
