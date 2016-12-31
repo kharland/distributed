@@ -14,18 +14,18 @@ abstract class RouteHandler {
   static const delete = 'delete';
   static const patch = 'patch';
 
-  static const ACCEPT_ALL_COOKIE = '';
+  static const acceptAllCookie = '';
 
   final String _cookie;
 
-  RouteHandler._([this._cookie = ACCEPT_ALL_COOKIE]);
+  RouteHandler._([this._cookie = acceptAllCookie]);
 
   String get method;
 
   String get route;
 
   void execute(HttpContext ctx) {
-    if (_cookie == ACCEPT_ALL_COOKIE || ctx.params['cookie'] == _cookie) {
+    if (_cookie == acceptAllCookie || ctx.params['cookie'] == _cookie) {
       executeChild(ctx);
     } else {
       fail(ctx, 'Invalid cookie');

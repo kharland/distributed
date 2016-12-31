@@ -13,18 +13,18 @@ void main() {
     File testFile;
 
     Future<Database<String, String>> setup() async {
-      testFile = new File('./test.db.txt');
+      testFile = new File('.test.db');
       if (testFile.existsSync()) {
         testFile.deleteSync();
       }
       testFile.createSync();
 
       return new MemoryDatabase<String, String>(testFile,
-          recordSerializer: new RecordSerializer(
+          recordSerializer: new RecordSerializer<String, String>(
               new StringSerializer(), new StringSerializer()));
     }
 
-    Future teardown() async {
+    Future<Null> teardown() async {
       testFile.deleteSync();
     }
 
@@ -35,7 +35,7 @@ void main() {
 
       await database.insert('A', 'B');
       await database.insert('C', 'D');
-      await database.save();
+      database.save();
       var contents = testFile.readAsStringSync();
       expect(contents, contains('A'));
       expect(contents, contains('B'));

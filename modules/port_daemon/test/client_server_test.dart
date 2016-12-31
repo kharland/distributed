@@ -35,6 +35,10 @@ void main() {
       Future.wait(daemon.nodes.map(daemon.deregisterNode));
     });
 
+    tearDownAll(() {
+      dbFile.deleteSync();
+    });
+
     test('should reject requests with a bad cookie', () async {
       var badClient =
           new DaemonClient(new VmSeltzerHttp(), cookie: 'bad${server.cookie}');
@@ -52,14 +56,14 @@ void main() {
 
     test('should fail to register a currently registered node', () async {
       expect(await client.registerNode('A'), greaterThan(0));
-      expect(await client.registerNode('A'), Ports.INVALID_PORT);
+      expect(await client.registerNode('A'), Ports.invalidPort);
     });
 
     test('should deregister a node', () async {
       expect(await client.registerNode('A'), greaterThan(0));
       expect(await daemon.lookupPort('A'), greaterThan(0));
       expect(await client.deregisterNode('A'), true);
-      expect(await daemon.lookupPort('A'), Ports.INVALID_PORT);
+      expect(await daemon.lookupPort('A'), Ports.invalidPort);
     });
 
     test('should exchange the list of nodes registered on the server',

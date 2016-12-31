@@ -43,7 +43,7 @@ class Daemon {
   ///
   /// If no node is found, returns Ports.INVALID_PORT.
   Future<Int64> lookupPort(String nodeName) async =>
-      await _database.get(nodeName) ?? Ports.INVALID_PORT;
+      await _database.get(nodeName) ?? Ports.invalidPort;
 }
 
 class NodeDatabase extends MemoryDatabase<String, Int64> {

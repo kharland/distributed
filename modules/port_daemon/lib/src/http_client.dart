@@ -13,12 +13,10 @@ class DaemonClient {
   final String hostname;
   final Int64 port;
 
-  DaemonClient(
-    this._seltzer, {
-    this.hostname: DaemonServer.defaultHostname,
-    int port: DaemonServer.defaultPort,
-    this.cookie: DaemonServer.defaultCookie
-  })
+  DaemonClient(this._seltzer,
+      {this.hostname: DaemonServer.defaultHostname,
+      int port: DaemonServer.defaultPort,
+      this.cookie: DaemonServer.defaultCookie})
       : this.port = new Int64(port);
 
   /// Pings the daemon server.
@@ -63,7 +61,7 @@ class DaemonClient {
       portCompleter.complete(Int64.parseInt(response.readAsString()));
     }, onError: (error) {
       log(error);
-      portCompleter.complete(Ports.INVALID_PORT);
+      portCompleter.complete(Ports.invalidPort);
     });
     return portCompleter.future;
   }
@@ -80,7 +78,7 @@ class DaemonClient {
       portCompleter.complete(result.port);
     }, onError: (error) {
       log(error);
-      portCompleter.complete(Ports.INVALID_PORT);
+      portCompleter.complete(Ports.invalidPort);
     });
     return portCompleter.future;
   }

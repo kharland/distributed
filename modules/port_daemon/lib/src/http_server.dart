@@ -9,9 +9,7 @@ import 'package:fixnum/fixnum.dart';
 class DaemonServer {
   static const int defaultPort = 4369;
   static const String defaultHostname = 'localhost';
-  static const String defaultCookie = RouteHandler.ACCEPT_ALL_COOKIE;
-
-  static String url(String hostname, Int64 port) => 'http://$hostname:$port';
+  static const String defaultCookie = RouteHandler.acceptAllCookie;
 
   final Express _express = new Express();
   final Daemon _daemon;
@@ -26,6 +24,8 @@ class DaemonServer {
       : this.port = new Int64(port) {
     logger = (_) {};
   }
+
+  static String url(String hostname, Int64 port) => 'http://$hostname:$port';
 
   /// Starts listening for requests.
   ///

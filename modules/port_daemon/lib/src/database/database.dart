@@ -59,10 +59,10 @@ class RecordSerializer<K, V> {
 /// The contents can be written to disk via [save].
 class MemoryDatabase<K, V> implements Database<K, V> {
   final File _file;
-  final RecordSerializer _serializer;
+  final RecordSerializer<K, V> _serializer;
   final Map<K, V> _records = <K, V>{};
 
-  MemoryDatabase(this._file, {RecordSerializer recordSerializer})
+  MemoryDatabase(this._file, {RecordSerializer<K, V> recordSerializer})
       : _serializer = recordSerializer {
     if (!_file.existsSync()) {
       _file.createSync();
@@ -86,7 +86,7 @@ class MemoryDatabase<K, V> implements Database<K, V> {
       throw new Exception('$key is already associated with $oldValue');
     }
     _records[key] = value;
-    await save();
+    save();
     return value;
   }
 
@@ -96,7 +96,7 @@ class MemoryDatabase<K, V> implements Database<K, V> {
       throw new Exception("No record associated with $key");
     }
     _records[key] = value;
-    await save();
+    save();
     return value;
   }
 
@@ -107,7 +107,7 @@ class MemoryDatabase<K, V> implements Database<K, V> {
   Future<V> remove(K key) async {
     if (_records.containsKey(key)) {
       var record = _records.remove(key);
-      await save();
+      save();
       return record;
     }
     return null;

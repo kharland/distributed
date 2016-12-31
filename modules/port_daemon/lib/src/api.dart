@@ -12,7 +12,7 @@ abstract class Message {
 
   static Map<String, Object> parseJson(derivedType, String s) =>
       JSON.decode(s.substring(derivedType.toString().length))
-      as Map<String, Object>;
+          as Map<String, Object>;
 
   Map<String, Object> toJson();
 

@@ -15,7 +15,7 @@ dependencies:
       git: git://github.com/kharland/seltzer.git
   web_socket_channel: "<=2.0.0"
 dev_dependencies:
-  dart_coveralls: 
+  dart_style:
   test:
   mockito:
   echo_server:

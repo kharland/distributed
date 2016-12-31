@@ -15,7 +15,7 @@ dependencies:
   distributed.node:
     path: ../node
 dev_dependencies:
-  dart_coveralls:
+  dart_style:
   test:
   mockito:
   echo_server:
