@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:distributed.port_daemon/daemon.dart';
-import 'package:distributed.port_daemon/src/http_client.dart';
+import 'package:distributed.port_daemon/client.dart';
+import 'package:distributed.port_daemon/environment.dart';
 import 'package:distributed.port_daemon/src/http_server.dart';
 import 'package:distributed.port_daemon/src/ports.dart';
 import 'package:test/test.dart';
@@ -11,6 +12,7 @@ import 'package:quiver/testing/async.dart';
 
 void main() {
   useSeltzerInVm();
+  configureLogging(testing: true);
 
   group('$DaemonServer', () {
     DaemonServer server;

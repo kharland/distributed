@@ -4,6 +4,7 @@ import 'package:distributed.port_daemon/src/api.dart';
 import 'package:distributed.port_daemon/src/http_server.dart';
 import 'package:distributed.port_daemon/src/ports.dart';
 import 'package:fixnum/fixnum.dart';
+import 'package:logging/logging.dart';
 import 'package:seltzer/seltzer.dart';
 
 class DaemonClient {
@@ -12,24 +13,27 @@ class DaemonClient {
   final String cookie;
   final String hostname;
   final Int64 port;
+  final Logger _logger = new Logger('$DaemonClient');
 
-  DaemonClient(this._seltzer,
-      {this.hostname: DaemonServer.defaultHostname,
-      int port: DaemonServer.defaultPort,
-      this.cookie: DaemonServer.defaultCookie})
+  DaemonClient(
+    this._seltzer, {
+    this.hostname: DaemonServer.defaultHostname,
+    int port: DaemonServer.defaultPort,
+    this.cookie: DaemonServer.defaultCookie,
+  })
       : this.port = new Int64(port);
 
   /// Pings the daemon server.
   ///
   /// Returns a future that completes with true iff a response was received.
-  Future<bool> pingDaemon(String name,
-      [void log(String message) = print]) async {
+  Future<bool> pingDaemon(String name) async {
     var responseCompleter = new Completer<bool>();
     runZoned(() async {
       await _http.send(_seltzer.get(_url('ping/$name')));
       responseCompleter.complete(true);
     }, onError: (error) {
-      log('[ERROR]: $error');
+      _logger.info('Port daemon is unavailable');
+      _logger.severe(error);
       responseCompleter.complete(false);
     });
     return responseCompleter.future;
@@ -38,7 +42,7 @@ class DaemonClient {
   /// Returns a mapping of node name -> port of the daemon server registrants.
   ///
   /// Returns an empty map if no nodes are registered or if an error occurred.
-  Future<Map<String, int>> listNodes([void log(String message) = print]) async {
+  Future<Map<String, int>> listNodes() async {
     var assignmentsCompleter = new Completer<Map<String, int>>();
     runZoned(() async {
       var response = await _http.send(_seltzer.get(_url('list/node')));
@@ -46,7 +50,7 @@ class DaemonClient {
           new PortAssignmentList.fromString(response.readAsString());
       assignmentsCompleter.complete(assignments.assignments);
     }, onError: (error, stacktrace) {
-      log(error);
+      _logger.severe(error);
       assignmentsCompleter.complete({});
     });
     return assignmentsCompleter.future;
@@ -55,13 +59,13 @@ class DaemonClient {
   /// Request the port for the node named [name].
   ///
   /// Returns Ports.INVALID_PORT if no such node is registered with the daemon.
-  Future<Int64> lookupNode(String name, [void log(String message) = print]) {
+  Future<Int64> lookupNode(String name) {
     var portCompleter = new Completer<Int64>();
     runZoned(() async {
       var response = await _http.send(_seltzer.get(_url('node/$name')));
       portCompleter.complete(Int64.parseInt(response.readAsString()));
     }, onError: (error) {
-      log(error);
+      _logger.severe(error);
       portCompleter.complete(Ports.invalidPort);
     });
     return portCompleter.future;
@@ -71,14 +75,14 @@ class DaemonClient {
   ///
   /// Returns a Future that completes with the new port if registration
   /// succeeded or Ports.INVALID_PORT if it failed.
-  Future<Int64> registerNode(String name, [void log(String message) = print]) {
+  Future<Int64> registerNode(String name) {
     var portCompleter = new Completer<Int64>();
     runZoned(() async {
       var response = await _http.send(_seltzer.post(_url('node/$name')));
       var result = new RegistrationResult.fromString(response.readAsString());
       portCompleter.complete(result.port);
     }, onError: (error) {
-      log(error);
+      _logger.severe(error);
       portCompleter.complete(Ports.invalidPort);
     });
     return portCompleter.future;
@@ -87,14 +91,14 @@ class DaemonClient {
   /// Instructs the daemon server to deregister [name].
   ///
   /// Returns a future that completes with true iff deregistration succeeeded.
-  Future<bool> deregisterNode(String name, [void log(String message) = print]) {
+  Future<bool> deregisterNode(String name) {
     var resultCompleter = new Completer<bool>();
     runZoned(() async {
       var response = await _http.send(_seltzer.delete(_url('node/$name')));
       var result = new DeregistrationResult.fromString(response.readAsString());
       resultCompleter.complete(!result.failed);
     }, onError: (error) {
-      log(error);
+      _logger.severe(error);
       resultCompleter.complete(false);
     });
     return resultCompleter.future;

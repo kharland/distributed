@@ -1,10 +1,11 @@
 import 'package:distributed.node/interfaces/peer.dart';
 import 'package:distributed.node/src/configuration.dart';
 import 'package:distributed.node/src/io/node.dart';
-import 'package:distributed.port_daemon/src/http_client.dart';
+import 'package:distributed.port_daemon/client.dart';
 
 void configureDistributed() {
   setNodeProvider(new _IONodeProvider());
+  // TODO: replace websocketchannel with seltzer and init seltzer here.
 }
 
 class _IONodeProvider implements NodeProvider {

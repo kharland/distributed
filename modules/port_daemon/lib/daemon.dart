@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:distributed.port_daemon/src/ports.dart';
 import 'package:fixnum/fixnum.dart';
+import 'package:logging/logging.dart';
 import 'src/database/database.dart';
 import 'src/database/serializer.dart';
 
@@ -13,7 +14,9 @@ class Daemon {
 
   final Database<String, Int64> _database;
   final Map<String, ServerHeartbeat> _heartbeats = <String, ServerHeartbeat>{};
+  final Logger _logger = new Logger('$Daemon');
 
+  //TODO: Initialize heartbeats for nodes that are already in the database.
   Daemon(this._database);
 
   /// The set of names of all nodes registered with this daemon.
@@ -36,6 +39,7 @@ class Daemon {
     port = await _database.insert(name, await _ports.getUnusedPort());
     _heartbeats[name] = new ServerHeartbeat(name)
       ..onFlatline.listen(deregisterNode);
+    _logger.info("Registered $name to port $port");
     return port;
   }
 
@@ -43,14 +47,18 @@ class Daemon {
   ///
   /// An argument error is thrown if such a node does not exist.
   Future<Null> deregisterNode(String name) async {
-    if (await lookupPort(name) < Int64.ZERO) {
-      throw new ArgumentError('$name is not registered');
+    Int64 port;
+    if ((port = await lookupPort(name)) < Int64.ZERO) {
+      throw new Exception('Unable to deregister unregistered node $name');
     }
     await _database.remove(name);
 
     var heartbeat = _heartbeats.remove(name);
-    if (!heartbeat.isFlatlined) {
+    if (heartbeat.isFlatlined) {
+      _logger.info("Deregistered unresponsive node $name from port $port");
+    } else {
       heartbeat.flatline(notify: false);
+      _logger.info("Deregistered node $name from port $port");
     }
   }
 

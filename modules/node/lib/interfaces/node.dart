@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:distributed.node/interfaces/message.dart';
 import 'package:distributed.node/interfaces/peer.dart';
 import 'package:distributed.node/src/configuration.dart';
-import 'package:distributed.port_daemon/src/http_client.dart';
+import 'package:distributed.port_daemon/client.dart';
 
 /// A node in a distributed system.
 ///

@@ -6,7 +6,7 @@ import 'package:distributed.node/interfaces/peer.dart';
 import 'package:distributed.node/src/io/handshake.dart';
 import 'package:distributed.node/src/networking/channel_server.dart';
 import 'package:distributed.node/src/networking/message_channel.dart';
-import 'package:distributed.port_daemon/src/http_client.dart';
+import 'package:distributed.port_daemon/client.dart';
 import 'package:meta/meta.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -114,7 +114,7 @@ class IONode extends Peer implements Node {
     _onZeroConnections.close();
     _onDisconnect.close();
     _onShutdown.complete();
-    _daemonClient.deregisterNode(name);
+    await _daemonClient.deregisterNode(name);
     _heartbeatTimer.cancel();
   }
 

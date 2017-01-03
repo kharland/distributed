@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:args/args.dart';
 import 'package:distributed.node/node.dart';
 import 'package:distributed.node/platform/io.dart';
-import 'package:distributed.port_daemon/src/http_client.dart';
+import 'package:distributed.port_daemon/client.dart';
 import 'package:distributed.port_daemon/src/http_server.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:seltzer/platform/vm.dart';
@@ -40,7 +40,7 @@ Future main(List<String> args) async {
   }
   print('$nodeName registered to port $port with daemon at $serverUrl');
 
-  new Node(
+  var node = new Node(
     nodeName,
     hostname: 'localhost',
     port: port.toInt(),
@@ -48,7 +48,13 @@ Future main(List<String> args) async {
     daemonClient: daemonClient,
   );
 
-  print('$nodeName listening at ${DaemonServer.url('localhost', port)}');
+  ProcessSignal.SIGINT.watch().listen((_) async {
+    print("Received ${ProcessSignal.SIGINT}. Shutting down node...");
+    await node.shutdown();
+    exit(0);
+  });
+
+  print('$nodeName listening at ${node.url}');
 }
 
 void usage() {

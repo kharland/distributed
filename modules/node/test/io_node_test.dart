@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:distributed.node/src/io/node.dart';
 import 'package:distributed.node/platform/io.dart';
-import 'package:distributed.port_daemon/src/http_client.dart';
+import 'package:distributed.port_daemon/client.dart';
 import 'package:test/test.dart';
 import 'package:mockito/mockito.dart';
 

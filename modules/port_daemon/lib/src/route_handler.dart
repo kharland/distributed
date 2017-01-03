@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:distributed.port_daemon/daemon.dart';
 import 'package:distributed.port_daemon/src/api.dart';
-import 'package:express/express.dart';
+import 'package:express/express.dart' hide Logger;
 import 'package:fixnum/fixnum.dart';
-
-//TODO: Add logging support to this library
+import 'package:logging/logging.dart';
+import 'package:meta/meta.dart';
 
 abstract class RouteHandler {
   static const get = 'get';
@@ -26,13 +26,14 @@ abstract class RouteHandler {
 
   void execute(HttpContext ctx);
 
-  void fail(HttpContext ctx, String reason);
+  void fail(HttpContext ctx, String reason, [String context = '']);
 }
 
 abstract class _AuthenticatingRouteHandler implements RouteHandler {
   final String _cookie;
+  final Logger _logger;
 
-  _AuthenticatingRouteHandler(this._cookie);
+  _AuthenticatingRouteHandler(this._cookie, this._logger);
 
   @override
   void execute(HttpContext ctx) {
@@ -44,13 +45,23 @@ abstract class _AuthenticatingRouteHandler implements RouteHandler {
     }
   }
 
+  @override
+  @mustCallSuper
+  void fail(HttpContext ctx, String reason, [String context = '']) {
+    _logger.info('[request failed] $reason');
+    if (context.isNotEmpty) {
+      _logger.fine(context);
+    }
+  }
+
   void executeAuthenticated(HttpContext ctx);
 }
 
 class PingHandler extends _AuthenticatingRouteHandler {
   final Daemon _daemon;
 
-  PingHandler(this._daemon, String cookie) : super(cookie);
+  PingHandler(this._daemon, String cookie)
+      : super(cookie, new Logger('$PingHandler'));
 
   @override
   String get method => RouteHandler.get;
@@ -66,7 +77,8 @@ class PingHandler extends _AuthenticatingRouteHandler {
   }
 
   @override
-  void fail(HttpContext ctx, String reason) {
+  void fail(HttpContext ctx, String reason, [String context = '']) {
+    super.fail(ctx, reason, context);
     throw new UnimplementedError();
   }
 }
@@ -74,7 +86,8 @@ class PingHandler extends _AuthenticatingRouteHandler {
 class RegisterNodeHandler extends _AuthenticatingRouteHandler {
   final Daemon _daemon;
 
-  RegisterNodeHandler(this._daemon, String cookie) : super(cookie);
+  RegisterNodeHandler(this._daemon, String cookie)
+      : super(cookie, new Logger('$RegisterNodeHandler'));
 
   @override
   String get method => RouteHandler.post;
@@ -84,20 +97,18 @@ class RegisterNodeHandler extends _AuthenticatingRouteHandler {
 
   @override
   void executeAuthenticated(HttpContext ctx) {
-    print("Registering!");
     String name = ctx.params['name'];
     _daemon.registerNode(name).then((Int64 port) {
-      print("Registered $name to $port");
       ctx.sendText(new RegistrationResult(name, port).toString());
       ctx.end();
     }).catchError((e, stacktrace) {
-      fail(ctx, e.toString());
+      fail(ctx, e.toString(), stacktrace.toString());
     });
   }
 
   @override
-  void fail(HttpContext ctx, String reason) {
-    print("FAILED: $reason");
+  void fail(HttpContext ctx, String reason, [String context = '']) {
+    super.fail(ctx, reason, context);
     ctx.sendText(new RegistrationResult.failure().toString());
     ctx.end();
   }
@@ -106,7 +117,8 @@ class RegisterNodeHandler extends _AuthenticatingRouteHandler {
 class DeregisterNodeHandler extends _AuthenticatingRouteHandler {
   final Daemon _daemon;
 
-  DeregisterNodeHandler(this._daemon, String cookie) : super(cookie);
+  DeregisterNodeHandler(this._daemon, String cookie)
+      : super(cookie, new Logger('$DeregisterNodeHandler'));
 
   @override
   String get method => RouteHandler.delete;
@@ -121,12 +133,13 @@ class DeregisterNodeHandler extends _AuthenticatingRouteHandler {
       ctx.sendText(new DeregistrationResult(name, false).toString());
       ctx.end();
     }).catchError((e, stacktrace) {
-      fail(ctx, name);
+      fail(ctx, e.toString(), stacktrace.toString());
     });
   }
 
   @override
-  void fail(HttpContext ctx, String reason) {
+  void fail(HttpContext ctx, String reason, [String context = '']) {
+    super.fail(ctx, reason, context);
     ctx.sendText(new DeregistrationResult(reason, true).toString());
     ctx.end();
   }
@@ -135,7 +148,8 @@ class DeregisterNodeHandler extends _AuthenticatingRouteHandler {
 class LookupNodeHandler extends _AuthenticatingRouteHandler {
   final Daemon _daemon;
 
-  LookupNodeHandler(this._daemon, String cookie) : super(cookie);
+  LookupNodeHandler(this._daemon, String cookie)
+      : super(cookie, new Logger('$LookupNodeHandler'));
 
   @override
   String get method => RouteHandler.get;
@@ -152,7 +166,8 @@ class LookupNodeHandler extends _AuthenticatingRouteHandler {
   }
 
   @override
-  void fail(HttpContext ctx, String reason) {
+  void fail(HttpContext ctx, String reason, [String context = '']) {
+    super.fail(ctx, reason, context);
     ctx.sendText(reason);
     ctx.end();
   }
@@ -161,7 +176,8 @@ class LookupNodeHandler extends _AuthenticatingRouteHandler {
 class ListNodesHandler extends _AuthenticatingRouteHandler {
   final Daemon _daemon;
 
-  ListNodesHandler(this._daemon, String cookie) : super(cookie);
+  ListNodesHandler(this._daemon, String cookie)
+      : super(cookie, new Logger('$ListNodesHandler'));
 
   @override
   String get method => RouteHandler.get;
@@ -183,7 +199,8 @@ class ListNodesHandler extends _AuthenticatingRouteHandler {
   }
 
   @override
-  void fail(HttpContext ctx, String reason) {
+  void fail(HttpContext ctx, String reason, [String context = '']) {
+    super.fail(ctx, reason, context);
     ctx.sendText(reason);
     ctx.end();
   }

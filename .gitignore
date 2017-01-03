@@ -4,4 +4,4 @@
 pubspec.lock
 .pub
 .trash
-.db
+*.db

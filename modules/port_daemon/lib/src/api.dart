@@ -49,6 +49,7 @@ class RegistrationResult extends Message {
       {'name': name, 'port': port.toInt(), 'failed': _failed};
 }
 
+// TODO: Why is this implemented differently than RegisterationResult? fix.
 class DeregistrationResult extends Message {
   final String name;
   final bool failed;

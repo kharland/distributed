@@ -9,6 +9,7 @@ dependencies:
   distributed.port_daemon:
     path: ../port_daemon
   fixnum:
+  logging:
   meta:
   resource:
   seltzer:
