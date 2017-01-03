@@ -6,6 +6,7 @@ import 'package:distributed.node/interfaces/peer.dart';
 import 'package:distributed.node/src/io/handshake.dart';
 import 'package:distributed.node/src/networking/channel_server.dart';
 import 'package:distributed.node/src/networking/message_channel.dart';
+import 'package:distributed.port_daemon/src/http_client.dart';
 import 'package:meta/meta.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -31,8 +32,10 @@ class IONode extends Peer implements Node {
   @virtual
   final String cookie;
 
-  int connectionCount = 0;
+  final DaemonClient _daemonClient;
+  int _connectionCount = 0;
   StreamSubscription<WebSocketChannel> _channelSubscription;
+  Timer _heartbeatTimer;
 
   /// Creates a new [IONode].
   ///
@@ -42,11 +45,16 @@ class IONode extends Peer implements Node {
     String hostname,
     int port,
     bool isHidden: false,
+    DaemonClient daemonClient,
     this.cookie: '',
   })
       : _channelHost = new ChannelServer(hostname, port),
+        _daemonClient = daemonClient,
         super(name, hostname, port: port, isHidden: isHidden) {
     _channelSubscription = _channelHost.onChannel.listen(_handshake);
+    _heartbeatTimer = new Timer.periodic(const Duration(seconds: 1), (_) {
+      _daemonClient.pingDaemon(name);
+    });
   }
 
   /// Creates a new [IONode] from [peer].
@@ -106,6 +114,8 @@ class IONode extends Peer implements Node {
     _onZeroConnections.close();
     _onDisconnect.close();
     _onShutdown.complete();
+    _daemonClient.deregisterNode(name);
+    _heartbeatTimer.cancel();
   }
 
   @override
@@ -139,13 +149,13 @@ class IONode extends Peer implements Node {
     var subscription = channel.onMessage.listen(_onMessage.add);
 
     _channels[peer] = channel;
-    connectionCount++;
+    _connectionCount++;
 
     channel.onClose.then((_) {
       subscription.cancel();
       _channels.remove(peer);
-      connectionCount--;
-      if (connectionCount <= 0) {
+      _connectionCount--;
+      if (_connectionCount <= 0) {
         _onZeroConnections.add(null);
       }
       _onDisconnect.add(peer);

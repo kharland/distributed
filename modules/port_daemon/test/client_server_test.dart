@@ -7,6 +7,7 @@ import 'package:distributed.port_daemon/src/http_server.dart';
 import 'package:distributed.port_daemon/src/ports.dart';
 import 'package:test/test.dart';
 import 'package:seltzer/platform/vm.dart';
+import 'package:quiver/testing/async.dart';
 
 void main() {
   useSeltzerInVm();
@@ -36,7 +37,9 @@ void main() {
     });
 
     tearDownAll(() {
-      dbFile.deleteSync();
+      if (dbFile.existsSync()) {
+        dbFile.deleteSync();
+      }
     });
 
     test('should reject requests with a bad cookie', () async {
@@ -46,7 +49,7 @@ void main() {
     });
 
     test('should be able to ping each other', () async {
-      expect(await client.isDaemonRunning(), isTrue);
+      expect(await client.pingDaemon(''), isTrue);
     });
 
     test('should register a node', () async {
@@ -80,6 +83,17 @@ void main() {
       expect(port, greaterThan(0));
       expect(await daemon.lookupPort('A'), port);
       expect(await client.lookupNode('A'), port);
+    });
+
+    test("should deregister a node that fails to ping within its heartbeat",
+        () async {
+      new FakeAsync().run((fakeAsync) async {
+        await client.registerNode('A');
+        expect(daemon.lookupPort('A'), greaterThan(0));
+        fakeAsync.elapse(
+            ServerHeartbeat.defaultDuration + const Duration(seconds: 1));
+        expect(daemon.lookupPort('A'), lessThan(0));
+      });
     });
   });
 }

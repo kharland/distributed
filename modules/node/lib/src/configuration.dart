@@ -1,5 +1,6 @@
 import 'package:distributed.node/interfaces/node.dart';
 import 'package:distributed.node/interfaces/peer.dart';
+import 'package:distributed.port_daemon/src/http_client.dart';
 
 abstract class NodeProvider {
   Node create(
@@ -8,6 +9,7 @@ abstract class NodeProvider {
     String cookie,
     int port,
     bool isHidden,
+    DaemonClient daemonClient,
   });
 
   Node createFromPeer(Peer peer, {String cookie: ''});

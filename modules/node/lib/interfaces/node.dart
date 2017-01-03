@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:distributed.node/interfaces/message.dart';
 import 'package:distributed.node/interfaces/peer.dart';
 import 'package:distributed.node/src/configuration.dart';
+import 'package:distributed.port_daemon/src/http_client.dart';
 
 /// A node in a distributed system.
 ///
@@ -24,13 +25,15 @@ abstract class Node extends Peer {
           {String hostname: defaultHostname,
           String cookie: defaultCookie,
           int port: defaultPort,
-          bool isHidden: false}) =>
+          bool isHidden: false,
+          DaemonClient daemonClient}) =>
       nodeProvider.create(
         name,
         hostname: hostname,
         cookie: cookie,
         port: port,
         isHidden: isHidden,
+        daemonClient: daemonClient,
       );
 
   /// Creates a node with the same information as [peer].

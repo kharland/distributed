@@ -22,10 +22,11 @@ class DaemonClient {
   /// Pings the daemon server.
   ///
   /// Returns a future that completes with true iff a response was received.
-  Future<bool> isDaemonRunning([void log(String message) = print]) async {
+  Future<bool> pingDaemon(String name,
+      [void log(String message) = print]) async {
     var responseCompleter = new Completer<bool>();
     runZoned(() async {
-      await _http.send(_seltzer.get(_url('ping')));
+      await _http.send(_seltzer.get(_url('ping/$name')));
       responseCompleter.complete(true);
     }, onError: (error) {
       log('[ERROR]: $error');

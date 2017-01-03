@@ -32,7 +32,7 @@ class DaemonServer {
   /// Returns a future that completes when the server is ready for connections.
   Future<Null> start() async {
     [
-      new PingHandler(),
+      new PingHandler(_daemon, cookie),
       new RegisterNodeHandler(_daemon, cookie),
       new DeregisterNodeHandler(_daemon, cookie),
       new LookupNodeHandler(_daemon, cookie),

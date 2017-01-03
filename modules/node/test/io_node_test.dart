@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:distributed.node/src/io/node.dart';
 import 'package:distributed.node/platform/io.dart';
+import 'package:distributed.port_daemon/src/http_client.dart';
 import 'package:test/test.dart';
+import 'package:mockito/mockito.dart';
 
 void main() {
   configureDistributed();
@@ -17,7 +19,8 @@ void main() {
           hostname: 'localhost',
           port: testPort++,
           cookie: cookie,
-          isHidden: isHidden));
+          isHidden: isHidden,
+          daemonClient: new MockDaemonClient()));
       await testNodes.last.onStartup;
       return testNodes.last;
     }
@@ -115,3 +118,5 @@ void main() {
     });
   });
 }
+
+class MockDaemonClient extends Mock implements DaemonClient {}

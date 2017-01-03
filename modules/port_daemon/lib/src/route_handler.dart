@@ -24,30 +24,43 @@ abstract class RouteHandler {
 
   String get route;
 
+  void execute(HttpContext ctx);
+
+  void fail(HttpContext ctx, String reason);
+}
+
+abstract class _AuthenticatingRouteHandler implements RouteHandler {
+  final String _cookie;
+
+  _AuthenticatingRouteHandler(this._cookie);
+
+  @override
   void execute(HttpContext ctx) {
-    if (_cookie == acceptAllCookie || ctx.params['cookie'] == _cookie) {
-      executeChild(ctx);
+    if (_cookie == RouteHandler.acceptAllCookie ||
+        ctx.params['cookie'] == _cookie) {
+      executeAuthenticated(ctx);
     } else {
       fail(ctx, 'Invalid cookie');
     }
   }
 
-  void executeChild(HttpContext ctx);
-
-  void fail(HttpContext ctx, String reason);
+  void executeAuthenticated(HttpContext ctx);
 }
 
-class PingHandler extends RouteHandler {
-  PingHandler() : super._();
+class PingHandler extends _AuthenticatingRouteHandler {
+  final Daemon _daemon;
+
+  PingHandler(this._daemon, String cookie) : super(cookie);
 
   @override
   String get method => RouteHandler.get;
 
   @override
-  String get route => '/ping';
+  String get route => '/ping/:name';
 
   @override
-  void executeChild(HttpContext ctx) {
+  void executeAuthenticated(HttpContext ctx) {
+    _daemon.acknowledgeNodeIsAlive(ctx.params['name']);
     ctx.sendBytes([1]);
     ctx.end();
   }
@@ -58,10 +71,10 @@ class PingHandler extends RouteHandler {
   }
 }
 
-class RegisterNodeHandler extends RouteHandler {
+class RegisterNodeHandler extends _AuthenticatingRouteHandler {
   final Daemon _daemon;
 
-  RegisterNodeHandler(this._daemon, String cookie) : super._(cookie);
+  RegisterNodeHandler(this._daemon, String cookie) : super(cookie);
 
   @override
   String get method => RouteHandler.post;
@@ -70,9 +83,11 @@ class RegisterNodeHandler extends RouteHandler {
   String get route => '/node/:name';
 
   @override
-  void executeChild(HttpContext ctx) {
+  void executeAuthenticated(HttpContext ctx) {
+    print("Registering!");
     String name = ctx.params['name'];
     _daemon.registerNode(name).then((Int64 port) {
+      print("Registered $name to $port");
       ctx.sendText(new RegistrationResult(name, port).toString());
       ctx.end();
     }).catchError((e, stacktrace) {
@@ -82,15 +97,16 @@ class RegisterNodeHandler extends RouteHandler {
 
   @override
   void fail(HttpContext ctx, String reason) {
+    print("FAILED: $reason");
     ctx.sendText(new RegistrationResult.failure().toString());
     ctx.end();
   }
 }
 
-class DeregisterNodeHandler extends RouteHandler {
+class DeregisterNodeHandler extends _AuthenticatingRouteHandler {
   final Daemon _daemon;
 
-  DeregisterNodeHandler(this._daemon, String cookie) : super._(cookie);
+  DeregisterNodeHandler(this._daemon, String cookie) : super(cookie);
 
   @override
   String get method => RouteHandler.delete;
@@ -99,7 +115,7 @@ class DeregisterNodeHandler extends RouteHandler {
   String get route => '/node/:name';
 
   @override
-  void executeChild(HttpContext ctx) {
+  void executeAuthenticated(HttpContext ctx) {
     String name = ctx.params['name'];
     _daemon.deregisterNode(name).then((_) {
       ctx.sendText(new DeregistrationResult(name, false).toString());
@@ -116,10 +132,10 @@ class DeregisterNodeHandler extends RouteHandler {
   }
 }
 
-class LookupNodeHandler extends RouteHandler {
+class LookupNodeHandler extends _AuthenticatingRouteHandler {
   final Daemon _daemon;
 
-  LookupNodeHandler(this._daemon, String cookie) : super._(cookie);
+  LookupNodeHandler(this._daemon, String cookie) : super(cookie);
 
   @override
   String get method => RouteHandler.get;
@@ -128,7 +144,7 @@ class LookupNodeHandler extends RouteHandler {
   String get route => '/node/:name';
 
   @override
-  void executeChild(HttpContext ctx) {
+  void executeAuthenticated(HttpContext ctx) {
     _daemon.lookupPort(ctx.params['name']).then((Int64 port) {
       ctx.sendText(port.toString());
       ctx.end();
@@ -142,10 +158,10 @@ class LookupNodeHandler extends RouteHandler {
   }
 }
 
-class ListNodesHandler extends RouteHandler {
+class ListNodesHandler extends _AuthenticatingRouteHandler {
   final Daemon _daemon;
 
-  ListNodesHandler(this._daemon, String cookie) : super._(cookie);
+  ListNodesHandler(this._daemon, String cookie) : super(cookie);
 
   @override
   String get method => RouteHandler.get;
@@ -154,7 +170,7 @@ class ListNodesHandler extends RouteHandler {
   String get route => '/list/node';
 
   @override
-  void executeChild(HttpContext ctx) {
+  void executeAuthenticated(HttpContext ctx) {
     var nodes = _daemon.nodes;
     Future.wait(nodes.map(_daemon.lookupPort)).then((List<Int64> ports) {
       var assignments = <String, Int64>{};
