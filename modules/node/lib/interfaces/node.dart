@@ -36,10 +36,6 @@ abstract class Node extends Peer {
         daemonClient: daemonClient,
       );
 
-  /// Creates a node with the same information as [peer].
-  factory Node.fromPeer(Peer peer, {String cookie: ''}) =>
-      nodeProvider.createFromPeer(peer, cookie: cookie);
-
   /// A string that another node must supply when requesting to connect with
   /// this node.
   String get cookie;

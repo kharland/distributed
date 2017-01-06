@@ -25,8 +25,4 @@ class _IONodeProvider implements NodeProvider {
           cookie: cookie,
           isHidden: isHidden,
           daemonClient: daemonClient);
-
-  @override
-  IONode createFromPeer(Peer peer, {String cookie: ''}) =>
-      new IONode.fromPeer(peer, cookie: cookie);
 }

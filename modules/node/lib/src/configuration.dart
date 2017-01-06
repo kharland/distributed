@@ -11,8 +11,6 @@ abstract class NodeProvider {
     bool isHidden,
     DaemonClient daemonClient,
   });
-
-  Node createFromPeer(Peer peer, {String cookie: ''});
 }
 
 NodeProvider nodeProvider;
