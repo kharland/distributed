@@ -34,12 +34,3 @@ void main({
     expect(connectionStrategy.connect('local', 'unknown'), throws);
   });
 }
-
-class TestConnection implements Connection {
-  @override
-  ConnectionChannels<Message> get channels => null;
-
-  // TODO: implement peer
-  @override
-  Peer get peer => null;
-}
