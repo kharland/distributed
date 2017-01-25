@@ -8,7 +8,7 @@ import 'package:test/test.dart';
 typedef Future<Database<String, String>> DatabaseProvider();
 
 /// Common tests for [Database].
-void testDatabase(DatabaseProvider setup, Future<Null> teardown()) {
+void testDatabase(DatabaseProvider setup, Future teardown()) {
   Database<String, String> database;
 
   group('', () {

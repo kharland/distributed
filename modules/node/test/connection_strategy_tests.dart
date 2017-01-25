@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:distributed.node/src/connection/connection_strategy.dart';
-import 'package:distributed.node/src/message/message.dart';
 import 'package:distributed.node/src/node_finder.dart';
 import 'package:distributed.node/src/peer.dart';
 import 'package:distributed.node/testing/test_channels_connection.dart';
+import 'package:distributed.port_daemon/src/ports.dart';
 import 'package:test/test.dart';
 
 import 'src/connection_strategy_test.dart' as connection_strategy_test;
@@ -46,8 +46,8 @@ class _TestNodeFinder implements NodeFinder {
       new Future<String>.value(_nodeInfoCache[nodeName]?.address ?? '');
 
   @override
-  Future<int> findNodePort(String nodeName) =>
-      new Future<int>.value(_nodeInfoCache[nodeName]?.port ?? -1);
+  Future<int> findNodePort(String nodeName) => new Future<int>.value(
+      _nodeInfoCache[nodeName]?.port ?? Ports.invalidPort.toInt());
 }
 
 class _NodeInfo {

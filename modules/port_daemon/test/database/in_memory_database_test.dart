@@ -25,7 +25,7 @@ void main() {
               new StringSerializer(), new StringSerializer()));
     }
 
-    Future<Null> teardown() async {
+    Future teardown() async {
       testFile.deleteSync();
     }
 

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:distributed.node/src/node_finder.dart';
 import 'package:distributed.node/src/peer.dart';
+import 'package:distributed.port_daemon/src/ports.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:test/test.dart';
 
@@ -38,8 +39,10 @@ void main({
       expect(await finder.findNodePort(peer.name), peerPort);
     });
 
-    test("should return -1 if the node doesn't exist", () async {
-      expect(await finder.findNodePort('unregistered'), -1);
+    test("should return ${Ports.invalidPort} if the node doesn't exist",
+        () async {
+      expect(
+          await finder.findNodePort('unregistered'), Ports.invalidPort.toInt());
     });
   });
 }
