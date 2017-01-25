@@ -1,0 +1,3 @@
+name: distributed
+dev_dependencies:
+  dart_style:

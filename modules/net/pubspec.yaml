@@ -1,0 +1,13 @@
+name: distributed.net
+
+version: 0.0.0
+description: Common networking code
+authors:
+  - Kendal Harland <kjharland@google.com>
+homepage: https://github.com/kharland/distributed_dart
+dependencies:
+  seltzer:
+    git: git://github.com/matanlurey/seltzer.git
+dev_dependencies:
+  dart_style:
+  test:
