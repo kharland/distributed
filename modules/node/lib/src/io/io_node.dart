@@ -44,7 +44,7 @@ class IONode extends DelegatingNode {
   }
 
   @override
-  Future<Null> shutdown() async {
+  Future shutdown() async {
     await super.shutdown();
     await _server.close(force: true);
     await _daemonClient.deregisterNode(name);

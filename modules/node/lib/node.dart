@@ -26,7 +26,7 @@ abstract class Node {
   /// Emits events when this node disconnects from a [Peer].
   Stream<Peer> get onDisconnect;
 
-  Future<Null> connect(Peer peer);
+  Future connect(Peer peer);
 
   /// Disconnects from the remote peer identified by [name] and [address].
   void disconnect(Peer peer);
@@ -39,7 +39,7 @@ abstract class Node {
 
   /// Closes all connections and disables the node. Be sure to call [disconnect]
   /// before calling [shutdown] to remove the node from any connected networks.
-  Future<Null> shutdown();
+  Future shutdown();
 
   Peer toPeer() => new Peer(name, address);
 }
@@ -68,7 +68,7 @@ class DelegatingNode implements Node {
   Stream<Peer> get onDisconnect => delegate.onDisconnect;
 
   @override
-  Future<Null> connect(Peer peer) => delegate.connect(peer);
+  Future connect(Peer peer) => delegate.connect(peer);
 
   @override
   void disconnect(Peer peer) {
@@ -84,7 +84,7 @@ class DelegatingNode implements Node {
   Stream<Message> receive(String action) => delegate.receive(action);
 
   @override
-  Future<Null> shutdown() => delegate.shutdown();
+  Future shutdown() => delegate.shutdown();
 
   @override
   Peer toPeer() => delegate.toPeer();

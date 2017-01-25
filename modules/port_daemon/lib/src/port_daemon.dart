@@ -53,7 +53,7 @@ class PortDaemon {
   /// Frees the port held by the node named [name].
   ///
   /// An argument error is thrown if such a node does not exist.
-  Future<Null> deregisterNode(String name) async {
+  Future deregisterNode(String name) async {
     Int64 port;
     if ((port = await lookupPort(name)) < Int64.ZERO) {
       throw new Exception('Unable to deregister unregistered node $name');

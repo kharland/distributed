@@ -11,6 +11,7 @@ class SocketChannels implements ConnectionChannels<String> {
   static const _KEY_USR = '0';
   static const _KEY_SYS = '1';
   static const _KEY_ERR = '2';
+  static final _timeoutError = 'Remote $SocketChannels timed out';
 
   @override
   final StreamChannel<String> user;
@@ -36,7 +37,8 @@ class SocketChannels implements ConnectionChannels<String> {
     }));
 
     var timeout = new Timeout(() {
-      throw new TimeoutException('Remote SocketDemultiplexer timeod out');
+      splitter.primaryChannel.sink.close();
+      throw new TimeoutException(_timeoutError);
     });
 
     var message = JSON.decode(await splitter.primaryChannel.stream.first);
@@ -49,7 +51,7 @@ class SocketChannels implements ConnectionChannels<String> {
         socket,
       );
     } else {
-      throw new Exception('SocketDemultiplexer: ${message['error']}');
+      throw new Exception('$SocketChannels: ${message['error']}');
     }
   }
 
@@ -57,7 +59,7 @@ class SocketChannels implements ConnectionChannels<String> {
     var splitter = new SocketSplitter(socket);
     var timeout = new Timeout(() {
       splitter.primaryChannel.sink.close();
-      throw new TimeoutException('Remote SocketDemultiplexer timeod out');
+      throw new TimeoutException(_timeoutError);
     });
 
     var message = JSON.decode(await splitter.primaryChannel.stream.first);

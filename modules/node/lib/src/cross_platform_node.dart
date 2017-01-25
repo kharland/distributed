@@ -55,7 +55,7 @@ class CrossPlatformNode implements Node {
   Stream<Peer> get onDisconnect => _onDisconnectController.stream;
 
   @override
-  Future<Null> connect(Peer peer) async {
+  Future connect(Peer peer) async {
     assert(!_connections.containsKey(peer));
     _addConnection(await _connectionStrategy.connect(name, peer.name));
   }
@@ -78,7 +78,7 @@ class CrossPlatformNode implements Node {
       .where((Message message) => message.category == action);
 
   @override
-  Future<Null> shutdown() async {
+  Future shutdown() async {
     _onUserMessageController.close();
     _onConnectController.close();
     if (peers.isNotEmpty) {

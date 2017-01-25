@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:distributed.port_daemon/src/ports.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:meta/meta.dart';
 
@@ -30,7 +31,7 @@ class RegistrationResult extends Message {
 
   RegistrationResult.failure()
       : name = '',
-        port = new Int64(-1),
+        port = Ports.invalidPort,
         _failed = true;
 
   factory RegistrationResult.fromJson(Map<String, Object> json) =>

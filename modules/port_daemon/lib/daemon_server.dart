@@ -4,14 +4,16 @@ import 'dart:io';
 import 'package:distributed.port_daemon/src/port_daemon.dart';
 import 'package:distributed.port_daemon/src/route_handler.dart';
 import 'package:distributed.net/secret.dart';
-import 'package:express/express.dart';
+import 'package:express/express.dart' as express;
 import 'package:fixnum/fixnum.dart';
+import 'package:logging/logging.dart';
 
 class DaemonServer {
   static const int defaultPort = 4369;
   static const String defaultHostname = 'localhost';
 
-  final Express _express = new Express();
+  final express.Express _express = new express.Express();
+  final Logger _logger = new Logger('$DaemonServer');
   final PortDaemon _daemon;
   final Secret secret;
   final String hostname;
@@ -34,14 +36,18 @@ class DaemonServer {
     int port: DaemonServer.defaultPort,
     this.secret: Secret.acceptAny,
   })
-      : this.port = new Int64(port) {}
+      : this.port = new Int64(port) {
+    express.logger = (Object obj) {
+      _logger.info(obj);
+    };
+  }
 
   static String url(String hostname, Int64 port) => 'http://$hostname:$port';
 
   /// Starts listening for requests.
   ///
   /// Returns a future that completes when the server is ready for connections.
-  Future<Null> start() async {
+  Future start() async {
     [
       new PingHandler(_daemon, secret),
       new RegisterNodeHandler(_daemon, secret),
@@ -65,7 +71,7 @@ class DaemonServer {
 
   void _installRoute(
     RouteHandler route,
-    Express express, {
+    express.Express express, {
     Secret secret: Secret.acceptAny,
   }) {
     var installer;

@@ -2,23 +2,23 @@ import 'dart:async';
 
 import 'package:distributed.node/src/connection/connection.dart';
 import 'package:distributed.node/src/connection/connection_channels.dart';
-import 'package:distributed.node/src/peer_identification_strategy.dart';
-import 'package:distributed.node/src/message/message.dart';
 import 'package:distributed.node/src/node_finder.dart';
 import 'package:distributed.node/src/peer.dart';
+import 'package:distributed.node/src/peer_identification_strategy.dart';
+import 'package:distributed.port_daemon/src/ports.dart';
 
 abstract class ConnectionStrategy<T> {
   Future<Connection<T>> connect(String localPeerName, String remotePeerName);
 }
 
-class RequireIdentification implements ConnectionStrategy<Message> {
-  ConnectionStrategy<Message> _connectionStrategy;
-  PeerIdentificationStrategy _identificationStrategy;
+class RequireIdentification<T> implements ConnectionStrategy<T> {
+  ConnectionStrategy<T> _connectionStrategy;
+  PeerIdentificationStrategy<T> _identificationStrategy;
 
   RequireIdentification(this._connectionStrategy, this._identificationStrategy);
 
   @override
-  Future<Connection<Message>> connect(
+  Future<Connection<T>> connect(
     String localPeerName,
     String remotePeerName,
   ) async {
@@ -53,7 +53,7 @@ class SearchForNode<T> implements ConnectionStrategy<T> {
     }
 
     var remotePeerPort = await _nodeFinder.findNodePort(remotePeerName);
-    if (remotePeerPort == -1) {
+    if (remotePeerPort == Ports.invalidPort.toInt()) {
       throw new Exception('node not found $remotePeerName');
     }
 
