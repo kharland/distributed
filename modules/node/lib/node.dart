@@ -30,7 +30,7 @@ abstract class Node {
 
   /// Connect to [peer].
   ///
-  /// [connectionStrategy] determines how this node will conneect to [peer]. If
+  /// [connectionStrategy] determines how this node will connect to [peer]. If
   /// it is not supplied, the default strategy is used.
   Future connect(Peer peer, {ConnectionStrategy connectionStrategy});
 
