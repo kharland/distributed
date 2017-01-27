@@ -13,12 +13,12 @@ void main({
   tearDown(() => teardown());
 
   test('connect should return a stream of connections', () async {
-    connectionStrategy = await setup(['remote']);
+    connectionStrategy = setup(['remote']);
     expect(connectionStrategy.connect('local', 'remote').first, completes);
   });
 
   test('connect should throw an exception if the connection fails', () async {
-    connectionStrategy = await setup();
+    connectionStrategy = setup();
     expect(connectionStrategy.connect('local', 'unknown').first, throws);
   });
 }

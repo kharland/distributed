@@ -46,10 +46,10 @@ Future<Socket> receiveSeltzerSocket(
 /// the SeltzerWebSocket implementation. Consider updating that and removing
 /// this.
 class _SeltzerSocketStream extends StreamView<String> {
-  static String _decodeMessage(message) => message.readAsString();
-
   _SeltzerSocketStream(SeltzerWebSocket socket)
       : super(socket.onMessage.asyncMap(_decodeMessage).asBroadcastStream());
+
+  static String _decodeMessage(message) => message.readAsString();
 }
 
 class _SeltzerSocketSink implements StreamSink<String> {

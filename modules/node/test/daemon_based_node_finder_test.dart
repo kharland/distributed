@@ -26,6 +26,8 @@ Future teardown() async {}
 class MockDaemonClient extends Mock implements DaemonClient {
   final List<String> _inNetworkPeers;
   final Map<String, Int64> _peerNameToPort = <String, Int64>{};
+
+  @override
   Int64 port = Int64.ONE;
 
   MockDaemonClient([this._inNetworkPeers = const []]);

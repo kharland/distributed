@@ -17,8 +17,8 @@ void main({
 
   test('should reject a connection if the provided secret does not match',
       () async {
-    var a = await createNode('a');
-    var b = await createNode('b', secret: new Secret('different'));
+    var a = createNode('a');
+    var b = createNode('b', secret: new Secret('different'));
 
     await a.connect(b.toPeer());
     expect(a.peers, isEmpty);
@@ -26,8 +26,8 @@ void main({
   });
 
   test('should accept a connection if the provided secret matches', () async {
-    var a = await createNode('a');
-    var b = await createNode('b');
+    var a = createNode('a');
+    var b = createNode('b');
 
     await a.connect(b.toPeer());
     expect(a.peers.contains(b.toPeer()), isTrue);
@@ -36,9 +36,9 @@ void main({
   });
 
   test("should connect to a new Peer's peers if it is not hidden", () async {
-    var a = await createNode('a');
-    var b = await createNode('b');
-    var c = await createNode('c');
+    var a = createNode('a');
+    var b = createNode('b');
+    var c = createNode('c');
 
     await a.connect(c.toPeer());
     await a.connect(b.toPeer());
@@ -49,9 +49,9 @@ void main({
   });
 
   test("should not connect to a new Peer's peers if it is hidden", () async {
-    var a = await createNode('a');
-    var b = await createNode('b', isHidden: true);
-    var c = await createNode('c');
+    var a = createNode('a');
+    var b = createNode('b', isHidden: true);
+    var c = createNode('c');
 
     await a.connect(c.toPeer());
     await b.connect(a.toPeer());
@@ -63,8 +63,8 @@ void main({
 
   test('should update its list of peers when a node is disconnnected.',
       () async {
-    var a = await createNode('a');
-    var b = await createNode('b');
+    var a = createNode('a');
+    var b = createNode('b');
 
     await a.connect(b.toPeer());
     a.disconnect(b.toPeer());
