@@ -34,7 +34,7 @@ class _IntIdBroker implements _MessageBroker<int> {
   @override
   String addressMessage(int recipientKey, String message) {
     assert(_recipients.containsKey(recipientKey));
-    return '${recipientKey}$_delimiter$message';
+    return '$recipientKey$_delimiter$message';
   }
 
   @override

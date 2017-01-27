@@ -10,17 +10,15 @@ dependencies:
     path: ../port_daemon
   distributed.utils:
     path: ../utils
+  distributed.net:
+    path: ../net
   fixnum:
   logging:
-  meta:
-  resource:
   seltzer:
     git: git://github.com/matanlurey/seltzer.git
-  stack_trace:
-  web_socket_channel: "<=2.0.0"
 dev_dependencies:
+  quiver:
   dart_style:
   test:
   mockito:
-  echo_server:
-    git: git://github.com/kharland/echo_server.git
+  stack_trace:

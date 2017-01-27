@@ -1,6 +1,6 @@
 import 'dart:async';
+
 import 'package:distributed.node/src/node_finder.dart';
-import 'package:distributed.node/src/peer.dart';
 import 'package:distributed.port_daemon/src/ports.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:test/test.dart';
@@ -8,35 +8,31 @@ import 'package:test/test.dart';
 typedef NodeFinder NodeFinderFactory();
 
 void main({
-  Future<NodeFinder> setup(),
+  Future<NodeFinder> setup([List<String> findablePeerNames]),
   Future teardown(),
   Future<Map<String, Int64>> registerNodes(Set<String> nodeNames),
 }) {
   NodeFinder finder;
 
-  setUp(() async {
-    finder = await setup();
-  });
-
   tearDown(() async => teardown());
 
   group('findNodeUrl', () {
     test('should return the address for an existing node', () async {
-      const peer = const Peer('registered', 'localhost');
-      await registerNodes([peer.name].toSet());
-      expect(await finder.findNodeAddress(peer.name), peer.address);
+      var peerName = 'registered';
+      finder = await setup([peerName]);
+      expect(await finder.findNodeAddress(peerName), isNotEmpty);
     });
 
     test("should return the empty string if the node doesn't exist", () async {
+      finder = await setup();
       expect(await finder.findNodeAddress('unregistered'), isEmpty);
     });
   });
 
   group('findNodePort', () {
     test('should return the port an existing node', () async {
-      const peer = const Peer('registered', 'localhost');
-      var peerPort = (await registerNodes([peer.name].toSet()))[peer.name];
-      expect(await finder.findNodePort(peer.name), peerPort);
+      finder = await setup(['registered']);
+      expect(await finder.findNodePort('registered'), greaterThan(-1));
     });
 
     test("should return ${Ports.invalidPort} if the node doesn't exist",

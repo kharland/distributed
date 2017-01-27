@@ -2,69 +2,36 @@ import 'dart:async';
 
 import 'package:distributed.net/secret.dart';
 import 'package:distributed.node/src/socket/socket.dart';
-import 'package:seltzer/seltzer.dart' as seltzer;
+import 'package:seltzer/platform/vm.dart';
+import 'package:seltzer/seltzer.dart';
 
 export 'package:distributed.node/src/socket/socket.dart';
 
-class SeltzerSocket extends StreamView<String> implements Socket {
-  static const _SECRET_ACCEPTED = 'cookie_acc';
-  static const _SECRET_REJECTED = 'cookie_rej';
+bool _isSeltzerInitialized = false;
 
-  final _SeltzerSocketSink _sink;
-
-  static Future<Socket> connect(String url, {Secret secret}) async {
-    var socket = await seltzer.connect(url);
-    var stream = new _SeltzerSocketStream(socket);
-    var sink = new _SeltzerSocketSink(socket);
-
-    sink.add(secret.toString());
-    var response = await stream.take(1).first;
-    if (response == _SECRET_REJECTED) {
-      throw new Exception('Secret $secret rejected by $url');
-    }
-    return new SeltzerSocket._(sink, stream);
+void _initSeltzer() {
+  if (!_isSeltzerInitialized) {
+    useSeltzerInVm();
+    _isSeltzerInitialized = true;
   }
+}
 
-  static Future<Socket> receive(
-    seltzer.SeltzerWebSocket socket, {
-    Secret secret: Secret.acceptAny,
-  }) async {
-    var stream = new _SeltzerSocketStream(socket);
-    var sink = new _SeltzerSocketSink(socket);
-    var message = await stream.take(1).first;
-    var foreignSecret = new Secret.fromString(message);
+Future<Socket> connectSeltzerSocket(String url, {Secret secret}) async {
+  _initSeltzer();
+  var socket = connect(url);
+  var stream = new _SeltzerSocketStream(socket);
+  var sink = new _SeltzerSocketSink(socket);
+  return Socket.connect(sink, stream);
+}
 
-    if (!foreignSecret.matches(secret)) {
-      socket.sendString(_SECRET_REJECTED);
-      throw new Exception("Rejected bad cookie $foreignSecret != $secret");
-    }
-    socket.sendString(_SECRET_ACCEPTED);
-    return new SeltzerSocket._(sink, stream);
-  }
-
-  SeltzerSocket._(_SeltzerSocketSink sink, _SeltzerSocketStream stream)
-      : _sink = sink,
-        super(stream);
-
-  @override
-  Future get done => _sink.done;
-
-  @override
-  void add(String data) {
-    _sink.add(data);
-  }
-
-  @override
-  Future close({int code, String reason}) async =>
-      _sink.closeAsSocket(code: code, reason: reason);
-
-  @override
-  void addError(errorEvent, [StackTrace stackTrace]) {
-    _sink.addError(errorEvent, stackTrace);
-  }
-
-  @override
-  Future addStream(Stream<String> stream) => _sink.addStream(stream);
+Future<Socket> receiveSeltzerSocket(
+  SeltzerWebSocket socket, {
+  Secret secret: Secret.acceptAny,
+}) {
+  _initSeltzer();
+  var stream = new _SeltzerSocketStream(socket);
+  var sink = new _SeltzerSocketSink(socket);
+  return Socket.receive(sink, stream);
 }
 
 /// A Stream<String> SeltzerWebSocket wrapper that does not buffer messages.
@@ -79,14 +46,14 @@ class SeltzerSocket extends StreamView<String> implements Socket {
 /// the SeltzerWebSocket implementation. Consider updating that and removing
 /// this.
 class _SeltzerSocketStream extends StreamView<String> {
-  _SeltzerSocketStream(seltzer.SeltzerWebSocket socket)
-      : super(socket.onMessage
-            .asyncMap((m) => m.readAsString())
-            .asBroadcastStream());
+  static String _decodeMessage(message) => message.readAsString();
+
+  _SeltzerSocketStream(SeltzerWebSocket socket)
+      : super(socket.onMessage.asyncMap(_decodeMessage).asBroadcastStream());
 }
 
 class _SeltzerSocketSink implements StreamSink<String> {
-  final seltzer.SeltzerWebSocket _socket;
+  final SeltzerWebSocket _socket;
 
   _SeltzerSocketSink(this._socket);
 
@@ -106,11 +73,6 @@ class _SeltzerSocketSink implements StreamSink<String> {
   @override
   Future close() {
     _socket.close();
-    return done;
-  }
-
-  Future closeAsSocket({int code, String reason}) {
-    _socket.close(code: code, reason: reason);
     return done;
   }
 

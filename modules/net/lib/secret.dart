@@ -6,11 +6,11 @@ class Secret {
   final bool _matchAny;
   final String _value;
 
+  const Secret(this._value) : _matchAny = false;
+
   const Secret._any()
       : _value = '',
         _matchAny = true;
-
-  const Secret(this._value) : _matchAny = false;
 
   factory Secret.fromString(String json) =>
       new Secret((JSON.decode(json) as Map<String, String>)['secret']);

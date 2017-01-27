@@ -5,14 +5,14 @@ import 'package:distributed.node/src/message/message.dart';
 import 'package:distributed.node/src/message/message_categories.dart';
 import 'package:logging/logging.dart';
 
-abstract class PeerIdentificationStrategy<T> {
+abstract class PeerIdentificationStrategy {
   Future<String> identifyRemote(
-    StreamSink<T> sink,
-    Stream<T> stream,
+    StreamSink<Message> sink,
+    Stream<Message> stream,
   );
 }
 
-class NameExchange implements PeerIdentificationStrategy<Message> {
+class NameExchange implements PeerIdentificationStrategy {
   final String _localPeerName;
   final Logger _logger = new Logger("$NameExchange");
 
