@@ -12,41 +12,6 @@ abstract class ConnectionStrategy {
   Stream<Connection> connect(String localPeerName, String remotePeerName);
 }
 
-class TransitiveConnectionStrategy implements ConnectionStrategy {
-  final ConnectionStrategy _connectionStrategy;
-  final List<Peer> _connectedPeers;
-
-  TransitiveConnectionStrategy(this._connectedPeers, this._connectionStrategy);
-
-  @override
-  Stream<Connection> connect(String localPeerName, String remotePeerName) {
-    var streamController = new StreamController<Connection>();
-    _connect(localPeerName, remotePeerName, streamController, _connectedPeers);
-    return streamController.stream;
-  }
-
-  Future _connect(
-    String localPeerName,
-    String remotePeerName,
-    StreamController<Connection> controller,
-    List<Peer> connectedPeers,
-  ) async {
-    _connectionStrategy
-        .connect(localPeerName, remotePeerName)
-        .forEach((Connection connection) {
-      controller.add(connection);
-      connectedPeers.add(connection.peer);
-
-      var transitivePeers = <Peer>[]; // Request list of peers from peer.
-      transitivePeers.forEach((Peer peer) {
-        if (!connectedPeers.contains(peer)) {
-          _connect(localPeerName, peer.name, controller, connectedPeers);
-        }
-      });
-    });
-  }
-}
-
 class RequireIdentification implements ConnectionStrategy {
   ConnectionStrategy _connectionStrategy;
   PeerIdentificationStrategy _identificationStrategy;
