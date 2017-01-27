@@ -5,7 +5,7 @@ import 'package:distributed.node/node.dart';
 import 'package:distributed.node/src/connection/connection.dart';
 import 'package:distributed.node/src/connection/connection_strategy.dart';
 import 'package:distributed.node/src/node/cross_platform_node.dart';
-import 'package:distributed.node/testing/connection_controller.dart';
+import 'package:distributed.node/src/connection/connection_controller.dart';
 
 import 'src/node_test.dart' as node_test;
 

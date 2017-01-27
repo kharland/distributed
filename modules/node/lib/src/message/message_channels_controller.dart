@@ -1,5 +1,5 @@
 import 'package:distributed.node/src/message/message_channels.dart';
-import 'package:distributed.node/testing/socket_channels_controller.dart';
+import 'package:distributed.node/src/socket/socket_channels_controller.dart';
 
 class MessageChannelsController {
   final MessageChannels local;

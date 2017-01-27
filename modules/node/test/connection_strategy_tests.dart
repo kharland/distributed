@@ -5,7 +5,7 @@ import 'package:distributed.node/platform/vm.dart';
 import 'package:distributed.node/src/connection/connection_channels.dart';
 import 'package:distributed.node/src/connection/connection_strategy.dart';
 import 'package:distributed.node/src/node_finder.dart';
-import 'package:distributed.node/testing/message_channels_controller.dart';
+import 'package:distributed.node/src/message/message_channels_controller.dart';
 import 'package:distributed.port_daemon/src/ports.dart';
 import 'package:test/test.dart';
 
