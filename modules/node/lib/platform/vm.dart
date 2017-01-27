@@ -1,16 +1,17 @@
 import 'package:distributed.net/secret.dart';
 import 'package:distributed.node/node.dart';
 import 'package:distributed.node/src/configuration.dart';
-import 'package:seltzer/platform/vm.dart' as seltzer;
+import 'package:distributed.utils/logging.dart';
 
-export 'package:distributed.node/src/io/io_node.dart';
+export 'package:distributed.node/node.dart';
+export 'package:distributed.node/src/node/vm_node.dart';
 
 void configureDistributed() {
-  setNodeProvider(new _IONodeProvider());
-  seltzer.useSeltzerInVm();
+  setNodeProvider(new _VmNodeProvider());
+  configureLogging();
 }
 
-class _IONodeProvider implements NodeProvider {
+class _VmNodeProvider implements NodeProvider {
   @override
   Node create(
     String name, {

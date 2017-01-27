@@ -11,7 +11,8 @@ class Peer {
   factory Peer.fromJson(Map<String, Object> json) =>
       new Peer(json['name'], json['address']);
 
-  factory Peer.fromString(String peer) => new Peer.fromJson(JSON.decode(peer));
+  factory Peer.fromString(String peer) =>
+      new Peer.fromJson(JSON.decode(peer) as Map<String, Object>);
 
   @override
   String toString() => "$name@$address";

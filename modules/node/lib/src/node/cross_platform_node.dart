@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:distributed.net/secret.dart';
 import 'package:distributed.node/node.dart';
 import 'package:distributed.node/src/connection/connection.dart';
 import 'package:distributed.node/src/connection/connection_strategy.dart';
@@ -38,7 +37,6 @@ class CrossPlatformNode implements Node {
     String name, {
     this.address: 'localhost',
     this.isHidden: false,
-    Secret secret: Secret.acceptAny,
     ConnectionStrategy connectionStrategy,
   })
       : name = name,
@@ -57,7 +55,7 @@ class CrossPlatformNode implements Node {
   @override
   Future connect(Peer peer) async {
     assert(!_connections.containsKey(peer));
-    _addConnection(await _connectionStrategy.connect(name, peer.name));
+    _connectionStrategy.connect(name, peer.name).forEach(addConnection);
   }
 
   @override
@@ -93,32 +91,24 @@ class CrossPlatformNode implements Node {
   @override
   Peer toPeer() => new Peer(name, address);
 
-  void receiveConnection(Connection connection) {
+  @override
+  void addConnection(Connection connection) {
     assert(!_connections.containsKey(connection.peer));
-    _addConnection(connection);
-  }
-
-  void _addConnection(Connection connection) {
-    connection.channels.system.stream.forEach((Message message) {
-      _handleSystemMessage(message, connection);
-    });
+    connection.channels.system.stream.forEach(_handleSystemMessage);
     connection.channels.error.stream.forEach(_handleErrorMessage);
-    connection.channels.done.then((_) {
-      _handleConnectionClosed(connection.peer);
-    });
-    _onUserMessageController.addStream(connection.channels.user.stream);
+    connection.done.then(_handleConnectionClosed);
+    connection.channels.user.stream.map(_onUserMessageController.add);
     _connections[connection.peer] = connection;
     _logger.info('connected to ${connection.peer}');
   }
 
-  void _handleSystemMessage(Message message, Connection connection) {
+  void _handleSystemMessage(Message message) {
     switch (message.category) {
       case MessageCategories.error:
         _logger.shout(message.payload);
         break;
       default:
-        var error = new Message.error('Unsupported: ${message.category}');
-        connection.channels.error.sink.add(error);
+        _logger.shout('Unsupported meesage received ${message.category}');
     }
   }
 

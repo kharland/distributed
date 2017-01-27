@@ -1,25 +1,22 @@
 import 'dart:async';
 
 import 'package:distributed.node/src/socket/socket_channels.dart';
-import 'package:distributed.node/testing/test_socket_connection.dart';
-import 'package:seltzer/platform/vm.dart';
+import 'package:distributed.node/testing/socket_controller.dart';
 import 'package:test/test.dart';
 
 void main() {
-  useSeltzerInVm();
-
   group('$SocketChannels', () {
     SocketChannels local;
     SocketChannels foreign;
 
     setUp(() async {
-      var testConnection = new TestSocketConnection();
+      var testConnection = new SocketController();
       await Future.wait([
-        SocketChannels.outgoing(testConnection.foreign).then((demux) {
-          foreign = demux;
+        SocketChannels.outgoing(testConnection.foreign).then((channels) {
+          foreign = channels;
         }),
-        SocketChannels.incoming(testConnection.local).then((demux) {
-          local = demux;
+        SocketChannels.incoming(testConnection.local).then((channels) {
+          local = channels;
         })
       ]);
     });
@@ -41,16 +38,9 @@ void main() {
     });
 
     group('done', () {
-      test('should complete when the local $SocketChannels closes', () async {
+      test('should complete when the local $SocketChannels close', () async {
         local.close();
         expect(local.done, completes);
-        expect(foreign.done, completes);
-      });
-
-      test('should complete when the foreign $SocketChannels closes', () async {
-        foreign.close();
-        expect(local.done, completes);
-        expect(foreign.done, completes);
       });
     });
   });

@@ -1,58 +1,58 @@
 import 'dart:async';
 
+import 'package:distributed.net/secret.dart';
+import 'package:distributed.node/platform/vm.dart';
+import 'package:distributed.node/src/connection/connection_channels.dart';
 import 'package:distributed.node/src/connection/connection_strategy.dart';
 import 'package:distributed.node/src/node_finder.dart';
-import 'package:distributed.node/src/peer.dart';
-import 'package:distributed.node/testing/test_channels_connection.dart';
+import 'package:distributed.node/testing/message_channels_controller.dart';
 import 'package:distributed.port_daemon/src/ports.dart';
 import 'package:test/test.dart';
 
 import 'src/connection_strategy_test.dart' as connection_strategy_test;
 
-_TestNodeFinder testNodeFinder;
-int peerPort = 0;
+TestNodeFinder nodeFinder;
+ConnectionStrategy createStrategy([List<String> inNetworkPeers = const []]) =>
+    new SearchForNode(
+      new TestNodeFinder(inNetworkPeers),
+      new TestConnectionChannelsProvider(),
+    );
 
 void main() {
+  configureDistributed();
   group('$SearchForNode', () {
-    Future<ConnectionStrategy<String>> setup() async {
-      testNodeFinder = new _TestNodeFinder();
-      peerPort = 0;
-      return new SearchForNode<String>(
-          testNodeFinder, new TestConnectionChannelsProvider());
-    }
-
     connection_strategy_test.main(
-        setup: setup,
-        teardown: () => new Future.value(),
-        addPeersToNetwork: addPeersToNetwork);
+      setup: createStrategy,
+      teardown: () async {},
+    );
   });
 }
 
-Future addPeersToNetwork(List<Peer> peers) async {
-  peers.forEach((peer) {
-    testNodeFinder.addNodeInfo(peer.name, peer.address, peerPort++);
-  });
-}
-
-class _TestNodeFinder implements NodeFinder {
-  final Map<String, _NodeInfo> _nodeInfoCache = <String, _NodeInfo>{};
-
-  void addNodeInfo(String name, String address, int port) {
-    _nodeInfoCache[name] = new _NodeInfo(address, port);
-  }
+class TestConnectionChannelsProvider
+    implements ConnectionChannelsProvider<Message> {
+  final MessageChannelsController _messageChannelsController =
+      new MessageChannelsController();
 
   @override
-  Future<String> findNodeAddress(String nodeName) =>
-      new Future<String>.value(_nodeInfoCache[nodeName]?.address ?? '');
+  Future<ConnectionChannels<Message>> createFromSocket(_) =>
+      new Future.value(_messageChannelsController.foreign);
 
   @override
-  Future<int> findNodePort(String nodeName) => new Future<int>.value(
-      _nodeInfoCache[nodeName]?.port ?? Ports.invalidPort.toInt());
+  Future<ConnectionChannels<Message>> createFromUrl(String url,
+          {Secret secret: Secret.acceptAny}) =>
+      new Future.value(_messageChannelsController.foreign);
 }
 
-class _NodeInfo {
-  final String address;
-  final int port;
+class TestNodeFinder implements NodeFinder {
+  final List<String> _networkPeers;
 
-  const _NodeInfo(this.address, this.port);
+  TestNodeFinder([this._networkPeers = const []]);
+
+  @override
+  Future<String> findNodeAddress(String nodeName) => new Future<String>.value(
+      _networkPeers.contains(nodeName) ? 'localhost' : '');
+
+  @override
+  Future<int> findNodePort(String nodeName) async =>
+      _networkPeers.contains(nodeName) ? 123 : Ports.invalidPort.toInt();
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:distributed.net/secret.dart';
 import 'package:distributed.node/src/connection/connection_channels.dart';
 import 'package:distributed.node/src/message/message.dart';
 import 'package:distributed.node/src/socket/socket.dart';
@@ -13,7 +14,7 @@ class _MessageTransformer implements StreamChannelTransformer<Message, String> {
       ..stream.map((message) => message.toString()).pipe(channel.sink);
 
     return new StreamChannel(
-      channel.stream.map((s) => new Message.fromString(s)),
+      channel.stream.map((s) => new Message.fromString(s)).asBroadcastStream(),
       controller,
     );
   }
@@ -50,7 +51,11 @@ class MessageChannels implements ConnectionChannels<Message> {
 
 class MessageChannelsProvider implements ConnectionChannelsProvider<Message> {
   @override
-  Future<ConnectionChannels<Message>> createFromUrl(String url) async =>
-      new MessageChannels(
-          await SocketChannels.outgoing(await Socket.connect(url)));
+  Future<ConnectionChannels<Message>> createFromUrl(String url,
+          {Secret secret: Secret.acceptAny}) async =>
+      createFromSocket(await Socket.connectToUrl(url, secret: secret));
+
+  @override
+  Future<MessageChannels> createFromSocket(socket) async =>
+      new MessageChannels(await SocketChannels.outgoing(socket));
 }

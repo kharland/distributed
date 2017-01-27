@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:distributed.node/src/connection/connection.dart';
 import 'package:distributed.node/src/message/message.dart';
 import 'package:distributed.node/src/peer.dart';
 
@@ -26,7 +27,11 @@ abstract class Node {
   /// Emits events when this node disconnects from a [Peer].
   Stream<Peer> get onDisconnect;
 
+  /// Connect to [peer].
   Future connect(Peer peer);
+
+  /// Add an established [connection].
+  void addConnection(Connection connection);
 
   /// Disconnects from the remote peer identified by [name] and [address].
   void disconnect(Peer peer);
@@ -69,6 +74,10 @@ class DelegatingNode implements Node {
 
   @override
   Future connect(Peer peer) => delegate.connect(peer);
+
+  @override
+  void addConnection(Connection connection) =>
+      delegate.addConnection(connection);
 
   @override
   void disconnect(Peer peer) {
