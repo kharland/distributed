@@ -1,7 +1,7 @@
 import 'package:distributed.node/src/connection/connection.dart';
 import 'package:distributed.node/src/message/message_channels.dart';
 import 'package:distributed.node/src/peer.dart';
-import 'package:distributed.node/testing/socket_channels_controller.dart';
+import 'package:distributed.node/src/socket/socket_channels_controller.dart';
 
 class ConnectionController {
   final Connection local;

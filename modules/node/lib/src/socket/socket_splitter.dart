@@ -71,7 +71,7 @@ class _SocketSplitter implements SocketSplitter {
 
   @override
   Pair<int, StreamChannel<String>> split([int id]) {
-    var controller = new StreamChannelController(sync: true);
+    var controller = new StreamChannelController<String>(sync: true);
     var channelId = id;
     if (channelId == null) {
       channelId = childId++;

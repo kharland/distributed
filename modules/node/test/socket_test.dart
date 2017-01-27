@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:distributed.net/secret.dart';
 import 'package:distributed.node/src/socket/socket.dart';
-import 'package:distributed.node/testing/socket_controller.dart';
+import 'package:distributed.node/src/socket/socket_controller.dart';
 import 'package:test/test.dart';
 
 void main() {

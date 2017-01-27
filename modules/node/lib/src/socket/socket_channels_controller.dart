@@ -1,7 +1,6 @@
 import 'package:distributed.node/src/socket/socket_channels.dart';
+import 'package:distributed.node/src/socket/socket_controller.dart';
 import 'package:stream_channel/stream_channel.dart';
-
-import 'socket_controller.dart';
 
 class SocketChannelsController {
   final SocketChannels local;
