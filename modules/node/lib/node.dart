@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:distributed.node/src/connection/connection.dart';
+import 'package:distributed.node/src/connection/connection_strategy.dart';
 import 'package:distributed.node/src/message/message.dart';
 import 'package:distributed.node/src/peer.dart';
 
@@ -28,7 +29,10 @@ abstract class Node {
   Stream<Peer> get onDisconnect;
 
   /// Connect to [peer].
-  Future connect(Peer peer);
+  ///
+  /// [connectionStrategy] determines how this node will conneect to [peer]. If
+  /// it is not supplied, the default strategy is used.
+  Future connect(Peer peer, {ConnectionStrategy connectionStrategy});
 
   /// Add an established [connection].
   void addConnection(Connection connection);
@@ -73,7 +77,8 @@ class DelegatingNode implements Node {
   Stream<Peer> get onDisconnect => delegate.onDisconnect;
 
   @override
-  Future connect(Peer peer) => delegate.connect(peer);
+  Future connect(Peer peer, {ConnectionStrategy connectionStrategy}) =>
+      delegate.connect(peer, connectionStrategy: connectionStrategy);
 
   @override
   void addConnection(Connection connection) =>

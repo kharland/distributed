@@ -10,7 +10,7 @@ import 'package:distributed.utils/logging.dart';
 
 /// Internal-only [Node] implementation.
 class CrossPlatformNode implements Node {
-  final ConnectionStrategy _connectionStrategy;
+  final ConnectionStrategy _defaultConnectionStrategy;
   final Logger _logger;
 
   final StreamController<Message> _onUserMessageController =
@@ -40,7 +40,7 @@ class CrossPlatformNode implements Node {
     ConnectionStrategy connectionStrategy,
   })
       : name = name,
-        _connectionStrategy = connectionStrategy,
+        _defaultConnectionStrategy = connectionStrategy,
         _logger = new Logger('$Node:$name');
 
   @override
@@ -53,9 +53,10 @@ class CrossPlatformNode implements Node {
   Stream<Peer> get onDisconnect => _onDisconnectController.stream;
 
   @override
-  Future connect(Peer peer) async {
+  Future connect(Peer peer, {ConnectionStrategy connectionStrategy}) async {
     assert(!_connections.containsKey(peer));
-    _connectionStrategy.connect(name, peer.name).forEach(addConnection);
+    connectionStrategy ??= _defaultConnectionStrategy;
+    _defaultConnectionStrategy.connect(name, peer.name).forEach(addConnection);
   }
 
   @override
