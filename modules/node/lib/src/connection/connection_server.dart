@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'dart:io';
 import 'package:distributed.net/secret.dart';
 import 'package:distributed.node/src/connection/connection.dart';
 import 'package:distributed.node/src/connection/connection_channels.dart';
@@ -27,7 +28,7 @@ class ConnectionServer {
     _delegate.socketConnections.forEach((SeltzerWebSocket rawSocket) async {
       var socket = await receiveSeltzerSocket(rawSocket, secret: secret);
       var channels = await _channelsProvider.createFromSocket(socket);
-      var remotePeerAddress = socket.address;
+      var remotePeerAddress = new InternetAddress(socket.address);
       var remotePeerName = await _identificationStrategy.identifyRemote(
         channels.system.sink,
         channels.system.stream,

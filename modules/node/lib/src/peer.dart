@@ -1,10 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 
 class Peer {
-  static const unknown = const Peer('unknown', 'unknown');
+  static const unknown = const Peer('unknown', null);
 
   final String name;
-  final String address;
+  final InternetAddress address;
 
   const Peer(this.name, this.address);
 

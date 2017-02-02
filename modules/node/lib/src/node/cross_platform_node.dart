@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:distributed.node/node.dart';
 import 'package:distributed.node/src/connection/connection.dart';
 import 'package:distributed.node/src/connection/connection_strategy.dart';
@@ -28,14 +27,10 @@ class CrossPlatformNode implements Node {
   final String name;
 
   @override
-  final String address;
-
-  @override
   final bool isHidden;
 
   CrossPlatformNode(
     String name, {
-    this.address: 'localhost',
     this.isHidden: false,
     ConnectionStrategy connectionStrategy,
   })
@@ -90,7 +85,7 @@ class CrossPlatformNode implements Node {
   }
 
   @override
-  Peer toPeer() => new Peer(name, address);
+  Peer toPeer() => new Peer(name, null);
 
   @override
   void addConnection(Connection connection) {

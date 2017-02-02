@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:distributed.node/src/node_finder.dart';
 import 'package:distributed.port_daemon/daemon_client.dart';
+import 'package:distributed.port_daemon/src/daemon_server_info.dart';
 import 'package:distributed.port_daemon/src/ports.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:mockito/mockito.dart';
@@ -28,17 +29,16 @@ class MockDaemonClient extends Mock implements DaemonClient {
   final Map<String, Int64> _peerNameToPort = <String, Int64>{};
 
   @override
-  Int64 port = Int64.ONE;
+  final DaemonServerInfo serverInfo = new DaemonServerInfo();
+
+  Int64 peerPort = Int64.ONE;
 
   MockDaemonClient([this._inNetworkPeers = const []]);
 
   @override
-  String get address => 'localhost';
-
-  @override
   Future<Int64> lookupNode(String nodeName) async {
     if (_inNetworkPeers.contains(nodeName)) {
-      return _peerNameToPort.putIfAbsent(nodeName, () => port++);
+      return _peerNameToPort.putIfAbsent(nodeName, () => peerPort++);
     } else {
       return Ports.invalidPort;
     }

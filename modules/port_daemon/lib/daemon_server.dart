@@ -1,63 +1,58 @@
 import 'dart:async';
-import 'dart:io';
+import 'dart:io' show File, InternetAddress;
 
+import 'package:distributed.port_daemon/src/daemon_server_info.dart';
+import 'package:distributed.port_daemon/src/http_method.dart';
+import 'package:distributed.port_daemon/src/http_request_handler.dart';
 import 'package:distributed.port_daemon/src/port_daemon.dart';
-import 'package:distributed.port_daemon/src/route_handler.dart';
+import 'package:distributed.port_daemon/src/request_authenticator.dart';
 import 'package:distributed.net/secret.dart';
 import 'package:express/express.dart' as express;
-import 'package:fixnum/fixnum.dart';
+import 'package:express/express.dart' show HttpContext;
 import 'package:logging/logging.dart';
 
 class DaemonServer {
   static const int defaultPort = 4369;
   static const String defaultHostname = 'localhost';
 
+  final DaemonServerInfo serverInfo;
+  final PortDaemon _portDaemon;
+
   final express.Express _express = new express.Express();
   final Logger _logger = new Logger('$DaemonServer');
-  final PortDaemon _daemon;
-  final Secret secret;
-  final String hostname;
-  final Int64 port;
+  final RequestAuthenticator _requestAuthenticator;
 
-  factory DaemonServer({
-    String hostname: DaemonServer.defaultHostname,
-    Secret secret: Secret.acceptAny,
-    int port: DaemonServer.defaultPort,
-  }) =>
-      new DaemonServer.withDaemon(
-          new PortDaemon(new NodeDatabase(new File('node.db'))),
-          hostname: hostname,
-          secret: secret,
-          port: port);
-
-  DaemonServer.withDaemon(
-    this._daemon, {
-    this.hostname: DaemonServer.defaultHostname,
-    int port: DaemonServer.defaultPort,
-    this.secret: Secret.acceptAny,
-  })
-      : this.port = new Int64(port) {
+  DaemonServer(
+      {PortDaemon portDaemon,
+      DaemonServerInfo serverInfo,
+      RequestAuthenticator requestAuthenticator})
+      : serverInfo = serverInfo ?? new DaemonServerInfo(),
+        _portDaemon =
+            portDaemon ?? new PortDaemon(new NodeDatabase(new File('node.db'))),
+        _requestAuthenticator =
+            requestAuthenticator ?? new SecretAuthenticator(Secret.acceptAny) {
     express.logger = (Object obj) {
       _logger.info(obj);
     };
   }
 
-  static String url(String hostname, Int64 port) => 'http://$hostname:$port';
+  String get url => serverInfo.url;
 
   /// Starts listening for requests.
   ///
   /// Returns a future that completes when the server is ready for connections.
   Future start() async {
     [
-      new PingHandler(_daemon, secret),
-      new RegisterNodeHandler(_daemon, secret),
-      new DeregisterNodeHandler(_daemon, secret),
-      new LookupNodeHandler(_daemon, secret),
-      new ListNodesHandler(_daemon, secret)
+      new PingHandler(_portDaemon),
+      new RegisterNodeHandler(_portDaemon),
+      new DeregisterNodeHandler(_portDaemon),
+      new LookupNodeHandler(_portDaemon),
+      new ListNodesHandler(_portDaemon)
     ].forEach((route) {
-      _installRoute(route, _express, secret: secret);
+      _installRoute(route, _express);
     });
-    await _express.listen(InternetAddress.LOOPBACK_IP_V4.host, port.toInt());
+    await _express.listen(
+        InternetAddress.LOOPBACK_IP_V4.host, serverInfo.port.toInt());
   }
 
   /// Stops listening for new connections.
@@ -66,36 +61,40 @@ class DaemonServer {
   }
 
   void clearDatabase() {
-    _daemon.clearDatabase();
+    _portDaemon.clearDatabase();
   }
 
   void _installRoute(
-    RouteHandler route,
+    HttpRequestHandler route,
     express.Express express, {
     Secret secret: Secret.acceptAny,
   }) {
     var installer;
 
     switch (route.method) {
-      case RouteHandler.get:
+      case HttpMethod.GET:
         installer = express.get;
         break;
-      case RouteHandler.put:
+      case HttpMethod.PUT:
         installer = express.put;
         break;
-      case RouteHandler.post:
+      case HttpMethod.POST:
         installer = express.post;
         break;
-      case RouteHandler.delete:
+      case HttpMethod.DELETE:
         installer = express.delete;
         break;
-      case RouteHandler.patch:
-        installer = express.patch;
-        break;
       default:
-        throw new UnimplementedError(route.method);
+        throw new UnimplementedError(route.method.value);
     }
 
-    installer('${route.route}/:secret', route.execute);
+    installer('${route.route}/:secret', (HttpContext context) {
+      if (_requestAuthenticator.isContextValid(context)) {
+        route.execute(context);
+      } else {
+        context.sendText('Autentication failed');
+        context.end();
+      }
+    });
   }
 }

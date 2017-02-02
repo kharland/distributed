@@ -11,9 +11,10 @@ abstract class Message {
   static bool canParseAs(Type type, String string) =>
       string.startsWith(type.toString());
 
-  static Map<String, Object> parseJson(derivedType, String s) =>
-      JSON.decode(s.substring(derivedType.toString().length))
-          as Map<String, Object>;
+  static Map<String, Object> parseJson(derivedType, String s) {
+    return JSON.decode(s.substring(derivedType.toString().length))
+        as Map<String, Object>;
+  }
 
   Map<String, Object> toJson();
 
