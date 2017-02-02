@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'dart:io';
 import 'package:distributed.net/secret.dart';
 import 'package:distributed.node/node.dart';
 import 'package:distributed.node/src/connection/connection_server.dart';
@@ -13,7 +14,6 @@ import 'package:distributed.port_daemon/src/ports.dart';
 
 Future<Node> spawn(
   String name, {
-  String address: 'localhost',
   Secret secret: Secret.acceptAny,
   bool isHidden: false,
 }) async {
@@ -29,7 +29,7 @@ Future<Node> spawn(
     isHidden: isHidden,
   );
   var channelServer = await ConnectionServer.bind(
-    address,
+    new InternetAddress('127.0.0.1'),
     nodePort.toInt(),
     new MessageChannelsProvider(),
     new NameExchange(name),
