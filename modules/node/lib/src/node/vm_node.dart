@@ -8,8 +8,8 @@ import 'package:distributed.node/src/message/message_channels.dart';
 import 'package:distributed.node/src/node/cross_platform_node.dart';
 import 'package:distributed.node/src/peer_identification_strategy.dart';
 import 'package:distributed.port_daemon/daemon_client.dart';
+import 'package:distributed.port_daemon/src/daemon_server_info.dart';
 import 'package:distributed.port_daemon/src/ports.dart';
-import 'package:fixnum/fixnum.dart';
 
 Future<Node> spawn(
   String name, {
@@ -17,8 +17,8 @@ Future<Node> spawn(
   Secret secret: Secret.acceptAny,
   bool isHidden: false,
 }) async {
-  var daemonClient = new DaemonClient(name, address: address, secret: secret);
-  Int64 nodePort = await daemonClient.registerNode(name);
+  var daemonClient = new DaemonClient(name, new DaemonServerInfo());
+  var nodePort = await daemonClient.registerNode(name);
 
   if (nodePort == Ports.invalidPort) {
     throw new DaemonException('Unable to register node $name');
@@ -26,7 +26,6 @@ Future<Node> spawn(
 
   var delegate = new CrossPlatformNode(
     name,
-    address: address,
     isHidden: isHidden,
   );
   var channelServer = await ConnectionServer.bind(

@@ -43,7 +43,7 @@ class SearchForNode implements ConnectionStrategy {
   Future<Connection> _connect(String localPeerName, remotePeerName) async {
     assert(remotePeerName.isNotEmpty);
     var remotePeerAddress = await _nodeFinder.findNodeAddress(remotePeerName);
-    if (remotePeerAddress.isEmpty) {
+    if (remotePeerAddress == null) {
       throw new Exception('node not found $remotePeerName');
     }
 

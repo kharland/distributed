@@ -1,0 +1,133 @@
+import 'dart:async';
+
+import 'package:distributed.port_daemon/src/http_method.dart';
+import 'package:distributed.port_daemon/src/port_daemon.dart';
+import 'package:distributed.port_daemon/src/api.dart';
+import 'package:express/express.dart' hide Logger;
+import 'package:fixnum/fixnum.dart';
+import 'package:logging/logging.dart';
+
+abstract class HttpRequestHandler {
+  HttpMethod get method;
+
+  String get route;
+
+  Future execute(HttpContext ctx);
+}
+
+class PingHandler implements HttpRequestHandler {
+  final PortDaemon _daemon;
+
+  PingHandler(this._daemon);
+
+  @override
+  HttpMethod get method => HttpMethod.GET;
+
+  @override
+  String get route => '/ping/:name';
+
+  @override
+  Future execute(HttpContext ctx) async {
+    _daemon.acknowledgeNodeIsAlive(ctx.params['name']);
+    ctx.sendBytes([1]);
+    ctx.end();
+  }
+}
+
+class RegisterNodeHandler implements HttpRequestHandler {
+  final PortDaemon _daemon;
+  final Logger _logger = new Logger('$RegisterNodeHandler');
+
+  RegisterNodeHandler(this._daemon);
+
+  @override
+  HttpMethod get method => HttpMethod.POST;
+
+  @override
+  String get route => '/node/:name';
+
+  @override
+  Future execute(HttpContext ctx) async {
+    String name = ctx.params['name'];
+    _daemon.registerNode(name).then((Int64 port) {
+      ctx.sendText(new RegistrationResult(name, port).toString());
+      ctx.end();
+    }).catchError((e, stacktrace) {
+      _logger.severe(e);
+      _logger.severe(stacktrace);
+      ctx.sendText(new RegistrationResult.failure().toString());
+      ctx.end();
+    });
+  }
+}
+
+class DeregisterNodeHandler implements HttpRequestHandler {
+  final PortDaemon _daemon;
+  final Logger _logger = new Logger('$DeregisterNodeHandler');
+
+  DeregisterNodeHandler(this._daemon);
+
+  @override
+  HttpMethod get method => HttpMethod.DELETE;
+
+  @override
+  String get route => '/node/:name';
+
+  @override
+  Future execute(HttpContext ctx) async {
+    String name = ctx.params['name'];
+    _daemon.deregisterNode(name).then((_) {
+      ctx.sendText(new DeregistrationResult(name, false).toString());
+      ctx.end();
+    }).catchError((e, stacktrace) {
+      _logger.severe(e);
+      _logger.severe(stacktrace);
+      ctx.sendText(new DeregistrationResult(e.toString(), true).toString());
+      ctx.end();
+    });
+  }
+}
+
+class LookupNodeHandler implements HttpRequestHandler {
+  final PortDaemon _daemon;
+
+  LookupNodeHandler(this._daemon);
+
+  @override
+  HttpMethod get method => HttpMethod.GET;
+
+  @override
+  String get route => '/node/:name';
+
+  @override
+  Future execute(HttpContext ctx) async {
+    _daemon.lookupPort(ctx.params['name']).then((Int64 port) {
+      ctx.sendText(port.toString());
+      ctx.end();
+    });
+  }
+}
+
+class ListNodesHandler implements HttpRequestHandler {
+  final PortDaemon _daemon;
+
+  ListNodesHandler(this._daemon);
+
+  @override
+  HttpMethod get method => HttpMethod.GET;
+
+  @override
+  String get route => '/list/node';
+
+  @override
+  Future execute(HttpContext ctx) async {
+    var nodes = _daemon.nodes;
+    var ports = await Future.wait(nodes.map(_daemon.lookupPort));
+    var assignments = <String, Int64>{};
+    for (int i = 0; i < nodes.length; i++) {
+      assignments[nodes.elementAt(i)] = ports[i];
+    }
+    ctx.sendText(new PortAssignmentList(assignments));
+    ctx.end();
+  }
+}

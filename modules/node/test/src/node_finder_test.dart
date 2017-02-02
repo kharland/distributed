@@ -20,12 +20,12 @@ void main({
     test('should return the address for an existing node', () async {
       var peerName = 'registered';
       finder = await setup([peerName]);
-      expect(await finder.findNodeAddress(peerName), isNotEmpty);
+      expect((await finder.findNodeAddress(peerName)).address, isNotEmpty);
     });
 
     test("should return the empty string if the node doesn't exist", () async {
       finder = await setup();
-      expect(await finder.findNodeAddress('unregistered'), isEmpty);
+      expect(await finder.findNodeAddress('unregistered'), isNull);
     });
   });
 

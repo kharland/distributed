@@ -13,9 +13,6 @@ abstract class Node {
   /// The name used to identify this node.
   String get name;
 
-  /// This node's address
-  String get address;
-
   /// Whether this node is hidden;
   bool get isHidden;
 
@@ -37,7 +34,7 @@ abstract class Node {
   /// Add an established [connection].
   void addConnection(Connection connection);
 
-  /// Disconnects from the remote peer identified by [name] and [address].
+  /// Disconnects from the remote peer identified by [name].
   void disconnect(Peer peer);
 
   /// Send a command of type [action] to [peer] with [data].
@@ -50,16 +47,13 @@ abstract class Node {
   /// before calling [shutdown] to remove the node from any connected networks.
   Future shutdown();
 
-  Peer toPeer() => new Peer(name, address);
+  Peer toPeer() => new Peer(name, null);
 }
 
 class DelegatingNode implements Node {
   final Node delegate;
 
   DelegatingNode(this.delegate);
-
-  @override
-  String get address => delegate.address;
 
   @override
   bool get isHidden => delegate.isHidden;

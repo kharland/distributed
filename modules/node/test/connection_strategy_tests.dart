@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'dart:io';
 import 'package:distributed.net/secret.dart';
 import 'package:distributed.node/platform/vm.dart';
 import 'package:distributed.node/src/connection/connection_channels.dart';
@@ -49,8 +50,10 @@ class TestNodeFinder implements NodeFinder {
   TestNodeFinder([this._networkPeers = const []]);
 
   @override
-  Future<String> findNodeAddress(String nodeName) => new Future<String>.value(
-      _networkPeers.contains(nodeName) ? 'localhost' : '');
+  Future<InternetAddress> findNodeAddress(String nodeName) =>
+      new Future<InternetAddress>.value(_networkPeers.contains(nodeName)
+          ? new InternetAddress('127.0.0.1')
+          : null);
 
   @override
   Future<int> findNodePort(String nodeName) async =>
