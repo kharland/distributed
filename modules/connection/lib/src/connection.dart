@@ -40,7 +40,7 @@ class ConnectionProvider implements DataChannelsProvider<Message> {
   @override
   Future<Connection> createFromUrl(String url,
           {Secret secret: Secret.acceptAny}) async =>
-      createFromSocket(await Socket.connectToUrl(url, secret: secret));
+      createFromSocket(await Socket.connect(url));
 
   @override
   Future<Connection> createFromSocket(socket) async =>

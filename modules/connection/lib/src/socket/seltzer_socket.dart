@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:distributed.connection/src/socket/socket.dart';
-import 'package:distributed.net/secret.dart';
 import 'package:seltzer/platform/vm.dart';
 import 'package:seltzer/seltzer.dart';
 
@@ -14,22 +13,19 @@ void _initSeltzer() {
   }
 }
 
-Future<Socket> connectSeltzerSocket(String url, {Secret secret}) async {
+Future<Socket> connectSeltzerSocket(String url) async {
   _initSeltzer();
   var socket = connect(url);
   var stream = new _SeltzerSocketStream(socket);
   var sink = new _SeltzerSocketSink(socket);
-  return Socket.connect(sink, stream);
+  return new Socket(sink, stream);
 }
 
-Future<Socket> receiveSeltzerSocket(
-  SeltzerWebSocket socket, {
-  Secret secret: Secret.acceptAny,
-}) {
+Socket receiveSeltzerSocket(SeltzerWebSocket socket) {
   _initSeltzer();
   var stream = new _SeltzerSocketStream(socket);
   var sink = new _SeltzerSocketSink(socket);
-  return Socket.receive(sink, stream);
+  return new Socket(sink, stream);
 }
 
 /// A Stream<String> SeltzerWebSocket wrapper that does not buffer messages.
