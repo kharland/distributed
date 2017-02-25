@@ -13,9 +13,28 @@ void main() {
   group('$ConnectionLimit', () {
     group('isSafe', () {
       test(
-          'should return true iff the number of conncurrent connections is '
+          'should return true iff the number of concurrent connections is '
           'less than the maximum number of allowed connections.', () {
         var guard = new ConnectionLimit(1)..currentConnections = 1;
+        expect(guard.isSafe(new MockConnection()), isFalse);
+      });
+    });
+  });
+
+  group('$MultiGuard', () {
+    group('isSafe', () {
+      test(
+          'should return true iff all of its delegate guards determine the '
+          'connection is safe', () {
+        var connectionLimitGuard = new ConnectionLimit(1);
+        var guard = new MultiGuard([
+          connectionLimitGuard,
+          new ConnectionLimit(1),
+        ]);
+
+        expect(guard.isSafe(new MockConnection()), isTrue);
+
+        connectionLimitGuard.currentConnections = 1;
         expect(guard.isSafe(new MockConnection()), isFalse);
       });
     });
