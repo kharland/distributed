@@ -13,6 +13,18 @@ abstract class ConnectionGuard {
 
 /* Common connection guards */
 
+/// A [ConnectionGuard] that delegates to collection of other guards.
+class MultiGuard implements ConnectionGuard {
+  final Iterable<ConnectionGuard> _guards;
+
+  MultiGuard(this._guards);
+
+  /// Returns true iff every delegate guard determines [connection] is safe.
+  @override
+  bool isSafe(Connection connection) =>
+      _guards.every((g) => g.isSafe(connection));
+}
+
 /// A [ConnectionGuard] that warns when the number of concurrent connections
 /// exceeds some specified limit.
 class ConnectionLimit implements ConnectionGuard {
