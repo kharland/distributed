@@ -13,7 +13,7 @@ abstract class ConnectionGuard {
 
 /* Common connection guards */
 
-/// A [ConnectionGuard] that delegates to collection of other guards.
+/// A [ConnectionGuard] that delegates to a collection of other guards.
 class MultiGuard implements ConnectionGuard {
   final Iterable<ConnectionGuard> _guards;
 
