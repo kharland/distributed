@@ -1,7 +1,7 @@
 import 'package:distributed.net/secret.dart';
 import 'package:distributed.node/node.dart';
 import 'package:distributed.node/src/configuration.dart';
-import 'package:distributed.utils/logging.dart';
+import 'package:distributed.node/src/logging.dart';
 
 export 'package:distributed.node/node.dart';
 export 'package:distributed.node/src/node/vm_node.dart';

@@ -3,16 +3,16 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:distributed.net/secret.dart';
-import 'package:distributed.port_daemon/src/daemon_server_info.dart';
-import 'package:distributed.port_daemon/src/port_daemon.dart';
+import 'package:distributed.node/src/logging.dart';
 import 'package:distributed.port_daemon/daemon_client.dart';
 import 'package:distributed.port_daemon/daemon_server.dart';
+import 'package:distributed.port_daemon/src/daemon_server_info.dart';
+import 'package:distributed.port_daemon/src/port_daemon.dart';
 import 'package:distributed.port_daemon/src/ports.dart';
 import 'package:distributed.port_daemon/src/request_authenticator.dart';
-import 'package:distributed.utils/logging.dart';
-import 'package:test/test.dart';
-import 'package:seltzer/platform/vm.dart';
 import 'package:quiver/testing/async.dart';
+import 'package:seltzer/platform/vm.dart';
+import 'package:test/test.dart';
 
 void main() {
   useSeltzerInVm();

@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:distributed.connection/connection.dart';
 import 'package:distributed.node/node.dart';
+import 'package:distributed.node/src/logging.dart';
 import 'package:distributed.node/src/peer.dart';
-import 'package:distributed.utils/logging.dart';
 
 /// Internal-only [Node] implementation.
 class CrossPlatformNode implements Node {
@@ -58,7 +58,7 @@ class CrossPlatformNode implements Node {
   void disconnect(Peer peer) {
     assert(_connections.containsKey(peer));
     _connections.remove(peer).close();
-    _logger.info('disconnected from $peer');
+    _logger.log('disconnected from $peer');
   }
 
   @override
@@ -96,21 +96,21 @@ class CrossPlatformNode implements Node {
       ..done.then(_handleConnectionClosed)
       ..user.stream.map(_onUserMessageController.add);
     _connections[peer] = connection;
-    _logger.info('connected to $peer');
+    _logger.log('connected to $peer');
   }
 
   void _handleSystemMessage(Message message) {
     switch (message.category) {
       case MessageCategories.error:
-        _logger.shout(message.payload);
+        _logger.error(message.payload);
         break;
       default:
-        _logger.shout('Unsupported meesage received ${message.category}');
+        _logger.error('Unsupported meesage received ${message.category}');
     }
   }
 
   void _handleErrorMessage(Message message) {
-    _logger.shout(message.payload);
+    _logger.error(message.payload);
   }
 
   void _handleConnectionClosed(Peer peer) {
