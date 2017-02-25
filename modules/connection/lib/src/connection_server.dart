@@ -18,7 +18,7 @@ class ConnectionServer {
     Secret secret: Secret.acceptAny,
   }) {
     _delegate.socketConnections.forEach((SeltzerWebSocket rawSocket) async {
-      var socket = await receiveSeltzerSocket(rawSocket, secret: secret);
+      var socket = receiveSeltzerSocket(rawSocket);
       var channels = await _dataChannelsProvider.createFromSocket(socket);
       _channelsController.add(new Connection(channels));
     });
