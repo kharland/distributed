@@ -49,9 +49,9 @@ class CrossPlatformNode implements Node {
   Future connect(Peer peer, {ConnectionStrategy connectionStrategy}) async {
     assert(!_connections.containsKey(peer));
     connectionStrategy ??= _defaultConnectionStrategy;
-    _defaultConnectionStrategy.connect(name, peer.name).forEach((connection) {
+    await for (var connection in connectionStrategy.connect(name, peer.name)) {
       addConnection(connection, peer);
-    });
+    }
   }
 
   @override
@@ -90,10 +90,11 @@ class CrossPlatformNode implements Node {
   @override
   void addConnection(Connection connection, Peer peer) {
     assert(!_connections.containsKey(peer));
-    connection.system.stream.forEach(_handleSystemMessage);
-    connection.error.stream.forEach(_handleErrorMessage);
-    connection.done.then(_handleConnectionClosed);
-    connection.user.stream.map(_onUserMessageController.add);
+    connection
+      ..system.stream.forEach(_handleSystemMessage)
+      ..error.stream.forEach(_handleErrorMessage)
+      ..done.then(_handleConnectionClosed)
+      ..user.stream.map(_onUserMessageController.add);
     _connections[peer] = connection;
     _logger.info('connected to $peer');
   }

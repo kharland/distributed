@@ -4,7 +4,6 @@ import 'package:distributed.connection/src/data_channels.dart';
 import 'package:distributed.connection/src/message/message.dart';
 import 'package:distributed.connection/src/socket/socket.dart';
 import 'package:distributed.connection/src/socket/socket_channels.dart';
-import 'package:distributed.net/secret.dart';
 import 'package:stream_channel/stream_channel.dart';
 
 class Connection implements DataChannels<Message> {
@@ -38,8 +37,7 @@ class Connection implements DataChannels<Message> {
 
 class ConnectionProvider implements DataChannelsProvider<Message> {
   @override
-  Future<Connection> createFromUrl(String url,
-          {Secret secret: Secret.acceptAny}) async =>
+  Future<Connection> createFromUrl(String url) async =>
       createFromSocket(await Socket.connect(url));
 
   @override
