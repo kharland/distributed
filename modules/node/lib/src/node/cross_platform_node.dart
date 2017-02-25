@@ -24,12 +24,8 @@ class CrossPlatformNode implements Node {
   @override
   final String name;
 
-  @override
-  final bool isHidden;
-
   CrossPlatformNode(
     String name, {
-    this.isHidden: false,
     ConnectionStrategy connectionStrategy,
   })
       : name = name,
@@ -84,10 +80,6 @@ class CrossPlatformNode implements Node {
     _onShutdown.complete();
   }
 
-  @override
-  Peer toPeer() => new Peer(name, null);
-
-  @override
   void addConnection(Connection connection, Peer peer) {
     assert(!_connections.containsKey(peer));
     connection

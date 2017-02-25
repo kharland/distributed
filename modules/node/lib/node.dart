@@ -10,9 +10,6 @@ abstract class Node {
   /// The name used to identify this node.
   String get name;
 
-  /// Whether this node is hidden;
-  bool get isHidden;
-
   /// The list of peers that are connected to this [Node].
   List<Peer> get peers;
 
@@ -28,9 +25,6 @@ abstract class Node {
   /// it is not supplied, the default strategy is used.
   Future connect(Peer peer, {ConnectionStrategy connectionStrategy});
 
-  /// Add an established [connection].
-  void addConnection(Connection connection, Peer peer);
-
   /// Disconnects from the remote peer identified by [name].
   void disconnect(Peer peer);
 
@@ -43,17 +37,12 @@ abstract class Node {
   /// Closes all connections and disables the node. Be sure to call [disconnect]
   /// before calling [shutdown] to remove the node from any connected networks.
   Future shutdown();
-
-  Peer toPeer() => new Peer(name, null);
 }
 
 class DelegatingNode implements Node {
   final Node delegate;
 
   DelegatingNode(this.delegate);
-
-  @override
-  bool get isHidden => delegate.isHidden;
 
   @override
   String get name => delegate.name;
@@ -72,10 +61,6 @@ class DelegatingNode implements Node {
       delegate.connect(peer, connectionStrategy: connectionStrategy);
 
   @override
-  void addConnection(Connection connection, Peer peer) =>
-      delegate.addConnection(connection, peer);
-
-  @override
   void disconnect(Peer peer) {
     delegate.disconnect(peer);
   }
@@ -90,7 +75,4 @@ class DelegatingNode implements Node {
 
   @override
   Future shutdown() => delegate.shutdown();
-
-  @override
-  Peer toPeer() => delegate.toPeer();
 }
