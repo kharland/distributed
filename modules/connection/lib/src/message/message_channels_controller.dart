@@ -1,4 +1,4 @@
-import 'package:distributed.connection/src/connection.dart';
+import 'package:distributed.connection/connection.dart';
 import 'package:distributed.connection/src/socket/socket_channels_controller.dart';
 
 class MessageChannelsController {

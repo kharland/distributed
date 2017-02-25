@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:distributed.connection/src/socket/socket.dart';
-import 'package:distributed.net/secret.dart';
 import 'package:stream_channel/stream_channel.dart';
 
 abstract class DataChannels<T> {
@@ -17,8 +16,7 @@ abstract class DataChannels<T> {
 }
 
 abstract class DataChannelsProvider<T> {
-  Future<DataChannels<T>> createFromUrl(String url,
-      {Secret secret: Secret.acceptAny});
+  Future<DataChannels<T>> createFromUrl(String url);
 
   Future<DataChannels<T>> createFromSocket(Socket socket);
 }
