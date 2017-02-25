@@ -16,8 +16,6 @@ dependencies:
     path: ../net
   distributed.node:
     path: ../node
-  distributed.utils:
-    path: ../utils
 dev_dependencies:
   dart_style:
   test:

@@ -10,8 +10,6 @@ dependencies:
     path: ../connection
   distributed.port_daemon:
     path: ../port_daemon
-  distributed.utils:
-    path: ../utils
   distributed.net:
     path: ../net
   fixnum:

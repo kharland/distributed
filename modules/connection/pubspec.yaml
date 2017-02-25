@@ -14,8 +14,6 @@ dependencies:
     git: git://github.com/matanlurey/seltzer.git
   distributed.net:
     path: ../net
-  distributed.utils:
-    path: ../utils
 dev_dependencies:
   dart_style:
   test:
