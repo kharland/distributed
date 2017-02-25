@@ -21,7 +21,7 @@ class PingHandler implements HttpRequestHandler {
   PingHandler(this._daemon);
 
   @override
-  HttpMethod get method => HttpMethod.GET;
+  HttpMethod get method => HttpMethod.get;
 
   @override
   String get route => '/ping/:name';
@@ -41,7 +41,7 @@ class RegisterNodeHandler implements HttpRequestHandler {
   RegisterNodeHandler(this._daemon);
 
   @override
-  HttpMethod get method => HttpMethod.POST;
+  HttpMethod get method => HttpMethod.post;
 
   @override
   String get route => '/node/:name';
@@ -68,7 +68,7 @@ class DeregisterNodeHandler implements HttpRequestHandler {
   DeregisterNodeHandler(this._daemon);
 
   @override
-  HttpMethod get method => HttpMethod.DELETE;
+  HttpMethod get method => HttpMethod.delete;
 
   @override
   String get route => '/node/:name';
@@ -94,7 +94,7 @@ class LookupNodeHandler implements HttpRequestHandler {
   LookupNodeHandler(this._daemon);
 
   @override
-  HttpMethod get method => HttpMethod.GET;
+  HttpMethod get method => HttpMethod.get;
 
   @override
   String get route => '/node/:name';
@@ -114,7 +114,7 @@ class ListNodesHandler implements HttpRequestHandler {
   ListNodesHandler(this._daemon);
 
   @override
-  HttpMethod get method => HttpMethod.GET;
+  HttpMethod get method => HttpMethod.get;
 
   @override
   String get route => '/list/node';

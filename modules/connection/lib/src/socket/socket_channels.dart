@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:distributed.connection/src/connection_channels.dart';
+import 'package:distributed.connection/src/socket/socket.dart';
+import 'package:distributed.connection/src/socket/socket_splitter.dart';
 import 'package:distributed.net/timeout.dart';
-import 'package:distributed.node/src/connection/connection_channels.dart';
-import 'package:distributed.node/src/socket/socket.dart';
-import 'package:distributed.node/src/socket/socket_splitter.dart';
 import 'package:stream_channel/stream_channel.dart';
 
-class SocketChannels implements ConnectionChannels<String> {
+class SocketChannels implements DataChannels<String> {
   static const _keyUsr = '0';
   static const _keySys = '1';
   static const _keyErr = '2';

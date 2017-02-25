@@ -1,11 +1,8 @@
 import 'dart:async';
 
-import 'package:distributed.node/src/connection/connection.dart';
-import 'package:distributed.node/src/connection/connection_strategy.dart';
-import 'package:distributed.node/src/message/message.dart';
 import 'package:distributed.node/src/peer.dart';
+import 'package:distributed.connection/connection.dart';
 
-export 'package:distributed.node/src/message/message.dart';
 export 'package:distributed.node/src/peer.dart';
 
 /// A node in a distributed system.
@@ -32,7 +29,7 @@ abstract class Node {
   Future connect(Peer peer, {ConnectionStrategy connectionStrategy});
 
   /// Add an established [connection].
-  void addConnection(Connection connection);
+  void addConnection(Connection connection, Peer peer);
 
   /// Disconnects from the remote peer identified by [name].
   void disconnect(Peer peer);
@@ -75,8 +72,8 @@ class DelegatingNode implements Node {
       delegate.connect(peer, connectionStrategy: connectionStrategy);
 
   @override
-  void addConnection(Connection connection) =>
-      delegate.addConnection(connection);
+  void addConnection(Connection connection, Peer peer) =>
+      delegate.addConnection(connection, peer);
 
   @override
   void disconnect(Peer peer) {

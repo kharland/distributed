@@ -3,8 +3,8 @@ class HttpMethod {
 
   const HttpMethod._(this.value);
 
-  static const HttpMethod GET = const HttpMethod._('get');
-  static const HttpMethod PUT = const HttpMethod._('put');
-  static const HttpMethod POST = const HttpMethod._('post');
-  static const HttpMethod DELETE = const HttpMethod._('delete');
+  static const HttpMethod get = const HttpMethod._('get');
+  static const HttpMethod put = const HttpMethod._('put');
+  static const HttpMethod post = const HttpMethod._('post');
+  static const HttpMethod delete = const HttpMethod._('delete');
 }

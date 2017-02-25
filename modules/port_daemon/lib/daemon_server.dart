@@ -72,16 +72,16 @@ class DaemonServer {
     var installer;
 
     switch (route.method) {
-      case HttpMethod.GET:
+      case HttpMethod.get:
         installer = express.get;
         break;
-      case HttpMethod.PUT:
+      case HttpMethod.put:
         installer = express.put;
         break;
-      case HttpMethod.POST:
+      case HttpMethod.post:
         installer = express.post;
         break;
-      case HttpMethod.DELETE:
+      case HttpMethod.delete:
         installer = express.delete;
         break;
       default:

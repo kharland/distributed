@@ -1,11 +1,9 @@
 import 'dart:async';
 
+import 'package:distributed.connection/src/socket/socket.dart';
 import 'package:distributed.net/secret.dart';
-import 'package:distributed.node/src/socket/socket.dart';
 import 'package:seltzer/platform/vm.dart';
 import 'package:seltzer/seltzer.dart';
-
-export 'package:distributed.node/src/socket/socket.dart';
 
 bool _isSeltzerInitialized = false;
 
@@ -47,6 +45,7 @@ Future<Socket> receiveSeltzerSocket(
 /// this.
 class _SeltzerSocketStream extends StreamView<String> {
   _SeltzerSocketStream(SeltzerWebSocket socket)
+      // ignore: strong_mode_down_cast_composite
       : super(socket.onMessage.asyncMap(_decodeMessage).asBroadcastStream());
 
   static String _decodeMessage(message) => message.readAsString();

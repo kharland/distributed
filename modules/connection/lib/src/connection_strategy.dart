@@ -1,10 +1,8 @@
 import 'dart:async';
 
-import 'package:distributed.node/src/connection/connection.dart';
-import 'package:distributed.node/src/connection/connection_channels.dart';
-import 'package:distributed.node/src/message/message.dart';
+import 'package:distributed.connection/connection.dart';
+import 'package:distributed.connection/src/connection_channels.dart';
 import 'package:distributed.node/src/node_finder.dart';
-import 'package:distributed.node/src/peer.dart';
 import 'package:distributed.node/src/peer_identification_strategy.dart';
 import 'package:distributed.port_daemon/src/ports.dart';
 
@@ -23,7 +21,7 @@ class RequireIdentification implements ConnectionStrategy {
     var stream = _connectionStrategy.connect(localPeerName, remotePeerName);
     return stream.asyncMap((Connection connection) async {
       var verifiedPeerName = await _identificationStrategy.identifyRemote(
-          connection.channels.system.sink, connection.channels.system.stream);
+          connection.system.sink, connection.system.stream);
       assert(verifiedPeerName == remotePeerName);
       return connection;
     });
@@ -32,7 +30,7 @@ class RequireIdentification implements ConnectionStrategy {
 
 class SearchForNode implements ConnectionStrategy {
   final NodeFinder _nodeFinder;
-  final ConnectionChannelsProvider<Message> _channelsProvider;
+  final DataChannelsProvider<String> _channelsProvider;
 
   SearchForNode(this._nodeFinder, this._channelsProvider);
 
@@ -53,9 +51,6 @@ class SearchForNode implements ConnectionStrategy {
     }
 
     var remotePeerUrl = 'ws://$remotePeerAddress:$remotePeerPort';
-    return new Connection(
-      new Peer(remotePeerName, remotePeerAddress),
-      await _channelsProvider.createFromUrl(remotePeerUrl),
-    );
+    return new Connection(await _channelsProvider.createFromUrl(remotePeerUrl));
   }
 }
