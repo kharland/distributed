@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:distributed.connection/src/connection_channels.dart';
+import 'package:distributed.connection/src/data_channels.dart';
 import 'package:distributed.connection/src/socket/socket.dart';
 import 'package:distributed.connection/src/socket/socket_splitter.dart';
 import 'package:distributed.net/timeout.dart';

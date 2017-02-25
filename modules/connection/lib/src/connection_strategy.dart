@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:distributed.connection/connection.dart';
-import 'package:distributed.connection/src/connection_channels.dart';
+import 'package:distributed.connection/src/data_channels.dart';
 import 'package:distributed.node/src/node_finder.dart';
 import 'package:distributed.node/src/peer_identification_strategy.dart';
 import 'package:distributed.port_daemon/src/ports.dart';

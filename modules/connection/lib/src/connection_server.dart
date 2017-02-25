@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:distributed.connection/connection.dart';
-import 'package:distributed.connection/src/connection_channels.dart';
+import 'package:distributed.connection/src/data_channels.dart';
 import 'package:distributed.connection/src/socket/seltzer_socket.dart';
 import 'package:distributed.net/secret.dart';
 import 'package:distributed.node/src/peer_identification_strategy.dart';

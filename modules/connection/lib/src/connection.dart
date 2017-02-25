@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:distributed.connection/src/connection_channels.dart';
+import 'package:distributed.connection/src/data_channels.dart';
 import 'package:distributed.connection/src/message/message.dart';
 import 'package:distributed.connection/src/socket/socket.dart';
 import 'package:distributed.connection/src/socket/socket_channels.dart';

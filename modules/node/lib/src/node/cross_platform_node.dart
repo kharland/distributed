@@ -49,7 +49,9 @@ class CrossPlatformNode implements Node {
   Future connect(Peer peer, {ConnectionStrategy connectionStrategy}) async {
     assert(!_connections.containsKey(peer));
     connectionStrategy ??= _defaultConnectionStrategy;
-    _defaultConnectionStrategy.connect(name, peer.name).forEach(addConnection);
+    _defaultConnectionStrategy.connect(name, peer.name).forEach((connection) {
+      addConnection(connection, peer);
+    });
   }
 
   @override
