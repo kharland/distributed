@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:distributed.node/src/socket/socket.dart';
+import 'package:distributed.connection/src/socket/socket.dart';
 import 'package:stream_channel/stream_channel.dart';
 import 'package:test/src/utils.dart';
 

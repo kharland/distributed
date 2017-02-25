@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:distributed.node/src/message/message_categories.dart';
+import 'package:distributed.connection/src/message/message_categories.dart';
 
 class Message {
   final String category;

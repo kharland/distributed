@@ -1,8 +1,8 @@
 import 'dart:async';
 
+import 'package:distributed.connection/src/socket/seltzer_socket.dart';
 import 'package:distributed.net/secret.dart';
 import 'package:distributed.net/timeout.dart';
-import 'package:distributed.node/src/socket/seltzer_socket.dart';
 
 /// A two-way communication channel for sending raw data.
 ///

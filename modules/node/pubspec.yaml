@@ -6,6 +6,8 @@ authors:
   - Kendal Harland <kjharland@google.com>
 homepage: https://github.com/kharland/distributed_dart
 dependencies:
+  distributed.connection:
+    path: ../connection
   distributed.port_daemon:
     path: ../port_daemon
   distributed.utils:

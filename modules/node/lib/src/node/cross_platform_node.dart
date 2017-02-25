@@ -1,9 +1,7 @@
 import 'dart:async';
+
+import 'package:distributed.connection/connection.dart';
 import 'package:distributed.node/node.dart';
-import 'package:distributed.node/src/connection/connection.dart';
-import 'package:distributed.node/src/connection/connection_strategy.dart';
-import 'package:distributed.node/src/message/message.dart';
-import 'package:distributed.node/src/message/message_categories.dart';
 import 'package:distributed.node/src/peer.dart';
 import 'package:distributed.utils/logging.dart';
 
@@ -57,14 +55,14 @@ class CrossPlatformNode implements Node {
   @override
   void disconnect(Peer peer) {
     assert(_connections.containsKey(peer));
-    _connections.remove(peer).channels.close();
+    _connections.remove(peer).close();
     _logger.info('disconnected from $peer');
   }
 
   @override
   void send(Peer peer, String action, String data) {
     assert(_connections.containsKey(peer));
-    _connections[peer].channels.user.sink.add(new Message(action, data));
+    _connections[peer].user.sink.add(new Message(action, data));
   }
 
   @override
@@ -88,14 +86,14 @@ class CrossPlatformNode implements Node {
   Peer toPeer() => new Peer(name, null);
 
   @override
-  void addConnection(Connection connection) {
-    assert(!_connections.containsKey(connection.peer));
-    connection.channels.system.stream.forEach(_handleSystemMessage);
-    connection.channels.error.stream.forEach(_handleErrorMessage);
+  void addConnection(Connection connection, Peer peer) {
+    assert(!_connections.containsKey(peer));
+    connection.system.stream.forEach(_handleSystemMessage);
+    connection.error.stream.forEach(_handleErrorMessage);
     connection.done.then(_handleConnectionClosed);
-    connection.channels.user.stream.map(_onUserMessageController.add);
-    _connections[connection.peer] = connection;
-    _logger.info('connected to ${connection.peer}');
+    connection.user.stream.map(_onUserMessageController.add);
+    _connections[peer] = connection;
+    _logger.info('connected to $peer');
   }
 
   void _handleSystemMessage(Message message) {

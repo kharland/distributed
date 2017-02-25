@@ -1,47 +1,33 @@
 import 'dart:async';
-
-import 'dart:io';
+import 'package:distributed.connection/connection.dart';
+import 'package:distributed.connection/src/connection_channels.dart';
+import 'package:distributed.connection/src/socket/seltzer_socket.dart';
 import 'package:distributed.net/secret.dart';
-import 'package:distributed.node/src/connection/connection.dart';
-import 'package:distributed.node/src/connection/connection_channels.dart';
-import 'package:distributed.node/src/message/message.dart';
-import 'package:distributed.node/src/peer.dart';
 import 'package:distributed.node/src/peer_identification_strategy.dart';
-import 'package:distributed.node/src/socket/seltzer_socket.dart';
 import 'package:seltzer/platform/vm.dart';
 
-export 'package:distributed.node/src/connection/connection.dart';
-
 class ConnectionServer {
-  final ConnectionChannelsProvider<Message> _channelsProvider;
-  final PeerIdentificationStrategy _identificationStrategy;
+  final DataChannelsProvider<String> _dataChannelsProvider;
   final StreamController<Connection> _channelsController =
       new StreamController<Connection>(sync: true);
   final SeltzerHttpServer _delegate;
 
   ConnectionServer._(
     this._delegate,
-    this._channelsProvider,
-    this._identificationStrategy, {
+    this._dataChannelsProvider, {
     Secret secret: Secret.acceptAny,
   }) {
     _delegate.socketConnections.forEach((SeltzerWebSocket rawSocket) async {
       var socket = await receiveSeltzerSocket(rawSocket, secret: secret);
-      var channels = await _channelsProvider.createFromSocket(socket);
-      var remotePeerAddress = new InternetAddress(socket.address);
-      var remotePeerName = await _identificationStrategy.identifyRemote(
-        channels.system.sink,
-        channels.system.stream,
-      );
-      var remotePeer = new Peer(remotePeerName, remotePeerAddress);
-      _channelsController.add(new Connection(remotePeer, channels));
+      var channels = await _dataChannelsProvider.createFromSocket(socket);
+      _channelsController.add(new Connection(channels));
     });
   }
 
   static Future<ConnectionServer> bind(
     address,
     int port,
-    ConnectionChannelsProvider<Message> channelsProvider,
+    DataChannelsProvider<String> channelsProvider,
     PeerIdentificationStrategy identificationStrategy, {
     Secret secret: Secret.acceptAny,
     int backlog: 0,
@@ -57,7 +43,6 @@ class ConnectionServer {
           shared: shared,
         ),
         channelsProvider,
-        identificationStrategy,
       );
 
   Stream<Connection> get onConnection => _channelsController.stream;
