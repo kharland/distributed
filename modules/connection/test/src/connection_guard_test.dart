@@ -15,11 +15,8 @@ void main() {
       test(
           'should return true iff the number of conncurrent connections is '
           'less than the maximum number of allowed connections.', () {
-        expect(
-            new ConnectionLimit(1)
-              ..currentConnections = 1
-              ..isSafe(new MockConnection()),
-            isFalse);
+        var guard = new ConnectionLimit(1)..currentConnections = 1;
+        expect(guard.isSafe(new MockConnection()), isFalse);
       });
     });
   });

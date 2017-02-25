@@ -25,7 +25,7 @@ class ConnectionLimit implements ConnectionGuard {
   ConnectionLimit(this.maxConnections);
 
   @override
-  bool isSafe(_) => currentConnections + 1 > maxConnections;
+  bool isSafe(_) => currentConnections + 1 <= maxConnections;
 }
 
 /// A [ConnectionGuard] that warns when the peer at the other end of a
