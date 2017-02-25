@@ -1,9 +1,9 @@
 import 'dart:async';
+
 import 'package:distributed.connection/connection.dart';
 import 'package:distributed.connection/src/data_channels.dart';
 import 'package:distributed.connection/src/socket/seltzer_socket.dart';
 import 'package:distributed.net/secret.dart';
-import 'package:distributed.node/src/peer_identification_strategy.dart';
 import 'package:seltzer/platform/vm.dart';
 
 class ConnectionServer {
@@ -27,8 +27,7 @@ class ConnectionServer {
   static Future<ConnectionServer> bind(
     address,
     int port,
-    DataChannelsProvider<String> channelsProvider,
-    PeerIdentificationStrategy identificationStrategy, {
+    DataChannelsProvider<String> channelsProvider, {
     Secret secret: Secret.acceptAny,
     int backlog: 0,
     bool v6Only: false,
