@@ -6,7 +6,7 @@ import 'package:distributed.connection/src/message/message.dart';
 import 'package:distributed.connection/src/socket/socket_channels.dart';
 import 'package:stream_channel/stream_channel.dart';
 
-export 'src/connection_strategy.dart';
+export 'src/connection_guard.dart';
 export 'src/message/message.dart';
 export 'src/message/message_categories.dart';
 

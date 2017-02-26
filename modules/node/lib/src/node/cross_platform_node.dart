@@ -1,14 +1,17 @@
 import 'dart:async';
 
+import 'dart:io';
 import 'package:distributed.connection/connection.dart';
 import 'package:distributed.node/node.dart';
 import 'package:distributed.node/src/logging.dart';
+import 'package:distributed.node/src/peer_connector.dart';
 import 'package:distributed.objects/peer.dart';
+import 'package:meta/meta.dart';
 
 /// Internal-only [Node] implementation.
 class CrossPlatformNode implements Node {
-  final ConnectionStrategy _defaultConnectionStrategy;
   final Logger _logger;
+  final PeerConnector _connector;
 
   final StreamController<Message> _onUserMessageController =
       new StreamController<Message>.broadcast(sync: true);
@@ -24,13 +27,17 @@ class CrossPlatformNode implements Node {
   @override
   final String name;
 
-  CrossPlatformNode(
-    String name, {
-    ConnectionStrategy connectionStrategy,
+  @override
+  final InternetAddress address;
+
+  CrossPlatformNode({
+    @required this.name,
+    @required this.address,
+    PeerConnector peerConnector,
+    Logger logger,
   })
-      : name = name,
-        _defaultConnectionStrategy = connectionStrategy,
-        _logger = new Logger('$Node:$name');
+      : _connector = peerConnector ?? (() => throw new UnimplementedError())(),
+        _logger = logger ?? new Logger('$name@$address');
 
   @override
   List<Peer> get peers => new List.unmodifiable(_connections.keys);
@@ -42,11 +49,15 @@ class CrossPlatformNode implements Node {
   Stream<Peer> get onDisconnect => _onDisconnectController.stream;
 
   @override
-  Future connect(Peer peer, {ConnectionStrategy connectionStrategy}) async {
+  Future connect(Peer peer) async {
     assert(!_connections.containsKey(peer));
-    connectionStrategy ??= _defaultConnectionStrategy;
-    await for (var connection in connectionStrategy.connect(name, peer.name)) {
-      addConnection(connection, peer);
+    await for (var result in _connector.connect(toPeer(), peer)) {
+      if (result.error != null) {
+        _logger.error(result.error);
+      } else {
+        _logger.log('Connected to ${result.receiver}');
+        addConnection(result.connection, result.receiver);
+      }
     }
   }
 
@@ -90,6 +101,11 @@ class CrossPlatformNode implements Node {
     _connections[peer] = connection;
     _logger.log('connected to $peer');
   }
+
+  @override
+  Peer toPeer() => new Peer((b) => b
+    ..name = name
+    ..address = address);
 
   void _handleSystemMessage(Message message) {
     switch (message.category) {
