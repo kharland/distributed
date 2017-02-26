@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:distributed.connection/src/socket/socket.dart';
+import 'package:distributed.connection/socket.dart';
 import 'package:stream_channel/stream_channel.dart';
 
 abstract class DataChannels<T> {

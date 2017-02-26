@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:distributed.connection/src/socket/socket.dart';
+import 'package:distributed.connection/socket.dart';
 import 'package:seltzer/platform/vm.dart';
 import 'package:seltzer/seltzer.dart';
 
