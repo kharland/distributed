@@ -1,7 +1,8 @@
 import 'dart:async';
 
-import 'package:distributed.objects/peer.dart';
+import 'dart:io';
 import 'package:distributed.connection/connection.dart';
+import 'package:distributed.objects/peer.dart';
 
 export 'package:distributed.objects/peer.dart';
 
@@ -9,6 +10,9 @@ export 'package:distributed.objects/peer.dart';
 abstract class Node {
   /// The name used to identify this node.
   String get name;
+
+  // The address of this node.
+  InternetAddress get address;
 
   /// The list of peers that are connected to this [Node].
   List<Peer> get peers;
@@ -19,14 +23,14 @@ abstract class Node {
   /// Emits events when this node disconnects from a [Peer].
   Stream<Peer> get onDisconnect;
 
-  /// Connect to [peer].
-  ///
-  /// [connectionStrategy] determines how this node will connect to [peer]. If
-  /// it is not supplied, the default strategy is used.
-  Future connect(Peer peer, {ConnectionStrategy connectionStrategy});
+  /// Connects this node to [peer].
+  Future connect(Peer peer);
 
   /// Disconnects from the remote peer identified by [name].
   void disconnect(Peer peer);
+
+  /// Returns a peer with the same information as this [Node].
+  Peer toPeer();
 
   /// Send a command of type [action] to [peer] with [data].
   void send(Peer peer, String action, String data);
@@ -48,6 +52,9 @@ class DelegatingNode implements Node {
   String get name => delegate.name;
 
   @override
+  InternetAddress get address => delegate.address;
+
+  @override
   List<Peer> get peers => delegate.peers;
 
   @override
@@ -57,13 +64,15 @@ class DelegatingNode implements Node {
   Stream<Peer> get onDisconnect => delegate.onDisconnect;
 
   @override
-  Future connect(Peer peer, {ConnectionStrategy connectionStrategy}) =>
-      delegate.connect(peer, connectionStrategy: connectionStrategy);
+  Future connect(Peer peer) => delegate.connect(peer);
 
   @override
   void disconnect(Peer peer) {
     delegate.disconnect(peer);
   }
+
+  @override
+  Peer toPeer() => delegate.toPeer();
 
   @override
   void send(Peer peer, String action, String data) {

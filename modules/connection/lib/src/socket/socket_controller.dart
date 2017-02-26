@@ -1,4 +1,4 @@
-import 'package:distributed.connection/src/socket/socket.dart';
+import 'package:distributed.connection/socket.dart';
 import 'package:stream_channel/stream_channel.dart';
 
 class SocketController {
