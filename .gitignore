@@ -1,8 +1,0 @@
-.idea
-.vscode
-*packages*
-pubspec.lock
-.pub
-.trash
-*.db
-*toy.dart

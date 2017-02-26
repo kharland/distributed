@@ -1,4 +1,4 @@
-import 'package:distributed.net/secret.dart';
+import 'package:distributed.objects/secret.dart';
 import 'package:express/express.dart';
 
 abstract class RequestAuthenticator {

@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:distributed.connection/src/data_channels.dart';
 import 'package:distributed.connection/src/socket/socket.dart';
 import 'package:distributed.connection/src/socket/socket_splitter.dart';
-import 'package:distributed.net/timeout.dart';
+import 'package:distributed.objects/timeout.dart';
 import 'package:stream_channel/stream_channel.dart';
 
 class SocketChannels implements DataChannels<String> {

@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:distributed.connection/connection.dart';
-import 'package:distributed.net/timeout.dart';
+import 'package:distributed.objects/timeout.dart';
 import 'package:logging/logging.dart';
 
 abstract class PeerIdentificationStrategy {

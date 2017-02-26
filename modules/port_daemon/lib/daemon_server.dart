@@ -6,7 +6,7 @@ import 'package:distributed.port_daemon/src/http_method.dart';
 import 'package:distributed.port_daemon/src/http_request_handler.dart';
 import 'package:distributed.port_daemon/src/port_daemon.dart';
 import 'package:distributed.port_daemon/src/request_authenticator.dart';
-import 'package:distributed.net/secret.dart';
+import 'package:distributed.objects/secret.dart';
 import 'package:express/express.dart' as express;
 import 'package:express/express.dart' show HttpContext;
 import 'package:logging/logging.dart';

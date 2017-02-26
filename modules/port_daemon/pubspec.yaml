@@ -12,8 +12,8 @@ dependencies:
   express:
   seltzer:
     git: git://github.com/matanlurey/seltzer.git
-  distributed.net:
-    path: ../net
+  distributed.objects:
+    path: ../objects
   distributed.node:
     path: ../node
 dev_dependencies:

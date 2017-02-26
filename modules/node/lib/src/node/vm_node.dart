@@ -1,7 +1,7 @@
 //import 'dart:async';
 //import 'dart:io';
 //
-//import 'package:distributed.net/secret.dart';
+//import 'package:distributed.objects/secret.dart';
 //import 'package:distributed.node/node.dart';
 //import 'package:distributed.node/src/exceptions.dart';
 //import 'package:distributed.node/src/node/cross_platform_node.dart';
