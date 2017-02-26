@@ -12,8 +12,8 @@ dependencies:
   express:
   seltzer:
     git: git://github.com/matanlurey/seltzer.git
-  distributed.net:
-    path: ../net
+  distributed.objects:
+    path: ../objects
 dev_dependencies:
   dart_style:
   test:

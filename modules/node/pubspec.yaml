@@ -10,8 +10,8 @@ dependencies:
     path: ../connection
   distributed.port_daemon:
     path: ../port_daemon
-  distributed.net:
-    path: ../net
+  distributed.objects:
+    path: ../objects
   fixnum:
   logging:
   seltzer:

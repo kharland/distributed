@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:distributed.connection/connection.dart';
 import 'package:distributed.node/node.dart';
 import 'package:distributed.node/src/logging.dart';
-import 'package:distributed.node/src/peer.dart';
+import 'package:distributed.objects/peer.dart';
 
 /// Internal-only [Node] implementation.
 class CrossPlatformNode implements Node {

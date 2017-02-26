@@ -1,4 +1,4 @@
-import 'package:distributed.net/secret.dart';
+import 'package:distributed.objects/secret.dart';
 import 'package:distributed.node/node.dart';
 
 abstract class NodeProvider {

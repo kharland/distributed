@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:args/args.dart';
-import 'package:distributed.net/secret.dart';
+import 'package:distributed.objects/secret.dart';
 import 'package:distributed.node/src/logging.dart';
 import 'package:distributed.port_daemon/daemon_server.dart';
 import 'package:distributed.port_daemon/src/daemon_server_info.dart';

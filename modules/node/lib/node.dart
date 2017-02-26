@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:distributed.node/src/peer.dart';
+import 'package:distributed.objects/peer.dart';
 import 'package:distributed.connection/connection.dart';
 
-export 'package:distributed.node/src/peer.dart';
+export 'package:distributed.objects/peer.dart';
 
 /// A node in a distributed system.
 abstract class Node {

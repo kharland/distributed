@@ -1,13 +1,15 @@
-name: distributed.net
-
+name: distributed.objects
 version: 0.0.0
-description: Common networking code
+description: Common objects used for communication betweeen nodes
 authors:
   - Kendal Harland <kjharland@google.com>
 homepage: https://github.com/kharland/distributed_dart
 dependencies:
-  seltzer:
-    git: git://github.com/matanlurey/seltzer.git
+  meta:
+  built_value:
+  built_value_generator:
+  build_runner:
+  source_gen:
 dev_dependencies:
   dart_style:
   test:

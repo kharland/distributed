@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:distributed.net/secret.dart';
+import 'package:distributed.objects/secret.dart';
 import 'package:distributed.port_daemon/daemon_server.dart';
 
 import 'package:fixnum/fixnum.dart';

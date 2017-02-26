@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:distributed.net/timeout.dart';
+import 'package:distributed.objects/timeout.dart';
 import 'package:seltzer/seltzer.dart';
 
 class HttpWithTimeout {
