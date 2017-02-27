@@ -10,7 +10,7 @@ abstract class Node {
   /// The name used to identify this node.
   String get name;
 
-  // The address of this node.
+  // This node's host machine.
   HostMachine get hostMachine;
 
   /// The list of peers that are connected to this [Node].
