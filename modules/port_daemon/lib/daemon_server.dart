@@ -6,7 +6,6 @@ import 'package:distributed.port_daemon/src/http_method.dart';
 import 'package:distributed.port_daemon/src/http_request_handler.dart';
 import 'package:distributed.port_daemon/src/port_daemon.dart';
 import 'package:distributed.port_daemon/src/request_authenticator.dart';
-import 'package:distributed.objects/secret.dart';
 import 'package:express/express.dart' as express;
 import 'package:express/express.dart' show HttpContext;
 import 'package:logging/logging.dart';
@@ -20,17 +19,14 @@ class DaemonServer {
 
   final express.Express _express = new express.Express();
   final Logger _logger = new Logger('$DaemonServer');
-  final RequestAuthenticator _requestAuthenticator;
 
   DaemonServer(
       {PortDaemon portDaemon,
       DaemonServerInfo serverInfo,
       RequestAuthenticator requestAuthenticator})
       : serverInfo = serverInfo ?? new DaemonServerInfo(),
-        _portDaemon =
-            portDaemon ?? new PortDaemon(new NodeDatabase(new File('node.db'))),
-        _requestAuthenticator =
-            requestAuthenticator ?? new SecretAuthenticator(Secret.acceptAny) {
+        _portDaemon = portDaemon ??
+            new PortDaemon(new NodeDatabase(new File('node.db'))) {
     express.logger = (Object obj) {
       _logger.info(obj);
     };
@@ -64,11 +60,7 @@ class DaemonServer {
     _portDaemon.clearDatabase();
   }
 
-  void _installRoute(
-    HttpRequestHandler route,
-    express.Express express, {
-    Secret secret: Secret.acceptAny,
-  }) {
+  void _installRoute(HttpRequestHandler route, express.Express express) {
     var installer;
 
     switch (route.method) {
@@ -88,13 +80,8 @@ class DaemonServer {
         throw new UnimplementedError(route.method.value);
     }
 
-    installer('${route.route}/:secret', (HttpContext context) {
-      if (_requestAuthenticator.isContextValid(context)) {
-        route.execute(context);
-      } else {
-        context.sendText('Autentication failed');
-        context.end();
-      }
+    installer('${route.route}', (HttpContext context) {
+      route.execute(context);
     });
   }
 }

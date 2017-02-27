@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:distributed.connection/connection.dart';
 import 'package:distributed.connection/socket.dart';
-import 'package:distributed.objects/peer.dart';
+import 'package:distributed.objects/objects.dart';
 
 /// Connects one [Peer] to another.
 abstract class PeerConnector {

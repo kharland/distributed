@@ -119,6 +119,5 @@ class DaemonClient {
     return resultCompleter.future;
   }
 
-  String _createRequestUrl(String route) =>
-      '${serverInfo.url}/$route/${serverInfo.secret}';
+  String _createRequestUrl(String route) => '${serverInfo.url}/$route';
 }

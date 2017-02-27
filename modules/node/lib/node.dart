@@ -1,18 +1,17 @@
 import 'dart:async';
 
-import 'dart:io';
 import 'package:distributed.connection/connection.dart';
-import 'package:distributed.objects/peer.dart';
+import 'package:distributed.objects/objects.dart';
 
-export 'package:distributed.objects/peer.dart';
+export 'package:distributed.objects/objects.dart';
 
 /// A node in a distributed system.
 abstract class Node {
   /// The name used to identify this node.
   String get name;
 
-  // The address of this node.
-  InternetAddress get address;
+  // This node's host machine.
+  HostMachine get hostMachine;
 
   /// The list of peers that are connected to this [Node].
   List<Peer> get peers;
@@ -52,7 +51,7 @@ class DelegatingNode implements Node {
   String get name => delegate.name;
 
   @override
-  InternetAddress get address => delegate.address;
+  HostMachine get hostMachine => delegate.hostMachine;
 
   @override
   List<Peer> get peers => delegate.peers;

@@ -1,4 +1,3 @@
-import 'package:distributed.objects/secret.dart';
 import 'package:distributed.node/node.dart';
 import 'package:distributed.node/src/configuration.dart';
 import 'package:distributed.node/src/logging.dart';
@@ -16,7 +15,6 @@ class _VmNodeProvider implements NodeProvider {
   Node create(
     String name, {
     String hostname,
-    Secret secret,
     bool isHidden: false,
   }) =>
       throw new UnimplementedError();

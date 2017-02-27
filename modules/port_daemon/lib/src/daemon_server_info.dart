@@ -1,8 +1,6 @@
 import 'dart:io';
 
-import 'package:distributed.objects/secret.dart';
 import 'package:distributed.port_daemon/daemon_server.dart';
-
 import 'package:fixnum/fixnum.dart';
 
 /// A class for specifying the location of a [DaemonServer].
@@ -12,12 +10,10 @@ class DaemonServerInfo {
 
   final InternetAddress address;
   final Int64 port;
-  final Secret secret;
 
-  DaemonServerInfo({InternetAddress address, Int64 port, Secret secret})
+  DaemonServerInfo({InternetAddress address, Int64 port})
       : address = address ?? defaultAddress,
-        port = port ?? defaultPort,
-        secret = secret ?? Secret.acceptAny;
+        port = port ?? defaultPort;
 
   String get url => 'http://${address.address}:$port';
 }

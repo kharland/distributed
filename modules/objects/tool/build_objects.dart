@@ -5,7 +5,7 @@ import 'package:source_gen/source_gen.dart';
 void main() {
   build(new PhaseGroup.singleAction(
           new GeneratorBuilder([new BuiltValueGenerator()]),
-          new InputSet('distributed.objects', const ['lib/peer.dart'])))
+          new InputSet('distributed.objects', const ['lib/objects.dart'])))
       .then((BuildResult buildResult) {
     print('Generated ${buildResult.outputs}');
   });
