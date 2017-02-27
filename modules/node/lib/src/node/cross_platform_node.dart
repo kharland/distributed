@@ -1,11 +1,10 @@
 import 'dart:async';
 
-import 'dart:io';
 import 'package:distributed.connection/connection.dart';
 import 'package:distributed.node/node.dart';
 import 'package:distributed.node/src/logging.dart';
 import 'package:distributed.node/src/peer_connector.dart';
-import 'package:distributed.objects/peer.dart';
+import 'package:distributed.objects/objects.dart';
 import 'package:meta/meta.dart';
 
 /// Internal-only [Node] implementation.
@@ -28,16 +27,16 @@ class CrossPlatformNode implements Node {
   final String name;
 
   @override
-  final InternetAddress address;
+  final HostMachine hostMachine;
 
   CrossPlatformNode({
     @required this.name,
-    @required this.address,
+    @required this.hostMachine,
     PeerConnector peerConnector,
     Logger logger,
   })
       : _connector = peerConnector ?? (() => throw new UnimplementedError())(),
-        _logger = logger ?? new Logger('$name@$address');
+        _logger = logger ?? new Logger('$name@$hostMachine');
 
   @override
   List<Peer> get peers => new List.unmodifiable(_connections.keys);
@@ -105,7 +104,7 @@ class CrossPlatformNode implements Node {
   @override
   Peer toPeer() => new Peer((b) => b
     ..name = name
-    ..address = address);
+    ..hostMachine = hostMachine);
 
   void _handleSystemMessage(Message message) {
     switch (message.category) {

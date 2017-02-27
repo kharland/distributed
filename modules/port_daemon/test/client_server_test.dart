@@ -2,14 +2,12 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:distributed.objects/secret.dart';
 import 'package:distributed.node/src/logging.dart';
 import 'package:distributed.port_daemon/daemon_client.dart';
 import 'package:distributed.port_daemon/daemon_server.dart';
 import 'package:distributed.port_daemon/src/daemon_server_info.dart';
 import 'package:distributed.port_daemon/src/port_daemon.dart';
 import 'package:distributed.port_daemon/src/ports.dart';
-import 'package:distributed.port_daemon/src/request_authenticator.dart';
 import 'package:quiver/testing/async.dart';
 import 'package:seltzer/platform/vm.dart';
 import 'package:test/test.dart';
@@ -30,14 +28,12 @@ void main() {
         dbFile.deleteSync();
       }
 
-      var testSecret = new Secret('test');
-      var serverInfo = new DaemonServerInfo(secret: testSecret);
+      var serverInfo = new DaemonServerInfo();
 
       portDaemon = new PortDaemon(new NodeDatabase(dbFile));
       server = new DaemonServer(
         portDaemon: portDaemon,
         serverInfo: serverInfo,
-        requestAuthenticator: new SecretAuthenticator(testSecret),
       );
       client = new DaemonClient('', serverInfo);
       await server.start();
@@ -53,12 +49,6 @@ void main() {
       if (dbFile.existsSync()) {
         dbFile.deleteSync();
       }
-    });
-
-    test('should reject a request with a bad cookie', () async {
-      var badClient = new DaemonClient(
-          '', new DaemonServerInfo(secret: new Secret('badSecret')));
-      expect(await badClient.registerNode('A'), lessThan(0));
     });
 
     test('should be able to ping each other', () async {
