@@ -58,9 +58,3 @@ void main() {
     });
   });
 }
-
-class TestNode {
-  final SocketServer socketServer;
-
-  TestNode(this.socketServer);
-}
