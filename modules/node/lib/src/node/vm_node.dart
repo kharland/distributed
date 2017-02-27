@@ -6,9 +6,14 @@
 //import 'package:distributed.node/src/exceptions.dart';
 //import 'package:distributed.node/src/node/cross_platform_node.dart';
 //import 'package:distributed.node/src/peer_identification_strategy.dart';
-//import 'package:distributed.port_daemon/daemon_client.dart';
+//import 'package:distributed.port_daemon/port_daemon_client.dart';
 //import 'package:distributed.port_daemon/src/daemon_server_info.dart';
 //import 'package:distributed.port_daemon/src/ports.dart';
+
+//import 'package:distributed.connection/connection.dart';
+//import 'package:distributed.connection/src/socket_server.dart';
+//import 'package:distributed.node/node.dart';
+//import 'package:distributed.port_daemon/port_daemon_client.dart';
 
 //Future<Node> spawn(
 //  String name, {
@@ -35,7 +40,7 @@
 //  );
 //  return new VmNode(delegate, channelServer, daemonClient);
 //}
-
+//
 ///// A node that runs on the Dart VM
 //class VmNode extends DelegatingNode {
 //  static const defaultHostname = 'localhost';

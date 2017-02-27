@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:distributed.port_daemon/src/ports.dart';
-import 'package:fixnum/fixnum.dart';
 import 'package:meta/meta.dart';
 
 abstract class Message {
@@ -24,7 +23,7 @@ abstract class Message {
 
 class RegistrationResult extends Message {
   final String name;
-  final Int64 port;
+  final int port;
   final bool _failed;
 
   @literal
@@ -32,13 +31,13 @@ class RegistrationResult extends Message {
 
   RegistrationResult.failure()
       : name = '',
-        port = Ports.invalidPort,
+        port = Ports.error,
         _failed = true;
 
   factory RegistrationResult.fromJson(Map<String, Object> json) =>
       json['failed']
           ? new RegistrationResult.failure()
-          : new RegistrationResult(json['name'], new Int64(json['port']));
+          : new RegistrationResult(json['name'], json['port']);
 
   factory RegistrationResult.fromString(String string) =>
       new RegistrationResult.fromJson(
@@ -71,16 +70,14 @@ class DeregistrationResult extends Message {
 }
 
 class PortAssignmentList extends Message {
-  final Map<String, Int64> assignments;
+  final Map<String, int> assignments;
 
   @literal
   const PortAssignmentList(this.assignments);
 
   factory PortAssignmentList.fromString(String s) {
     var assignmentsWithIntPorts = Message.parseJson(PortAssignmentList, s);
-    return new PortAssignmentList(new Map.fromIterables(
-        assignmentsWithIntPorts.keys,
-        assignmentsWithIntPorts.values.map((i) => new Int64(i))));
+    return new PortAssignmentList(assignmentsWithIntPorts);
   }
 
   @override

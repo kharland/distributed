@@ -1,5 +1,5 @@
-import 'daemon_based_node_finder_test.dart' as daemon_based_node_finder_test;
+import 'src/peer_connector_test.dart' as peer_connector_test;
 
 void main() {
-  daemon_based_node_finder_test.main();
+  peer_connector_test.main();
 }

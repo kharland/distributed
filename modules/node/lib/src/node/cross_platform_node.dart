@@ -70,7 +70,7 @@ class CrossPlatformNode implements Node {
   @override
   void send(Peer peer, String action, String data) {
     assert(_connections.containsKey(peer));
-    _connections[peer].user.sink.add(new Message(action, data));
+    _connections[peer].user.sink.add(createMessage(action, data));
   }
 
   @override

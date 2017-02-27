@@ -1,10 +1,9 @@
 import 'dart:async';
 
 import 'package:distributed.port_daemon/src/http_method.dart';
-import 'package:distributed.port_daemon/src/port_daemon.dart';
+import 'package:distributed.port_daemon/src/database_helpers.dart';
 import 'package:distributed.port_daemon/src/api.dart';
 import 'package:express/express.dart' hide Logger;
-import 'package:fixnum/fixnum.dart';
 import 'package:logging/logging.dart';
 
 abstract class HttpRequestHandler {
@@ -16,7 +15,7 @@ abstract class HttpRequestHandler {
 }
 
 class PingHandler implements HttpRequestHandler {
-  final PortDaemon _daemon;
+  final DatabaseHelpers _daemon;
 
   PingHandler(this._daemon);
 
@@ -35,7 +34,7 @@ class PingHandler implements HttpRequestHandler {
 }
 
 class RegisterNodeHandler implements HttpRequestHandler {
-  final PortDaemon _daemon;
+  final DatabaseHelpers _daemon;
   final Logger _logger = new Logger('$RegisterNodeHandler');
 
   RegisterNodeHandler(this._daemon);
@@ -49,7 +48,7 @@ class RegisterNodeHandler implements HttpRequestHandler {
   @override
   Future execute(HttpContext ctx) async {
     String name = ctx.params['name'];
-    _daemon.registerNode(name).then((Int64 port) {
+    _daemon.registerNode(name).then((int port) {
       ctx.sendText(new RegistrationResult(name, port).toString());
       ctx.end();
     }).catchError((e, stacktrace) {
@@ -62,7 +61,7 @@ class RegisterNodeHandler implements HttpRequestHandler {
 }
 
 class DeregisterNodeHandler implements HttpRequestHandler {
-  final PortDaemon _daemon;
+  final DatabaseHelpers _daemon;
   final Logger _logger = new Logger('$DeregisterNodeHandler');
 
   DeregisterNodeHandler(this._daemon);
@@ -89,7 +88,7 @@ class DeregisterNodeHandler implements HttpRequestHandler {
 }
 
 class LookupNodeHandler implements HttpRequestHandler {
-  final PortDaemon _daemon;
+  final DatabaseHelpers _daemon;
 
   LookupNodeHandler(this._daemon);
 
@@ -101,7 +100,7 @@ class LookupNodeHandler implements HttpRequestHandler {
 
   @override
   Future execute(HttpContext ctx) async {
-    _daemon.lookupPort(ctx.params['name']).then((Int64 port) {
+    _daemon.lookupPort(ctx.params['name']).then((int port) {
       ctx.sendText(port.toString());
       ctx.end();
     });
@@ -109,7 +108,7 @@ class LookupNodeHandler implements HttpRequestHandler {
 }
 
 class ListNodesHandler implements HttpRequestHandler {
-  final PortDaemon _daemon;
+  final DatabaseHelpers _daemon;
 
   ListNodesHandler(this._daemon);
 
@@ -123,7 +122,7 @@ class ListNodesHandler implements HttpRequestHandler {
   Future execute(HttpContext ctx) async {
     var nodes = _daemon.nodes;
     var ports = await Future.wait(nodes.map(_daemon.lookupPort));
-    var assignments = <String, Int64>{};
+    var assignments = <String, int>{};
     for (int i = 0; i < nodes.length; i++) {
       assignments[nodes.elementAt(i)] = ports[i];
     }

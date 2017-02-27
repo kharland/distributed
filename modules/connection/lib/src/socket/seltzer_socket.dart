@@ -44,7 +44,7 @@ class _SeltzerSocketStream extends StreamView<String> {
       // ignore: strong_mode_down_cast_composite
       : super(socket.onMessage.asyncMap(_decodeMessage).asBroadcastStream());
 
-  static String _decodeMessage(message) => message.readAsString();
+  static Future<String> _decodeMessage(message) => message.readAsString();
 }
 
 class _SeltzerSocketSink implements StreamSink<String> {
