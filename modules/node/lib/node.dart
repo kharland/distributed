@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:distributed.connection/connection.dart';
 import 'package:distributed.objects/objects.dart';
 
 export 'package:distributed.objects/objects.dart';

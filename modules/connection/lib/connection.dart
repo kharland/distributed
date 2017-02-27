@@ -1,13 +1,12 @@
 import 'dart:async';
 
+import 'package:distributed.objects/objects.dart';
 import 'package:distributed.connection/socket.dart';
 import 'package:distributed.connection/src/data_channels.dart';
-import 'package:distributed.connection/src/message/message.dart';
 import 'package:distributed.connection/src/socket/socket_channels.dart';
 import 'package:stream_channel/stream_channel.dart';
 
 export 'src/connection_guard.dart';
-export 'src/message/message.dart';
 export 'src/message/message_categories.dart';
 
 class Connection implements DataChannels<Message> {
@@ -28,6 +27,15 @@ class Connection implements DataChannels<Message> {
         error = _transformer.bind(original.error),
         _doneFuture = original.done;
 
+  static Future<Connection> open(String url) async {
+    var socket = await Socket.connect(url);
+    return new Connection(await SocketChannels.outgoing(socket));
+  }
+
+  static Future<Connection> receive(Socket socket) async {
+    return new Connection(await SocketChannels.incoming(socket));
+  }
+
   @override
   Future get done => _doneFuture;
 
@@ -39,24 +47,16 @@ class Connection implements DataChannels<Message> {
       ]).then((_) {});
 }
 
-class ConnectionProvider implements DataChannelsProvider<Message> {
-  @override
-  Future<Connection> createFromUrl(String url) async =>
-      createFromSocket(await Socket.connect(url));
-
-  @override
-  Future<Connection> createFromSocket(socket) async =>
-      new Connection(await SocketChannels.outgoing(socket));
-}
-
 class _MessageTransformer implements StreamChannelTransformer<Message, String> {
   @override
   StreamChannel<Message> bind(StreamChannel<String> channel) {
     var controller = new StreamController<Message>(sync: true)
-      ..stream.map((message) => message.toString()).pipe(channel.sink);
+      ..stream.map((message) => serialize(message, Message)).pipe(channel.sink);
 
-    return new StreamChannel(
-      channel.stream.map((s) => new Message.fromString(s)).asBroadcastStream(),
+    return new StreamChannel<Message>(
+      channel.stream
+          .map((message) => deserialize(message, Message))
+          .asBroadcastStream(),
       controller,
     );
   }

@@ -1,23 +1,26 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:distributed.port_daemon/port_daemon.dart';
 import 'package:distributed.port_daemon/src/database/database.dart';
 import 'package:distributed.port_daemon/src/database/serializer.dart';
 import 'package:distributed.port_daemon/src/ports.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:logging/logging.dart';
 
-/// An interface for interacting with the database of nodes registered to the
-/// local port mapping daemon.
-class PortDaemon {
+/// A partial [PortDaemon] implementation that excludes http-server specifics.
+class DatabaseHelpers {
   static final Ports _ports = new Ports();
 
-  final Database<String, Int64> _database;
+  Database<String, Int64> _database;
   final Map<String, ServerHeartbeat> _heartbeats = <String, ServerHeartbeat>{};
-  final Logger _logger = new Logger('$PortDaemon');
+  final Logger _logger = new Logger('$DatabaseHelpers');
 
   //TODO: Initialize heartbeats for nodes that are already in the database.
-  PortDaemon(this._database);
+
+  set database(Database<String, Int64> value) {
+    _database = value;
+  }
 
   /// The set of names of all nodes registered with this daemon.
   Set<String> get nodes => _database.keys.toSet();
@@ -38,16 +41,17 @@ class PortDaemon {
   /// Assigns a port to a new node named [name].
   ///
   /// Returns a future that completes with the port number.
-  Future<Int64> registerNode(String name) async {
+  Future<int> registerNode(String name) async {
     Int64 port;
-    if ((port = await lookupPort(name)) > Int64.ZERO) {
+    if ((port = new Int64(await lookupPort(name))) > 0) {
       throw new ArgumentError('$name is already registered to port $port');
     }
-    port = await _database.insert(name, await _ports.getUnusedPort());
+    port =
+        await _database.insert(name, new Int64(await _ports.getUnusedPort()));
     _heartbeats[name] = new ServerHeartbeat(name)
       ..onFlatline.listen(deregisterNode);
     _logger.info("Registered $name to port $port");
-    return port;
+    return port.toInt();
   }
 
   /// Frees the port held by the node named [name].
@@ -55,7 +59,7 @@ class PortDaemon {
   /// An argument error is thrown if such a node does not exist.
   Future deregisterNode(String name) async {
     Int64 port;
-    if ((port = await lookupPort(name)) < Int64.ZERO) {
+    if ((port = new Int64(await lookupPort(name))) < Int64.ZERO) {
       throw new Exception('Unable to deregister unregistered node $name');
     }
     await _database.remove(name);
@@ -71,9 +75,9 @@ class PortDaemon {
 
   /// Returns the port for the node named [nodeName].
   ///
-  /// If no node is found, returns Ports.INVALID_PORT.
-  Future<Int64> lookupPort(String nodeName) async =>
-      await _database.get(nodeName) ?? Ports.invalidPort;
+  /// If no node is found, returns [Ports.error].
+  Future<int> lookupPort(String nodeName) async =>
+      (await _database.get(nodeName))?.toInt() ?? Ports.error;
 }
 
 class NodeDatabase extends MemoryDatabase<String, Int64> {

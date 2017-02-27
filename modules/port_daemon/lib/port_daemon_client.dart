@@ -1,26 +1,27 @@
 import 'dart:async';
 
+import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/src/api.dart';
-import 'package:distributed.port_daemon/src/daemon_server_info.dart';
 import 'package:distributed.port_daemon/src/http_with_timeout.dart';
-import 'package:distributed.port_daemon/src/port_daemon.dart';
+import 'package:distributed.port_daemon/src/database_helpers.dart';
 import 'package:distributed.port_daemon/src/ports.dart';
 import 'package:fixnum/fixnum.dart';
 import 'package:logging/logging.dart';
 import 'package:seltzer/platform/vm.dart';
 import 'package:seltzer/seltzer.dart';
 
-class DaemonClient {
+class PortDaemonClient {
   final String name;
-  final DaemonServerInfo serverInfo;
+  final HostMachine daemonHostMachine;
 
   final HttpWithTimeout _http = new HttpWithTimeout();
   final SeltzerHttp _seltzer;
-  final Logger _logger = new Logger('$DaemonClient');
+  final Logger _logger = new Logger('$PortDaemonClient');
 
   Timer _heartbeatTimer;
 
-  DaemonClient(this.name, this.serverInfo) : _seltzer = const VmSeltzerHttp();
+  PortDaemonClient(this.name, this.daemonHostMachine)
+      : _seltzer = const VmSeltzerHttp();
 
   void startHeartbeat() {
     var period = ServerHeartbeat.period ~/ 2;
@@ -68,17 +69,18 @@ class DaemonClient {
   /// Request the port for the node named [name].
   ///
   /// Returns Ports.INVALID_PORT if no such node is registered with the daemon.
-  Future<Int64> lookupNode(String name) async {
+  Future<int> lookupNode(String name) async {
     if (!await pingDaemon()) {
-      throw new Exception('No deamon running at ${serverInfo.url}');
+      throw new Exception(
+          'No daemon running at ${daemonHostMachine.daemonUrl}');
     }
-    var portCompleter = new Completer<Int64>();
+    var portCompleter = new Completer<int>();
     try {
       var response =
           await _http.send(_seltzer.get(_createRequestUrl('node/$name')));
-      portCompleter.complete(Int64.parseInt(await response.readAsString()));
+      portCompleter.complete(int.parse(await response.readAsString()));
     } catch (e) {
-      portCompleter.complete(Ports.invalidPort);
+      portCompleter.complete(Ports.error);
     }
     return portCompleter.future;
   }
@@ -97,7 +99,7 @@ class DaemonClient {
       portCompleter.complete(result.port);
     } catch (e) {
       _logger.severe(e);
-      portCompleter.complete(Ports.invalidPort);
+      portCompleter.complete(Ports.error);
     }
     return portCompleter.future;
   }
@@ -119,5 +121,6 @@ class DaemonClient {
     return resultCompleter.future;
   }
 
-  String _createRequestUrl(String route) => '${serverInfo.url}/$route';
+  String _createRequestUrl(String route) =>
+      '${daemonHostMachine.daemonUrl}/$route';
 }

@@ -3,10 +3,11 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:distributed.node/src/logging.dart';
-import 'package:distributed.port_daemon/daemon_client.dart';
-import 'package:distributed.port_daemon/daemon_server.dart';
-import 'package:distributed.port_daemon/src/daemon_server_info.dart';
-import 'package:distributed.port_daemon/src/port_daemon.dart';
+import 'package:distributed.objects/objects.dart';
+import 'package:distributed.port_daemon/port_daemon.dart';
+import 'package:distributed.port_daemon/port_daemon_client.dart';
+import 'package:distributed.port_daemon/src/express_daemon.dart';
+import 'package:distributed.port_daemon/src/database_helpers.dart';
 import 'package:distributed.port_daemon/src/ports.dart';
 import 'package:quiver/testing/async.dart';
 import 'package:seltzer/platform/vm.dart';
@@ -16,10 +17,10 @@ void main() {
   useSeltzerInVm();
   configureLogging(testing: true);
 
-  group('$DaemonServer', () {
-    DaemonServer server;
-    DaemonClient client;
-    PortDaemon portDaemon;
+  group('$ExpressDaemon', () {
+    ExpressDaemon server;
+    PortDaemonClient client;
+    DatabaseHelpers portDaemon;
     File dbFile;
 
     setUp(() async {
@@ -28,14 +29,9 @@ void main() {
         dbFile.deleteSync();
       }
 
-      var serverInfo = new DaemonServerInfo();
-
-      portDaemon = new PortDaemon(new NodeDatabase(dbFile));
-      server = new DaemonServer(
-        portDaemon: portDaemon,
-        serverInfo: serverInfo,
-      );
-      client = new DaemonClient('', serverInfo);
+      var daemonHostMachine = new HostMachine();
+      server = new PortDaemon(hostMachine: daemonHostMachine);
+      client = new PortDaemonClient('', daemonHostMachine);
       await server.start();
     });
 
@@ -62,14 +58,14 @@ void main() {
 
     test('should fail to register a currently registered node', () async {
       expect(await client.registerNode('A'), greaterThan(0));
-      expect(await client.registerNode('A'), Ports.invalidPort);
+      expect(await client.registerNode('A'), Ports.error);
     });
 
     test('should deregister a node', () async {
       expect(await client.registerNode('A'), greaterThan(0));
       expect(await portDaemon.lookupPort('A'), greaterThan(0));
       expect(await client.deregisterNode('A'), true);
-      expect(await portDaemon.lookupPort('A'), Ports.invalidPort);
+      expect(await portDaemon.lookupPort('A'), Ports.error);
     });
 
     test('should exchange the list of nodes registered on the server',
