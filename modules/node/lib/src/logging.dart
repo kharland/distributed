@@ -60,8 +60,6 @@ class _LoggingLogger implements Logger {
 }
 
 class _NoOpLogger implements Logger {
-  _NoOpLogger();
-
   @override
   void error(String message) {}
 
