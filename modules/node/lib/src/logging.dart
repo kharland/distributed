@@ -1,21 +1,9 @@
 // TODO: move this to a common package
 import 'dart:io';
+
 import 'package:logging/logging.dart' as l;
 
 final logger = new Logger('distributed');
-
-void configureLogging({bool testing: false}) {
-  l.Logger.root.level = testing ? l.Level.SEVERE : l.Level.ALL;
-  l.Logger.root.onRecord.listen((l.LogRecord record) {
-    if (record.level >= l.Logger.root.level) {
-      if (record.level >= l.Level.WARNING) {
-        stderr.writeln(record.message);
-      } else {
-        stdout.writeln(record.message);
-      }
-    }
-  });
-}
 
 abstract class Logger {
   factory Logger(String prefix) = _LoggingLogger;
@@ -33,9 +21,27 @@ abstract class Logger {
 }
 
 class _LoggingLogger implements Logger {
+  static bool _isConfigured = false;
   l.Logger _logger;
 
-  _LoggingLogger(String prefix) : _logger = new l.Logger(prefix);
+  _LoggingLogger._(String prefix) : _logger = new l.Logger(prefix);
+
+  factory _LoggingLogger(String prefix) {
+    if (!_isConfigured) {
+      _isConfigured = true;
+      l.Logger.root.level = l.Level.ALL;
+      l.Logger.root.onRecord.listen((l.LogRecord record) {
+        if (record.level >= l.Logger.root.level) {
+          if (record.level >= l.Level.WARNING) {
+            stderr.writeln(record.message);
+          } else {
+            stdout.writeln(record.message);
+          }
+        }
+      });
+    }
+    return new _LoggingLogger._(prefix);
+  }
 
   @override
   void log(String message) {

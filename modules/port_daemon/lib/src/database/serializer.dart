@@ -1,5 +1,3 @@
-import 'package:fixnum/fixnum.dart';
-
 /// An object that serializes instances of [T] to and from Strings.
 abstract class Serializer<T> {
   /// Converts [object] to an instance of S.
@@ -18,12 +16,12 @@ class StringSerializer implements Serializer<String> {
   String deserialize(String object) => object;
 }
 
-class Int64Serializer implements Serializer<Int64> {
-  const Int64Serializer();
+class IntSerializer implements Serializer<int> {
+  const IntSerializer();
 
   @override
-  String serialize(Int64 number) => number.toString();
+  String serialize(int number) => number.toString();
 
   @override
-  Int64 deserialize(String number) => Int64.parseInt(number);
+  int deserialize(String number) => int.parse(number);
 }

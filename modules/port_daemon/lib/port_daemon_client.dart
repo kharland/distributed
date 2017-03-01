@@ -1,126 +1,40 @@
 import 'dart:async';
 
 import 'package:distributed.objects/objects.dart';
-import 'package:distributed.port_daemon/src/api.dart';
-import 'package:distributed.port_daemon/src/http_with_timeout.dart';
-import 'package:distributed.port_daemon/src/database_helpers.dart';
+import 'package:distributed.port_daemon/port_daemon.dart';
+import 'package:distributed.port_daemon/src/http_daemon_client.dart';
 import 'package:distributed.port_daemon/src/ports.dart';
-import 'package:fixnum/fixnum.dart';
-import 'package:logging/logging.dart';
-import 'package:seltzer/platform/vm.dart';
-import 'package:seltzer/seltzer.dart';
+import 'package:meta/meta.dart';
 
-class PortDaemonClient {
-  final String name;
-  final HostMachine daemonHostMachine;
+/// An object for communicating with a [PortDaemon].
+abstract class PortDaemonClient {
+  factory PortDaemonClient({@required HostMachine daemonHostMachine}) =
+      HttpDaemonClient;
 
-  final HttpWithTimeout _http = new HttpWithTimeout();
-  final SeltzerHttp _seltzer;
-  final Logger _logger = new Logger('$PortDaemonClient');
+  /// The [HostMachine] where this client's [PortDaemon] is running.
+  HostMachine get daemonHostMachine;
 
-  Timer _heartbeatTimer;
+  /// Completes with true iff a daemon is running at [daemonHostMachine].
+  Future<bool> get isDaemonRunning;
 
-  PortDaemonClient(this.name, this.daemonHostMachine)
-      : _seltzer = const VmSeltzerHttp();
-
-  void startHeartbeat() {
-    var period = ServerHeartbeat.period ~/ 2;
-    _heartbeatTimer = new Timer.periodic(period, (_) {
-      pingDaemon();
-    });
-  }
-
-  void stopHeartBeat() {
-    assert(_heartbeatTimer != null);
-    _heartbeatTimer.cancel();
-  }
-
-  /// Pings the daemon server.
-  ///
-  /// Returns a future that completes with true iff a response was received.
-  Future<bool> pingDaemon() async {
-    var responseCompleter = new Completer<bool>();
-    try {
-      await _http.send(_seltzer.get(_createRequestUrl('ping/$name')));
-      responseCompleter.complete(true);
-    } catch (e) {
-      responseCompleter.complete(false);
-    }
-    return responseCompleter.future;
-  }
-
-  /// Returns a mapping of node name -> port of the daemon server registrants.
+  /// Returns a mapping of node names to their registered ports.
   ///
   /// Returns an empty map if no nodes are registered or if an error occurred.
-  Future<Map<String, int>> listNodes() async {
-    var assignmentsCompleter = new Completer<Map<String, int>>();
-    try {
-      var response =
-          await _http.send(_seltzer.get(_createRequestUrl('list/node')));
-      var assignments =
-          new PortAssignmentList.fromString(await response.readAsString());
-      assignmentsCompleter.complete(assignments.assignments);
-    } catch (e) {
-      assignmentsCompleter.complete({});
-    }
-    return assignmentsCompleter.future;
-  }
+  Future<Map<String, int>> getNodes();
 
-  /// Request the port for the node named [name].
+  /// Request the port for the node named [nodeName].
   ///
-  /// Returns Ports.INVALID_PORT if no such node is registered with the daemon.
-  Future<int> lookupNode(String name) async {
-    if (!await pingDaemon()) {
-      throw new Exception(
-          'No daemon running at ${daemonHostMachine.daemonUrl}');
-    }
-    var portCompleter = new Completer<int>();
-    try {
-      var response =
-          await _http.send(_seltzer.get(_createRequestUrl('node/$name')));
-      portCompleter.complete(int.parse(await response.readAsString()));
-    } catch (e) {
-      portCompleter.complete(Ports.error);
-    }
-    return portCompleter.future;
-  }
+  /// Returns [Ports.error] if no such node is registered with the daemon.
+  Future<int> lookup(String nodeName);
 
-  /// Instructs the daemon server to register [name] under a new port.
+  /// Instructs the daemon server to register [nodeName] under a new port.
   ///
   /// Returns a Future that completes with the new port if registration
-  /// succeeded or Ports.INVALID_PORT if it failed.
-  Future<Int64> registerNode(String name) async {
-    var portCompleter = new Completer<Int64>();
-    try {
-      var response =
-          await _http.send(_seltzer.post(_createRequestUrl('node/$name')));
-      var result =
-          new RegistrationResult.fromString(await response.readAsString());
-      portCompleter.complete(result.port);
-    } catch (e) {
-      _logger.severe(e);
-      portCompleter.complete(Ports.error);
-    }
-    return portCompleter.future;
-  }
+  /// succeeded or [Ports.error] if it failed.
+  Future<int> register(String nodeName);
 
-  /// Instructs the daemon server to deregister [name].
+  /// Instructs the daemon server to deregister [nodeName].
   ///
-  /// Returns a future that completes with true iff deregistration succeeeded.
-  Future<bool> deregisterNode(String name) async {
-    var resultCompleter = new Completer<bool>();
-    try {
-      var response =
-          await _http.send(_seltzer.delete(_createRequestUrl('node/$name')));
-      var result =
-          new DeregistrationResult.fromString(await response.readAsString());
-      resultCompleter.complete(!result.failed);
-    } catch (e) {
-      resultCompleter.complete(false);
-    }
-    return resultCompleter.future;
-  }
-
-  String _createRequestUrl(String route) =>
-      '${daemonHostMachine.daemonUrl}/$route';
+  /// Returns a future that completes with true iff deregistration succeeded.
+  Future<bool> deregister(String nodeName);
 }

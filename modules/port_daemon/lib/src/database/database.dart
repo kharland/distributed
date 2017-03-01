@@ -1,11 +1,14 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:distributed.port_daemon/src/database/serializer.dart';
-
-/// A very naive key-value store.
+/// A simple key-value store.
 abstract class Database<K, V> {
   Iterable<K> get keys;
+
+  /// Deletes all data from this database.
+  void clear();
+
+  /// Whether this database is empty.
+  bool get isEmpty;
 
   /// Whether this [Database] contains and entry for [key].
   bool containsKey(K key);
@@ -28,53 +31,21 @@ abstract class Database<K, V> {
   Future<Iterable<V>> where(bool filter(K key, V value));
 }
 
-class RecordSerializer<K, V> {
-  final String _keyValueDelimiter;
-  final Serializer<K> _keySerializer;
-  final Serializer<V> _valueSerializer;
-
-  RecordSerializer(this._keySerializer, this._valueSerializer,
-      {String keyValueDelimiter: '«'})
-      : _keyValueDelimiter = keyValueDelimiter;
-
-  String serialize(K key, V value) => <String>[
-        _keySerializer.serialize(key),
-        _keyValueDelimiter,
-        _valueSerializer.serialize(value)
-      ].join();
-
-  Map<K, V> deserialize(String string) {
-    var parts = string.split(_keyValueDelimiter);
-    if (parts.length != 2) {
-      throw new FormatException('Invalid format: $string');
-    }
-    var key = _keySerializer.deserialize(parts.first);
-    var value = _valueSerializer.deserialize(parts.last);
-    return <K, V>{key: value};
-  }
-}
-
-/// A simple database that holds all data in-memory.
-///
-/// The contents can be written to disk via [save].
+/// A [Database] that holds all data in-memory.
 class MemoryDatabase<K, V> implements Database<K, V> {
-  final File _file;
-  final RecordSerializer<K, V> _serializer;
   final Map<K, V> _records = <K, V>{};
-
-  MemoryDatabase(this._file, {RecordSerializer<K, V> recordSerializer})
-      : _serializer = recordSerializer {
-    if (!_file.existsSync()) {
-      _file.createSync();
-    }
-    _file.readAsLinesSync().forEach((String entry) {
-      var keyValuePair = _serializer.deserialize(entry);
-      _records[keyValuePair.keys.single] = keyValuePair.values.single;
-    });
-  }
 
   @override
   Iterable<K> get keys => new List.unmodifiable(_records.keys);
+
+  // TODO: implement isEmpty
+  @override
+  bool get isEmpty => _records.isEmpty;
+
+  @override
+  void clear() {
+    _records.clear();
+  }
 
   @override
   bool containsKey(K key) => _records.containsKey(key);
@@ -86,7 +57,6 @@ class MemoryDatabase<K, V> implements Database<K, V> {
       throw new Exception('$key is already associated with $oldValue');
     }
     _records[key] = value;
-    save();
     return value;
   }
 
@@ -96,7 +66,6 @@ class MemoryDatabase<K, V> implements Database<K, V> {
       throw new Exception("No record associated with $key");
     }
     _records[key] = value;
-    save();
     return value;
   }
 
@@ -107,7 +76,6 @@ class MemoryDatabase<K, V> implements Database<K, V> {
   Future<V> remove(K key) async {
     if (_records.containsKey(key)) {
       var record = _records.remove(key);
-      save();
       return record;
     }
     return null;
@@ -123,12 +91,10 @@ class MemoryDatabase<K, V> implements Database<K, V> {
     });
     return results;
   }
+}
 
-  void save() {
-    var data = '';
-    _records.forEach((K key, V value) {
-      data += _serializer.serialize(key, value) + '\n';
-    });
-    _file.writeAsStringSync(data);
-  }
+class DatabaseException implements Exception {
+  final String message;
+
+  DatabaseException([this.message = '']);
 }

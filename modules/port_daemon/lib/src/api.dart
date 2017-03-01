@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:distributed.port_daemon/src/ports.dart';
 import 'package:meta/meta.dart';
 
 abstract class Message {
@@ -19,35 +18,6 @@ abstract class Message {
 
   @override
   String toString() => "$runtimeType${JSON.encode(toJson())}";
-}
-
-class RegistrationResult extends Message {
-  final String name;
-  final int port;
-  final bool _failed;
-
-  @literal
-  const RegistrationResult(this.name, this.port) : _failed = false;
-
-  RegistrationResult.failure()
-      : name = '',
-        port = Ports.error,
-        _failed = true;
-
-  factory RegistrationResult.fromJson(Map<String, Object> json) =>
-      json['failed']
-          ? new RegistrationResult.failure()
-          : new RegistrationResult(json['name'], json['port']);
-
-  factory RegistrationResult.fromString(String string) =>
-      new RegistrationResult.fromJson(
-          Message.parseJson(RegistrationResult, string));
-
-  bool get failed => _failed;
-
-  @override
-  Map<String, Object> toJson() =>
-      {'name': name, 'port': port.toInt(), 'failed': _failed};
 }
 
 // TODO: Why is this implemented differently than RegisterationResult? fix.

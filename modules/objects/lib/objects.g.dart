@@ -8,13 +8,68 @@ part of distributed.objects.src.peer;
 // **************************************************************************
 
 Serializers _$serializers = (new Serializers().toBuilder()
+      ..add(Registration.serializer)
       ..add(Message.serializer)
       ..add(Peer.serializer)
       ..add(HostMachine.serializer))
     .build();
+Serializer<Registration> _$registrationSerializer =
+    new _$RegistrationSerializer();
 Serializer<Message> _$messageSerializer = new _$MessageSerializer();
 Serializer<Peer> _$peerSerializer = new _$PeerSerializer();
 Serializer<HostMachine> _$hostMachineSerializer = new _$HostMachineSerializer();
+
+class _$RegistrationSerializer implements StructuredSerializer<Registration> {
+  @override
+  final Iterable<Type> types = const [Registration, _$Registration];
+  @override
+  final String wireName = 'Registration';
+
+  @override
+  Iterable serialize(Serializers serializers, Registration object,
+      {FullType specifiedType: FullType.unspecified}) {
+    final result = [
+      'name',
+      serializers.serialize(object.name, specifiedType: const FullType(String)),
+      'port',
+      serializers.serialize(object.port, specifiedType: const FullType(int)),
+    ];
+
+    return result;
+  }
+
+  @override
+  Registration deserialize(Serializers serializers, Iterable serialized,
+      {FullType specifiedType: FullType.unspecified}) {
+    final result = new RegistrationBuilder();
+
+    var key;
+    var value;
+    var expectingKey = true;
+    for (final item in serialized) {
+      if (expectingKey) {
+        key = item;
+        expectingKey = false;
+      } else {
+        value = item;
+        expectingKey = true;
+
+        switch (key as String) {
+          case 'name':
+            result.name = serializers.deserialize(value,
+                specifiedType: const FullType(String)) as dynamic;
+            break;
+          case 'port':
+            result.port = serializers.deserialize(value,
+                specifiedType: const FullType(int)) as dynamic;
+            break;
+        }
+      }
+    }
+
+    return result.build();
+  }
+}
 
 class _$MessageSerializer implements StructuredSerializer<Message> {
   @override
@@ -174,6 +229,110 @@ class _$HostMachineSerializer implements StructuredSerializer<HostMachine> {
     }
 
     return result.build();
+  }
+}
+
+// **************************************************************************
+// Generator: BuiltValueGenerator
+// Target: abstract class Registration
+// **************************************************************************
+
+class _$Registration extends Registration {
+  @override
+  final String name;
+  @override
+  final int port;
+
+  factory _$Registration([updates(RegistrationBuilder b)]) =>
+      (new RegistrationBuilder()..update(updates)).build();
+
+  _$Registration._({this.name, this.port}) : super._() {
+    if (name == null) throw new ArgumentError.notNull('name');
+    if (port == null) throw new ArgumentError.notNull('port');
+  }
+
+  @override
+  Registration rebuild(updates(RegistrationBuilder b)) =>
+      (toBuilder()..update(updates)).build();
+
+  @override
+  _$RegistrationBuilder toBuilder() =>
+      new _$RegistrationBuilder()..replace(this);
+
+  @override
+  bool operator ==(dynamic other) {
+    if (other is! Registration) return false;
+    return name == other.name && port == other.port;
+  }
+
+  @override
+  int get hashCode {
+    return $jf($jc($jc(0, name.hashCode), port.hashCode));
+  }
+
+  @override
+  String toString() {
+    return 'Registration {'
+        'name=${name.toString()},\n'
+        'port=${port.toString()},\n'
+        '}';
+  }
+}
+
+class _$RegistrationBuilder extends RegistrationBuilder {
+  Registration _$v;
+
+  @override
+  String get name {
+    _$this;
+    return super.name;
+  }
+
+  @override
+  set name(String name) {
+    _$this;
+    super.name = name;
+  }
+
+  @override
+  int get port {
+    _$this;
+    return super.port;
+  }
+
+  @override
+  set port(int port) {
+    _$this;
+    super.port = port;
+  }
+
+  _$RegistrationBuilder() : super._();
+
+  RegistrationBuilder get _$this {
+    if (_$v != null) {
+      super.name = _$v.name;
+      super.port = _$v.port;
+      _$v = null;
+    }
+    return this;
+  }
+
+  @override
+  void replace(Registration other) {
+    if (other == null) throw new ArgumentError.notNull('other');
+    _$v = other;
+  }
+
+  @override
+  void update(updates(RegistrationBuilder b)) {
+    if (updates != null) updates(this);
+  }
+
+  @override
+  Registration build() {
+    final result = _$v ?? new _$Registration._(name: name, port: port);
+    replace(result);
+    return result;
   }
 }
 
