@@ -33,6 +33,40 @@ HostMachine createHostMachine(InternetAddress address, int daemonPort) =>
       ..address = address
       ..daemonPort = daemonPort);
 
+Registration createRegistration([String name = '', int port = -1]) =>
+    new Registration((b) => b
+      ..name = name
+      ..port = port);
+
+abstract class Registration
+    implements Built<Registration, RegistrationBuilder> {
+  static Serializer<Registration> get serializer => _$registrationSerializer;
+
+  /// The name of the node being registered.
+  String get name;
+
+  /// The port registered to the node with [name] or -1 if registration failed
+  int get port;
+
+  Registration._();
+  factory Registration([updates(RegistrationBuilder b)]) = _$Registration;
+}
+
+abstract class RegistrationBuilder
+    implements Builder<Registration, RegistrationBuilder> {
+  @virtual
+  String name;
+
+  @virtual
+  int port;
+
+  @virtual
+  bool failed;
+
+  RegistrationBuilder._();
+  factory RegistrationBuilder() = _$RegistrationBuilder;
+}
+
 abstract class Message implements Built<Message, MessageBuilder> {
   static Serializer<Message> get serializer => _$messageSerializer;
 

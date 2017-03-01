@@ -25,9 +25,9 @@ void main() {
 
     setUp(() async {
       connector = new OneShotConnector(new Logger.disabled());
-
       portDaemon = new PortDaemon(hostMachine: hostMachine);
       await portDaemon.start();
+
       var senderPort = await portDaemon.registerNode(senderPeer.name);
       var receiverPort = await portDaemon.registerNode(receiverPeer.name);
 
@@ -37,7 +37,6 @@ void main() {
     });
 
     tearDown(() async {
-      portDaemon.clearDatabase();
       return portDaemon.stop();
     });
 

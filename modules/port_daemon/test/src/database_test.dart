@@ -2,17 +2,19 @@
 import 'dart:async';
 
 import 'package:distributed.port_daemon/src/database/database.dart';
+import 'package:meta/meta.dart';
 import 'package:test/test.dart';
 
-/// Factory for [Database] instances.
-typedef Future<Database<String, String>> DatabaseProvider();
-
 /// Common tests for [Database].
-void testDatabase(DatabaseProvider setup, Future teardown()) {
+void testDatabase({
+  @required FutureOr<Database<String, String>> setup(),
+  @required FutureOr<Null> teardown(),
+}) {
   Database<String, String> database;
 
   group('', () {
     setUp(() async {
+      // ignore: await_only_futures
       database = await setup();
     });
 

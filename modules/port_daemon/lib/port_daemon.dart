@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/src/ports.dart';
-import 'package:distributed.port_daemon/src/express_daemon.dart';
+import 'package:distributed.port_daemon/src/http_daemon.dart';
 
 abstract class PortDaemon {
-  factory PortDaemon({HostMachine hostMachine}) = ExpressDaemon;
+  factory PortDaemon({HostMachine hostMachine}) = ExpressHttpDaemon;
 
   /// The set of names of all nodes registered with this daemon.
   Set<String> get nodes;
@@ -14,13 +14,20 @@ abstract class PortDaemon {
   String get url;
 
   /// The number of milliseconds that may pass between successive calls to
-  /// [acknowledgeNodeIsAlive] before this daemon automatically deregisters
-  /// the corresponding node.
+  /// [keepAlive] before this daemon automatically deregisters the corresponding
+  /// node.
   int get heartbeatMs;
 
-  /// Delays automatic deregistration of [nodeName] for [heartbeatMs]
-  /// milliseconds.
-  void acknowledgeNodeIsAlive(String nodeName);
+  /// Signals to this daemon that [nodeName] is still available.
+  void keepAlive(String nodeName);
+
+  /// Starts listening for requests.
+  ///
+  /// Returns a future that completes when the server is ready for connections.
+  Future start();
+
+  /// Stops listening for new connections.
+  void stop();
 
   /// Assigns a port to a new [nodeName].
   ///
@@ -36,15 +43,4 @@ abstract class PortDaemon {
   ///
   /// If no node is found, returns [Ports.error].
   Future<int> lookupPort(String nodeName);
-
-  /// Starts listening for requests.
-  ///
-  /// Returns a future that completes when the server is ready for connections.
-  Future start();
-
-  /// Stops listening for new connections.
-  void stop();
-
-  /// Removes all nodes from the database.
-  void clearDatabase();
 }

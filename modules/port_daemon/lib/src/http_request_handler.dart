@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:distributed.port_daemon/src/http_method.dart';
-import 'package:distributed.port_daemon/src/database_helpers.dart';
+import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/src/api.dart';
+import 'package:distributed.port_daemon/src/database_helpers.dart';
 import 'package:express/express.dart' hide Logger;
 import 'package:logging/logging.dart';
 
@@ -27,7 +27,7 @@ class PingHandler implements HttpRequestHandler {
 
   @override
   Future execute(HttpContext ctx) async {
-    _daemon.acknowledgeNodeIsAlive(ctx.params['name']);
+    _daemon.keepAlive(ctx.params['name']);
     ctx.sendBytes([1]);
     ctx.end();
   }
@@ -49,12 +49,12 @@ class RegisterNodeHandler implements HttpRequestHandler {
   Future execute(HttpContext ctx) async {
     String name = ctx.params['name'];
     _daemon.registerNode(name).then((int port) {
-      ctx.sendText(new RegistrationResult(name, port).toString());
+      ctx.sendText(serialize(createRegistration(name, port), Registration));
       ctx.end();
     }).catchError((e, stacktrace) {
       _logger.severe(e);
       _logger.severe(stacktrace);
-      ctx.sendText(new RegistrationResult.failure().toString());
+      ctx.sendText(serialize(createRegistration(), Registration));
       ctx.end();
     });
   }
@@ -129,4 +129,15 @@ class ListNodesHandler implements HttpRequestHandler {
     ctx.sendText(new PortAssignmentList(assignments));
     ctx.end();
   }
+}
+
+class HttpMethod {
+  final String value;
+
+  const HttpMethod._(this.value);
+
+  static const HttpMethod get = const HttpMethod._('get');
+  static const HttpMethod put = const HttpMethod._('put');
+  static const HttpMethod post = const HttpMethod._('post');
+  static const HttpMethod delete = const HttpMethod._('delete');
 }

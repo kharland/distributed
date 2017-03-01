@@ -1,40 +1,27 @@
 import 'dart:async';
-import 'dart:io';
 
+import 'package:distributed.node/src/logging.dart';
 import 'package:distributed.port_daemon/port_daemon.dart';
 import 'package:distributed.port_daemon/src/database/database.dart';
-import 'package:distributed.port_daemon/src/database/serializer.dart';
 import 'package:distributed.port_daemon/src/ports.dart';
-import 'package:fixnum/fixnum.dart';
-import 'package:logging/logging.dart';
 
-/// A partial [PortDaemon] implementation that excludes http-server specifics.
+/// A partial [PortDaemon] implementation that excludes web-server specifics.
 class DatabaseHelpers {
-  static final Ports _ports = new Ports();
+  final _keepAlives = <String, KeepAlive>{};
+  final _logger = new Logger('$DatabaseHelpers');
+  Database<String, int> _database;
 
-  Database<String, Int64> _database;
-  final Map<String, ServerHeartbeat> _heartbeats = <String, ServerHeartbeat>{};
-  final Logger _logger = new Logger('$DatabaseHelpers');
-
-  //TODO: Initialize heartbeats for nodes that are already in the database.
-
-  set database(Database<String, Int64> value) {
+  set database(Database<String, int> value) {
     _database = value;
   }
 
   /// The set of names of all nodes registered with this daemon.
   Set<String> get nodes => _database.keys.toSet();
 
-  void acknowledgeNodeIsAlive(String name) {
-    if (_heartbeats.containsKey(name)) {
-      _heartbeats[name].beat();
-    }
-  }
-
-  void clearDatabase() {
-    var keys = _database.keys.toList();
-    for (var key in keys) {
-      _database.remove(key);
+  /// Signals that node [name] is still available.
+  void keepAlive(String name) {
+    if (_keepAlives.containsKey(name)) {
+      _keepAlives[name].ack();
     }
   }
 
@@ -42,34 +29,33 @@ class DatabaseHelpers {
   ///
   /// Returns a future that completes with the port number.
   Future<int> registerNode(String name) async {
-    Int64 port;
-    if ((port = new Int64(await lookupPort(name))) > 0) {
-      throw new ArgumentError('$name is already registered to port $port');
+    int port;
+    if ((port = await lookupPort(name)) > 0) {
+      _logger.error('$name is already registered to port $port');
+      return Ports.error;
     }
-    port =
-        await _database.insert(name, new Int64(await _ports.getUnusedPort()));
-    _heartbeats[name] = new ServerHeartbeat(name)
-      ..onFlatline.listen(deregisterNode);
-    _logger.info("Registered $name to port $port");
-    return port.toInt();
+    port = await _database.insert(name, await Ports.getUnusedPort());
+    _keepAlives[name] = new KeepAlive(name)..onDead.listen(deregisterNode);
+    _logger.log("Registered $name to port $port");
+    return port;
   }
 
   /// Frees the port held by the node named [name].
   ///
   /// An argument error is thrown if such a node does not exist.
   Future deregisterNode(String name) async {
-    Int64 port;
-    if ((port = new Int64(await lookupPort(name))) < Int64.ZERO) {
-      throw new Exception('Unable to deregister unregistered node $name');
+    int port;
+    if ((port = await lookupPort(name)) < 0) {
+      _logger.log('Unable to deregister unregistered node $name');
     }
     await _database.remove(name);
 
-    var heartbeat = _heartbeats.remove(name);
-    if (heartbeat.isFlatlined) {
-      _logger.info("Deregistered unresponsive node $name from port $port");
+    var keepAlive = _keepAlives.remove(name);
+    if (keepAlive.isDead) {
+      _logger.log("Deregistered unresponsive node $name from port $port");
     } else {
-      heartbeat.flatline(notify: false);
-      _logger.info("Deregistered node $name from port $port");
+      keepAlive.letDie(notify: false);
+      _logger.log("Deregistered node $name from port $port");
     }
   }
 
@@ -80,58 +66,64 @@ class DatabaseHelpers {
       (await _database.get(nodeName))?.toInt() ?? Ports.error;
 }
 
-class NodeDatabase extends MemoryDatabase<String, Int64> {
-  NodeDatabase(File databaseFile)
-      : super(databaseFile,
-            recordSerializer: new RecordSerializer(
-              new StringSerializer(),
-              new Int64Serializer(),
-            ));
-}
-
+/// A signal for communicating that a node is still available.
+///
+/// If a node does not ping the daemon repeatedly in [KeepAlive.time] second
+/// intervals,  it is automatically deregistered from the daemon.
+///
 /// Do not extend this class.
-class ServerHeartbeat {
-  static const period = const Duration(seconds: 3);
+class KeepAlive {
+  /// The time between successive signals.
+  static const time = const Duration(seconds: 10);
 
-  final StreamController<String> _flatlineController =
-      new StreamController<String>();
-  final Duration _duration = period;
-  final String nodeName;
+  /// The number of signals that can be missed before a node is considered dead.
+  static const numRetries = 3;
 
+  /// The name of the node sending signals for this [KeepAlive].
+  final String name;
+
+  // ...have you ever heard the tale of Darth Plagueis the wise?
+  final _deathController = new StreamController<String>();
+
+  int _currentRetries = 0;
   Timer _timer;
 
-  ServerHeartbeat(this.nodeName) {
-    beat();
+  KeepAlive(this.name) {
+    ack();
   }
 
-  /// Whether this [ServerHeartbeat] has flatlined.
-  bool get isFlatlined => _flatlineController.isClosed;
+  bool get isDead => _deathController.isClosed;
 
-  /// A singleton stream that emits when [beat]
-  Stream<String> get onFlatline => _flatlineController.stream;
+  /// A stream that emits when a signal has not been received in [time] seconds.
+  Stream<String> get onDead => _deathController.stream;
 
-  /// Prevents flatlining for one more duration.
-  void beat() {
-    _errorIfFlatlined();
+  /// Acknowledges that a signal has been received.
+  void ack() {
+    _errorIfDead();
+    _currentRetries = 0;
     _timer?.cancel();
-    _timer = new Timer(_duration, flatline);
+    _timer = new Timer.periodic(time, (_) {
+      if (++_currentRetries > numRetries) {
+        letDie();
+      }
+    });
   }
 
-  /// Notifies subscribers that the heartbeat has died.
+  /// Stops listening for signals.
   ///
-  /// Additionally closes [onFlatline] after emitting a single event.
-  void flatline({bool notify: true}) {
-    _errorIfFlatlined();
+  /// Additionally closes [onDead] after emitting a single event.
+  void letDie({bool notify: true}) {
+    _errorIfDead();
     _timer.cancel();
     if (notify) {
-      _flatlineController.add(nodeName);
+      _deathController.add(name);
     }
-    _flatlineController.close();
+    _deathController.close();
   }
 
-  void _errorIfFlatlined() {
-    if (isFlatlined) {
-      throw new StateError("$ServerHeartbeat has already flatlined");
+  void _errorIfDead() {
+    if (isDead) {
+      throw new StateError("$KeepAlive is already dead");
     }
   }
 }

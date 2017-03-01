@@ -38,10 +38,11 @@ class OneShotConnector implements PeerConnector {
 
   @override
   Stream<ConnectionResult> connect(Peer sender, Peer receiver) async* {
-    var daemonClient = new PortDaemonClient(sender.name, receiver.hostMachine);
+    var daemonClient =
+        new PortDaemonClient(daemonHostMachine: receiver.hostMachine);
     var receiverAddress = receiver.hostMachine.address.address;
 
-    var receiverPort = await daemonClient.lookupNode(receiver.name);
+    var receiverPort = await daemonClient.lookup(receiver.name);
     if (receiverPort == Ports.error) {
       yield new ConnectionResult.failed(
           'Peer ${receiver.name} not found at $receiverAddress');
