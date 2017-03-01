@@ -12,33 +12,19 @@ import 'package:seltzer/platform/vm.dart';
 import 'package:seltzer/seltzer.dart';
 
 /// A [PortDaemonClient] that communicates over HTTP.
-class HttpClient implements PortDaemonClient {
+class HttpDaemonClient implements PortDaemonClient {
   static const _seltzer = const VmSeltzerHttp();
 
   final _http = new HttpWithTimeout();
   final _logger = new Logger('$PortDaemonClient');
 
-  Timer _heartbeatTimer;
+  Timer _keepAliveTimer;
 
-  HttpClient({@required this.daemonHostMachine});
+  HttpDaemonClient({@required this.daemonHostMachine});
 
   @override
   @virtual
   final HostMachine daemonHostMachine;
-
-  @override
-  void startKeepAlive(String nodeName) {
-    var period = KeepAlive.time ~/ 2;
-    _heartbeatTimer = new Timer.periodic(period, (_) {
-      _pingDaemon(nodeName);
-    });
-  }
-
-  @override
-  void stopHeartBeat(String nodeName) {
-    assert(_heartbeatTimer != null);
-    _heartbeatTimer.cancel();
-  }
 
   @override
   Future<bool> get isDaemonRunning async => _pingDaemon('anonymous');
@@ -70,12 +56,15 @@ class HttpClient implements PortDaemonClient {
   }
 
   @override
-  Future<int> register(String name) async {
+  Future<int> register(String nodeName) async {
     await _expectDaemonIsRunning();
     try {
-      var response = await _http.send(_post('node/$name'));
+      var response = await _http.send(_post('node/$nodeName'));
       Registration result =
           deserialize(await response.readAsString(), Registration);
+      if (result.port != Ports.error) {
+        _startKeepAlive(nodeName);
+      }
       return result.port;
     } catch (e) {
       _logger.error(e);
@@ -84,13 +73,17 @@ class HttpClient implements PortDaemonClient {
   }
 
   @override
-  Future<bool> deregister(String name) async {
+  Future<bool> deregister(String nodeName) async {
     await _expectDaemonIsRunning();
     try {
-      var response = await _http.send(_delete('node/$name'));
-      var result =
-          new DeregistrationResult.fromString(await response.readAsString());
-      return !result.failed;
+      var response = await _http.send(_delete('node/$nodeName'));
+      var failed =
+          new DeregistrationResult.fromString(await response.readAsString())
+              .failed;
+      if (!failed) {
+        _stopKeepAlive();
+      }
+      return !failed;
     } catch (e) {
       _logger.error(e);
 
@@ -106,6 +99,18 @@ class HttpClient implements PortDaemonClient {
       _logger.error(e);
       return false;
     }
+  }
+
+  void _startKeepAlive(String nodeName) {
+    var period = KeepAlive.time;
+    _keepAliveTimer = new Timer.periodic(period, (_) {
+      _pingDaemon(nodeName);
+    });
+  }
+
+  void _stopKeepAlive() {
+    assert(_keepAliveTimer != null);
+    _keepAliveTimer.cancel();
   }
 
   Future _expectDaemonIsRunning() async {

@@ -13,11 +13,6 @@ abstract class PortDaemon {
   /// The url for connecting to this daemon.
   String get url;
 
-  /// The number of milliseconds that may pass between successive calls to
-  /// [keepAlive] before this daemon automatically deregisters the corresponding
-  /// node.
-  int get heartbeatMs;
-
   /// Signals to this daemon that [nodeName] is still available.
   void keepAlive(String nodeName);
 

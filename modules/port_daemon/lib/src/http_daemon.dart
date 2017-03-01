@@ -27,9 +27,6 @@ class ExpressHttpDaemon extends Object
   }
 
   @override
-  int get heartbeatMs => null;
-
-  @override
   String get url => _hostMachine.daemonUrl;
 
   @override

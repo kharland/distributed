@@ -9,16 +9,10 @@ import 'package:meta/meta.dart';
 /// An object for communicating with a [PortDaemon].
 abstract class PortDaemonClient {
   factory PortDaemonClient({@required HostMachine daemonHostMachine}) =
-      HttpClient;
+      HttpDaemonClient;
 
   /// The [HostMachine] where this client's [PortDaemon] is running.
   HostMachine get daemonHostMachine;
-
-  /// Tells this client to periodically send a signal to the daemon that
-  /// [nodeName] is still alive.
-  void startKeepAlive(String nodeName);
-
-  void stopHeartBeat(String nodeName);
 
   /// Completes with true iff a daemon is running at [daemonHostMachine].
   Future<bool> get isDaemonRunning;
