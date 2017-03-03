@@ -67,6 +67,7 @@ class SocketChannels implements DataChannels<String> {
 
     var message = JSON.decode(await splitter.primaryChannel.stream.first);
     timeout.cancel();
+
     var channels = new SocketChannels(
       splitter.split(message[_keyUsr]).last,
       splitter.split(message[_keySys]).last,

@@ -1,8 +1,5 @@
-import 'dart:io' hide Socket;
-
 import 'package:distributed.connection/socket.dart';
 import 'package:distributed.connection/src/socket_server.dart';
-import 'package:distributed.node/src/logging.dart';
 import 'package:distributed.node/src/peer_connector.dart';
 import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/port_daemon.dart';
@@ -10,8 +7,7 @@ import 'package:test/test.dart';
 
 void main() {
   const daemonPort = 9000;
-  final hostMachine =
-      createHostMachine(InternetAddress.LOOPBACK_IP_V4, daemonPort);
+  final hostMachine = createHostMachine('localhost', daemonPort);
 
   Peer createTestPeer(String name) => createPeer(name, hostMachine);
 
@@ -24,7 +20,7 @@ void main() {
     SocketServer receiverServer;
 
     setUp(() async {
-      connector = new OneShotConnector(new Logger.disabled());
+      connector = new OneShotConnector();
       portDaemon = new PortDaemon(hostMachine: hostMachine);
       await portDaemon.start();
 

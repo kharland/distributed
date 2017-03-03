@@ -17,7 +17,7 @@ void main() {
 
     tearDown(() => Future.wait([testSocket.close(), socket.close()]));
 
-    test('should send and recieve data', () async {
+    test('should send and receive data', () async {
       socket = new Socket(controller.local, controller.local);
 
       testSocket.listen(expectAsync1((String data) {
