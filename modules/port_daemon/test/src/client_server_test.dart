@@ -1,20 +1,17 @@
 @TestOn("vm")
 import 'dart:async';
-import 'dart:io';
 
 import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/port_daemon.dart';
 import 'package:distributed.port_daemon/port_daemon_client.dart';
-import 'package:distributed.port_daemon/src/database_helpers.dart';
 import 'package:distributed.port_daemon/src/ports.dart';
-import 'package:quiver/testing/async.dart';
 import 'package:seltzer/platform/vm.dart';
 import 'package:test/test.dart';
 
 void main() {
   useSeltzerInVm();
 
-  final hostMachine = createHostMachine(InternetAddress.LOOPBACK_IP_V4, 9000);
+  final hostMachine = createHostMachine('localhost', 9000);
   PortDaemon daemon;
   PortDaemonClient client;
 
@@ -82,16 +79,6 @@ void main() {
       expect(port, greaterThan(0));
       expect(await daemon.lookupPort('A'), port);
       expect(await client.lookup('A'), port);
-    });
-
-    test("should deregister a node that fails to ping within its heartbeat",
-        () async {
-      new FakeAsync().run((fakeAsync) async {
-        await client.register('A');
-        expect(daemon.lookupPort('A'), greaterThan(0));
-        fakeAsync.elapse(KeepAlive.time + const Duration(seconds: 1));
-        expect(daemon.lookupPort('A'), lessThan(0));
-      });
     });
   });
 }

@@ -1,7 +1,6 @@
 library distributed.objects.src.peer;
 
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
@@ -28,7 +27,7 @@ Peer createPeer(String name, HostMachine hostMachine) => new Peer((b) => b
   ..name = name
   ..hostMachine = hostMachine);
 
-HostMachine createHostMachine(InternetAddress address, int daemonPort) =>
+HostMachine createHostMachine(String address, int daemonPort) =>
     new HostMachine((b) => b
       ..address = address
       ..daemonPort = daemonPort);
@@ -100,6 +99,8 @@ abstract class Peer implements Built<Peer, PeerBuilder> {
   /// This peer's host machine.
   HostMachine get hostMachine;
 
+  String get displayName => '$name@${hostMachine.address}';
+
   Peer._();
   factory Peer([updates(PeerBuilder b)]) = _$Peer;
 }
@@ -119,12 +120,12 @@ abstract class HostMachine implements Built<HostMachine, HostMachineBuilder> {
   static Serializer<HostMachine> get serializer => _$hostMachineSerializer;
 
   /// The address of this machine.
-  InternetAddress get address;
+  String get address;
 
   /// The port where this machine's port daemon is running.
   int get daemonPort;
 
-  String get daemonUrl => 'http://${address.address}:$daemonPort';
+  String get daemonUrl => 'http://$address:$daemonPort';
 
   HostMachine._();
   factory HostMachine([updates(HostMachineBuilder b)]) = _$HostMachine;
@@ -133,7 +134,7 @@ abstract class HostMachine implements Built<HostMachine, HostMachineBuilder> {
 abstract class HostMachineBuilder
     implements Builder<HostMachine, HostMachineBuilder> {
   @virtual
-  InternetAddress address;
+  String address;
 
   @virtual
   int daemonPort;
@@ -142,26 +143,4 @@ abstract class HostMachineBuilder
   factory HostMachineBuilder() = _$HostMachineBuilder;
 }
 
-// TODO(kharland): This is a terrible fix for deciding to use InternetAddress
-// over string. Delete.
-class InternetAddressSerializer
-    implements PrimitiveSerializer<InternetAddress> {
-  @override
-  Iterable<Type> get types => const [InternetAddress];
-
-  @override
-  String get wireName => 'InternetAddress';
-
-  @override
-  InternetAddress deserialize(Serializers serializers, Object serialized,
-          {FullType specifiedType: FullType.unspecified}) =>
-      new InternetAddress(serialized);
-
-  @override
-  Object serialize(Serializers serializers, InternetAddress object,
-          {FullType specifiedType: FullType.unspecified}) =>
-      object.address;
-}
-
-Serializers serializers =
-    (_$serializers.toBuilder()..add(new InternetAddressSerializer())).build();
+Serializers serializers = _$serializers;

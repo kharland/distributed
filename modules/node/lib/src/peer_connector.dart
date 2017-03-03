@@ -32,15 +32,15 @@ class OneShotConnector implements PeerConnector {
   static const _statusCategory = 'status';
   static const _statusOk = 'ok';
 
-  final Logger _logger;
+  Logger logger = globalLogger;
 
-  OneShotConnector(this._logger);
+  OneShotConnector();
 
   @override
   Stream<ConnectionResult> connect(Peer sender, Peer receiver) async* {
     var daemonClient =
         new PortDaemonClient(daemonHostMachine: receiver.hostMachine);
-    var receiverAddress = receiver.hostMachine.address.address;
+    var receiverAddress = receiver.hostMachine.address;
 
     var receiverPort = await daemonClient.lookup(receiver.name);
     if (receiverPort == Ports.error) {
@@ -55,14 +55,13 @@ class OneShotConnector implements PeerConnector {
 
     var receiverStatus = await connection.system.stream.take(1).first;
     if (receiverStatus == createMessage(_statusCategory, _statusOk)) {
-      _logger.log('Connected to ${receiver.name}@$receiverAddress');
       yield new ConnectionResult(
         sender: sender,
         receiver: receiver,
         connection: connection,
       );
     } else {
-      _logger.error(receiverStatus.payload);
+      logger.error(receiverStatus.payload);
       yield new ConnectionResult.failed(receiverStatus.payload);
     }
   }
@@ -89,17 +88,15 @@ class OneShotConnector implements PeerConnector {
   Future<Peer> _waitForSenderInfo(Stream<Message> stream) async {
     var message = await stream.take(1).first;
     if (message.category != _idCategory) {
-      _logger.error('Got invalid message category ${message.category}');
+      logger.error('Got invalid message category ${message.category}');
       return null;
     }
 
     var sender = deserialize(message.payload, Peer) as Peer;
     if (sender is Peer) {
-      var senderAddress = sender.hostMachine.address.address;
-      _logger.log('Got info from ${sender.name}@$senderAddress');
       return sender;
     } else {
-      _logger.error('Got invalid sender info: $sender');
+      logger.error('Got invalid sender info: $sender');
       return null;
     }
   }

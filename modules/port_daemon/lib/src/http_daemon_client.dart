@@ -16,7 +16,6 @@ class HttpDaemonClient implements PortDaemonClient {
   static const _seltzer = const VmSeltzerHttp();
 
   final _http = new HttpWithTimeout();
-  final _logger = new Logger('$PortDaemonClient');
 
   Timer _keepAliveTimer;
 
@@ -38,7 +37,7 @@ class HttpDaemonClient implements PortDaemonClient {
           new PortAssignmentList.fromString(await response.readAsString());
       return assignments.assignments;
     } catch (e) {
-      _logger.error(e);
+      globalLogger.error(e);
       return {};
     }
   }
@@ -50,7 +49,7 @@ class HttpDaemonClient implements PortDaemonClient {
       var response = await _http.send(_get('node/$name'));
       return int.parse(await response.readAsString());
     } catch (e) {
-      _logger.error(e);
+      globalLogger.error(e);
       return Ports.error;
     }
   }
@@ -67,7 +66,7 @@ class HttpDaemonClient implements PortDaemonClient {
       }
       return result.port;
     } catch (e) {
-      _logger.error(e);
+      globalLogger.error(e);
       return Ports.error;
     }
   }
@@ -85,7 +84,7 @@ class HttpDaemonClient implements PortDaemonClient {
       }
       return !failed;
     } catch (e) {
-      _logger.error(e);
+      globalLogger.error(e);
 
       return false;
     }
@@ -96,7 +95,7 @@ class HttpDaemonClient implements PortDaemonClient {
       await _http.send(_get('ping/$nodeName'));
       return true;
     } catch (e) {
-      _logger.error(e);
+      globalLogger.error('$e'.trim());
       return false;
     }
   }

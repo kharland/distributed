@@ -17,13 +17,15 @@ import 'package:test/src/utils.dart';
 class SocketSplitter {
   final Socket _socket;
   final _MessageBroker _broker;
+  final _existingIds = <int>[];
 
   StreamChannel<String> _primaryChannel;
-  int _childId = 0;
+  int _nextAutoId = 0;
 
   SocketSplitter(this._socket) : _broker = new _IntIdBroker() {
-    _primaryChannel = split(0).last;
-    _broker.addRecipient(_childId++, _primaryChannel.sink);
+    int primaryId = _nextAutoId;
+    _primaryChannel = split(primaryId).last;
+    _broker.addRecipient(_nextAutoId++, _primaryChannel.sink);
     _socket.forEach(_broker.deliver);
   }
 
@@ -39,22 +41,25 @@ class SocketSplitter {
   /// The first element of the returned [Pair] is the channel's id, the second
   /// element is the channel.
   Pair<int, StreamChannel<String>> split([int id]) {
+    var channelId = id ?? _nextAutoId;
     var controller = new StreamChannelController<String>(sync: true);
-    var channelId = id;
-    if (channelId == null) {
-      channelId = _childId++;
-    }
 
-    if (id != null && id >= _childId) {
-      _childId = id + 1;
-    }
-
+    _recordId(channelId);
     _broker.addRecipient(channelId, controller.foreign.sink);
     controller.foreign.stream.forEach((String message) {
       _socket.add(_broker.addressMessage(channelId, message));
     });
 
     return new Pair<int, StreamChannel<String>>(channelId, controller.local);
+  }
+
+  void _recordId(int id) {
+    if (_existingIds.contains(id)) {
+      throw new ArgumentError('$id has already been used');
+    }
+    _existingIds.add(id);
+    _nextAutoId = 0;
+    while (_existingIds.contains(_nextAutoId)) _nextAutoId++;
   }
 }
 

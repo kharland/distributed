@@ -190,7 +190,7 @@ class _$HostMachineSerializer implements StructuredSerializer<HostMachine> {
     final result = [
       'address',
       serializers.serialize(object.address,
-          specifiedType: const FullType(InternetAddress)),
+          specifiedType: const FullType(String)),
       'daemonPort',
       serializers.serialize(object.daemonPort,
           specifiedType: const FullType(int)),
@@ -218,7 +218,7 @@ class _$HostMachineSerializer implements StructuredSerializer<HostMachine> {
         switch (key as String) {
           case 'address':
             result.address = serializers.deserialize(value,
-                specifiedType: const FullType(InternetAddress)) as dynamic;
+                specifiedType: const FullType(String)) as dynamic;
             break;
           case 'daemonPort':
             result.daemonPort = serializers.deserialize(value,
@@ -549,7 +549,7 @@ class _$PeerBuilder extends PeerBuilder {
 
 class _$HostMachine extends HostMachine {
   @override
-  final InternetAddress address;
+  final String address;
   @override
   final int daemonPort;
 
@@ -592,13 +592,13 @@ class _$HostMachineBuilder extends HostMachineBuilder {
   HostMachine _$v;
 
   @override
-  InternetAddress get address {
+  String get address {
     _$this;
     return super.address;
   }
 
   @override
-  set address(InternetAddress address) {
+  set address(String address) {
     _$this;
     super.address = address;
   }

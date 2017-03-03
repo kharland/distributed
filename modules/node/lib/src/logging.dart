@@ -1,12 +1,15 @@
 // TODO: move this to a common package
 import 'dart:io';
 
-import 'package:logging/logging.dart' as l;
+bool enableLogging = true;
 
-final logger = new Logger('distributed');
+Logger get globalLogger => enableLogging ? _logger : _disabledLogger;
+
+final _logger = new Logger('distributed');
+final _disabledLogger = new Logger.disabled();
 
 abstract class Logger {
-  factory Logger(String prefix) = _LoggingLogger;
+  factory Logger(String prefix) = _ShellLogger;
 
   factory Logger.disabled() = _NoOpLogger;
 
@@ -20,42 +23,24 @@ abstract class Logger {
   set prefix(String value);
 }
 
-class _LoggingLogger implements Logger {
-  static bool _isConfigured = false;
-  l.Logger _logger;
+class _ShellLogger implements Logger {
+  String _prefix;
 
-  _LoggingLogger._(String prefix) : _logger = new l.Logger(prefix);
-
-  factory _LoggingLogger(String prefix) {
-    if (!_isConfigured) {
-      _isConfigured = true;
-      l.Logger.root.level = l.Level.ALL;
-      l.Logger.root.onRecord.listen((l.LogRecord record) {
-        if (record.level >= l.Logger.root.level) {
-          if (record.level >= l.Level.WARNING) {
-            stderr.writeln(record.message);
-          } else {
-            stdout.writeln(record.message);
-          }
-        }
-      });
-    }
-    return new _LoggingLogger._(prefix);
-  }
+  _ShellLogger(this._prefix);
 
   @override
   void log(String message) {
-    _logger.info(message);
+    stdout.writeln('[$_prefix] $message');
   }
 
   @override
   void error(String message) {
-    _logger.severe(message);
+    stderr.writeln('[$_prefix] $message');
   }
 
   @override
   set prefix(String value) {
-    _logger = new l.Logger(value);
+    _prefix = value;
   }
 }
 

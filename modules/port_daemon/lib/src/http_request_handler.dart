@@ -1,10 +1,10 @@
 import 'dart:async';
 
+import 'package:distributed.node/src/logging.dart';
 import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/src/api.dart';
 import 'package:distributed.port_daemon/src/database_helpers.dart';
 import 'package:express/express.dart' hide Logger;
-import 'package:logging/logging.dart';
 
 abstract class HttpRequestHandler {
   HttpMethod get method;
@@ -35,7 +35,6 @@ class PingHandler implements HttpRequestHandler {
 
 class RegisterNodeHandler implements HttpRequestHandler {
   final DatabaseHelpers _daemon;
-  final Logger _logger = new Logger('$RegisterNodeHandler');
 
   RegisterNodeHandler(this._daemon);
 
@@ -52,8 +51,8 @@ class RegisterNodeHandler implements HttpRequestHandler {
       ctx.sendText(serialize(createRegistration(name, port), Registration));
       ctx.end();
     }).catchError((e, stacktrace) {
-      _logger.severe(e);
-      _logger.severe(stacktrace);
+      globalLogger.error(e);
+      globalLogger.error(stacktrace);
       ctx.sendText(serialize(createRegistration(), Registration));
       ctx.end();
     });
@@ -62,7 +61,6 @@ class RegisterNodeHandler implements HttpRequestHandler {
 
 class DeregisterNodeHandler implements HttpRequestHandler {
   final DatabaseHelpers _daemon;
-  final Logger _logger = new Logger('$DeregisterNodeHandler');
 
   DeregisterNodeHandler(this._daemon);
 
@@ -79,8 +77,8 @@ class DeregisterNodeHandler implements HttpRequestHandler {
       ctx.sendText(new DeregistrationResult(name, false).toString());
       ctx.end();
     }).catchError((e, stacktrace) {
-      _logger.severe(e);
-      _logger.severe(stacktrace);
+      globalLogger.error(e);
+      globalLogger.error(stacktrace);
       ctx.sendText(new DeregistrationResult(e.toString(), true).toString());
       ctx.end();
     });

@@ -9,8 +9,12 @@ import 'package:meta/meta.dart';
 
 /// Internal-only [Node] implementation.
 class CrossPlatformNode implements Node {
-  final Logger _logger;
-  final PeerConnector _connector;
+  @override
+  final String name;
+  @override
+  final HostMachine hostMachine;
+  final PeerConnector _connector = new OneShotConnector();
+  final Map<Peer, Connection> _connections = <Peer, Connection>{};
 
   final StreamController<Message> _onUserMessageController =
       new StreamController<Message>.broadcast(sync: true);
@@ -21,22 +25,8 @@ class CrossPlatformNode implements Node {
   final StreamController<Null> _onZeroConnections =
       new StreamController<Null>();
   final Completer<Null> _onShutdown = new Completer<Null>();
-  final Map<Peer, Connection> _connections = <Peer, Connection>{};
 
-  @override
-  final String name;
-
-  @override
-  final HostMachine hostMachine;
-
-  CrossPlatformNode({
-    @required this.name,
-    @required this.hostMachine,
-    PeerConnector peerConnector,
-    Logger logger,
-  })
-      : _connector = peerConnector ?? (() => throw new UnimplementedError())(),
-        _logger = logger ?? new Logger('$name@$hostMachine');
+  CrossPlatformNode({@required this.name, @required this.hostMachine});
 
   @override
   List<Peer> get peers => new List.unmodifiable(_connections.keys);
@@ -48,15 +38,15 @@ class CrossPlatformNode implements Node {
   Stream<Peer> get onDisconnect => _onDisconnectController.stream;
 
   @override
-  Future connect(Peer peer) async {
+  Stream<ConnectionResult> connect(Peer peer) async* {
     assert(!_connections.containsKey(peer));
     await for (var result in _connector.connect(toPeer(), peer)) {
-      if (result.error != null) {
-        _logger.error(result.error);
+      if (result.error.isNotEmpty) {
+        globalLogger.error(result.error);
       } else {
-        _logger.log('Connected to ${result.receiver}');
         addConnection(result.connection, result.receiver);
       }
+      yield result;
     }
   }
 
@@ -64,12 +54,14 @@ class CrossPlatformNode implements Node {
   void disconnect(Peer peer) {
     assert(_connections.containsKey(peer));
     _connections.remove(peer).close();
-    _logger.log('disconnected from $peer');
+    globalLogger.log('Disconnected from $peer');
   }
 
   @override
   void send(Peer peer, String action, String data) {
-    assert(_connections.containsKey(peer));
+    assert(_connections.containsKey(peer), '$peer not in $peers');
+    globalLogger
+        .log("Sending ${peer.displayName}: ${createMessage(action, data)}");
     _connections[peer].user.sink.add(createMessage(action, data));
   }
 
@@ -95,10 +87,13 @@ class CrossPlatformNode implements Node {
     connection
       ..system.stream.forEach(_handleSystemMessage)
       ..error.stream.forEach(_handleErrorMessage)
-      ..done.then(_handleConnectionClosed)
-      ..user.stream.map(_onUserMessageController.add);
+      ..done.then((_) {
+        _handleConnectionClosed(peer);
+      })
+      ..user.stream.forEach(_onUserMessageController.add);
     _connections[peer] = connection;
-    _logger.log('connected to $peer');
+    globalLogger.log('Connected to ${peer.displayName}');
+    _onConnectController.add(peer);
   }
 
   @override
@@ -109,15 +104,15 @@ class CrossPlatformNode implements Node {
   void _handleSystemMessage(Message message) {
     switch (message.category) {
       case MessageCategories.error:
-        _logger.error(message.payload);
+        globalLogger.error(message.payload);
         break;
       default:
-        _logger.error('Unsupported meesage received ${message.category}');
+        globalLogger.error('Unsupported meesage received ${message.category}');
     }
   }
 
   void _handleErrorMessage(Message message) {
-    _logger.error(message.payload);
+    globalLogger.error(message.payload);
   }
 
   void _handleConnectionClosed(Peer peer) {

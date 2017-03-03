@@ -3,7 +3,9 @@ import 'dart:io';
 
 abstract class Ports {
   /// Sentinel value for invalid port requests.
-  static final error = -1;
+  static const error = -1;
+
+  static const defaultDaemonPort = 4369;
 
   /// Returns the next available unused port.
   static Future<int> getUnusedPort() =>

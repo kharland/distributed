@@ -8,7 +8,6 @@ import 'package:distributed.port_daemon/src/ports.dart';
 /// A partial [PortDaemon] implementation that excludes web-server specifics.
 class DatabaseHelpers {
   final _keepAlives = <String, KeepAlive>{};
-  final _logger = new Logger('$DatabaseHelpers');
   Database<String, int> _database;
 
   set database(Database<String, int> value) {
@@ -31,12 +30,12 @@ class DatabaseHelpers {
   Future<int> registerNode(String name) async {
     int port;
     if ((port = await lookupPort(name)) > 0) {
-      _logger.error('$name is already registered to port $port');
+      globalLogger.error('$name is already registered to port $port');
       return Ports.error;
     }
     port = await _database.insert(name, await Ports.getUnusedPort());
     _keepAlives[name] = new KeepAlive(name)..onDead.listen(deregisterNode);
-    _logger.log("Registered $name to port $port");
+    globalLogger.log("Registered $name to port $port");
     return port;
   }
 
@@ -46,16 +45,16 @@ class DatabaseHelpers {
   Future deregisterNode(String name) async {
     int port;
     if ((port = await lookupPort(name)) < 0) {
-      _logger.log('Unable to deregister unregistered node $name');
+      globalLogger.log('Unable to deregister unregistered node $name');
     }
     await _database.remove(name);
 
     var keepAlive = _keepAlives.remove(name);
     if (keepAlive.isDead) {
-      _logger.log("Deregistered unresponsive node $name from port $port");
+      globalLogger.log("Deregistered unresponsive node $name from port $port");
     } else {
-      keepAlive.letDie(notify: false);
-      _logger.log("Deregistered node $name from port $port");
+      await keepAlive.letDie(notify: false);
+      globalLogger.log("Deregistered node $name from port $port");
     }
   }
 
@@ -74,7 +73,7 @@ class DatabaseHelpers {
 /// Do not extend this class.
 class KeepAlive {
   /// The time between successive signals.
-  static const time = const Duration(seconds: 10);
+  static const time = const Duration(seconds: 1);
 
   /// The number of signals that can be missed before a node is considered dead.
   static const numRetries = 3;
@@ -112,13 +111,13 @@ class KeepAlive {
   /// Stops listening for signals.
   ///
   /// Additionally closes [onDead] after emitting a single event.
-  void letDie({bool notify: true}) {
+  Future letDie({bool notify: true}) {
     _errorIfDead();
     _timer.cancel();
     if (notify) {
       _deathController.add(name);
     }
-    _deathController.close();
+    return _deathController.close();
   }
 
   void _errorIfDead() {
