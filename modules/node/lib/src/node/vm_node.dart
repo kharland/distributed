@@ -13,9 +13,6 @@ import 'package:meta/meta.dart';
 
 /// A node that runs on the Dart VM.
 class VmNode extends DelegatingNode {
-  static const defaultHostname = 'localhost';
-  static const defaultPort = 9000;
-
   final PortDaemonClient _daemonClient;
   final SocketServer _server;
 
