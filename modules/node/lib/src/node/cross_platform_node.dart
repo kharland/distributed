@@ -107,7 +107,7 @@ class CrossPlatformNode implements Node {
         globalLogger.error(message.payload);
         break;
       default:
-        globalLogger.error('Unsupported meesage received ${message.category}');
+        globalLogger.error('Unsupported message received ${message.category}');
     }
   }
 
