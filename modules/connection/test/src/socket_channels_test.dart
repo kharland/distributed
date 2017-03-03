@@ -21,7 +21,7 @@ void main() {
       ]);
     });
 
-    test('channels should only send and recieve the appropriate messages',
+    test('channels should only send and receive the appropriate messages',
         () async {
       local.user.sink.add('A');
       local.user.sink.add('B');

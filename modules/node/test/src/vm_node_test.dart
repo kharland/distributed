@@ -32,7 +32,7 @@ void main() {
       });
     });
 
-    test('should send and recieve messages', () async {
+    test('should send and receive messages', () async {
       ping.connect(pong.toPeer());
 
       return _onConnection(ping, pong, (peers) {

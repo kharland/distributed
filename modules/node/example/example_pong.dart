@@ -11,7 +11,7 @@ Future main(List<String> args) async {
   node
     ..connect(ping)
     ..receive('ping').listen((Message message) {
-      print('recieved ping ${message.payload}');
+      print('received ping ${message.payload}');
       new Future.delayed(pingDuration, () {
         node.send(ping, 'pong', '${++pongCounter}');
       });

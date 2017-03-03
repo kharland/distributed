@@ -19,7 +19,7 @@ Future main(List<String> args) async {
       }
     })
     ..receive('pong').listen((Message message) {
-      print('recieved pong ${message.payload}');
+      print('received pong ${message.payload}');
       new Future.delayed(pingDuration, _ping);
     })
     ..onConnect.listen((Peer peer) {
