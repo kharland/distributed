@@ -21,8 +21,7 @@ void main() {
 
     setUp(() async {
       connector = new OneShotConnector();
-      portDaemon = new PortDaemon(hostMachine: hostMachine);
-      await portDaemon.start();
+      portDaemon = await PortDaemon.spawn(hostMachine: hostMachine);
 
       var senderPort = await portDaemon.registerNode(senderPeer.name);
       var receiverPort = await portDaemon.registerNode(receiverPeer.name);

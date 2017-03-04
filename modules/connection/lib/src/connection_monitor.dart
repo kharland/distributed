@@ -17,7 +17,7 @@ class ConnectionMonitor {
   Future<Null> _onDeadFuture;
 
   ConnectionMonitor(Connection connection) {
-    _onDeadFuture = _keepAlive.onDead.first;
+    _onDeadFuture = _keepAlive.onDead.first.then((_) {});
     // If the connection closes, stop monitoring.
     connection.done.then((_) {
       stop();

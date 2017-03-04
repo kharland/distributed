@@ -6,22 +6,18 @@ import 'package:distributed.port_daemon/port_daemon.dart';
 import 'package:distributed.port_daemon/src/database/database.dart';
 import 'package:distributed.port_daemon/src/ports.dart';
 
-/// A partial [PortDaemon] implementation that excludes web-server specifics.
-class DatabaseHelpers {
-  final _keepAlives = <String, KeepAlive>{};
-  Database<String, int> _database;
-
-  set database(Database<String, int> value) {
-    _database = value;
-  }
+/// A database used by a [PortDaemon] for keeping track of registered nodes.
+class NodeDatabase {
+  final _nodeNameToKeepAlive = <String, KeepAlive>{};
+  final _delegateDatabase = new MemoryDatabase<String, int>();
 
   /// The set of names of all nodes registered with this daemon.
-  Set<String> get nodes => _database.keys.toSet();
+  Set<String> get nodes => _delegateDatabase.keys.toSet();
 
   /// Signals that node [name] is still available.
   void keepAlive(String name) {
-    if (_keepAlives.containsKey(name)) {
-      _keepAlives[name].ack();
+    if (_nodeNameToKeepAlive.containsKey(name)) {
+      _nodeNameToKeepAlive[name].ack();
     }
   }
 
@@ -30,12 +26,13 @@ class DatabaseHelpers {
   /// Returns a future that completes with the port number.
   Future<int> registerNode(String name) async {
     int port;
-    if ((port = await lookupPort(name)) > 0) {
+    if ((port = await getPort(name)) > 0) {
       globalLogger.error('$name is already registered to port $port');
       return Ports.error;
     }
-    port = await _database.insert(name, await Ports.getUnusedPort());
-    _keepAlives[name] = new KeepAlive(name)..onDead.listen(deregisterNode);
+    port = await _delegateDatabase.insert(name, await Ports.getUnusedPort());
+    _nodeNameToKeepAlive[name] = new KeepAlive(name)
+      ..onDead.listen(deregisterNode);
     globalLogger.log("Registered $name to port $port");
     return port;
   }
@@ -45,13 +42,13 @@ class DatabaseHelpers {
   /// An argument error is thrown if such a node does not exist.
   Future deregisterNode(String name) async {
     int port;
-    if ((port = await lookupPort(name)) < 0) {
+    if ((port = await getPort(name)) < 0) {
       globalLogger.log('Unable to deregister unregistered node $name');
       return;
     }
-    await _database.remove(name);
+    await _delegateDatabase.remove(name);
 
-    var keepAlive = _keepAlives.remove(name);
+    var keepAlive = _nodeNameToKeepAlive.remove(name);
     if (keepAlive.isDead) {
       globalLogger.log("Deregistered unresponsive node $name from port $port");
     } else {
@@ -63,6 +60,6 @@ class DatabaseHelpers {
   /// Returns the port for the node named [nodeName].
   ///
   /// If no node is found, returns [Ports.error].
-  Future<int> lookupPort(String nodeName) async =>
-      (await _database.get(nodeName))?.toInt() ?? Ports.error;
+  Future<int> getPort(String nodeName) async =>
+      (await _delegateDatabase.get(nodeName))?.toInt() ?? Ports.error;
 }

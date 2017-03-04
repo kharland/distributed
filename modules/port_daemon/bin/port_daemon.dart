@@ -8,8 +8,8 @@ import 'package:distributed.port_daemon/src/ports.dart';
 Future main(List<String> args) async {
   var argResults = _parseArgs(args);
   var port = int.parse(argResults['port']);
-  var daemon = new PortDaemon(hostMachine: createHostMachine('localhost', port))
-    ..start();
+  var daemon =
+      await PortDaemon.spawn(hostMachine: createHostMachine('localhost', port));
 
   print("Daemon listening at ${daemon.url}");
 }
