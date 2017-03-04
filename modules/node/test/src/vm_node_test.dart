@@ -11,8 +11,7 @@ void main() {
 
   group('VmNode', () {
     setUp(() async {
-      daemon = new PortDaemon();
-      await daemon.start();
+      daemon = await PortDaemon.spawn();
       ping = await VmNode.spawn(name: 'ping');
       pong = await VmNode.spawn(name: 'pong');
     });

@@ -1,11 +1,21 @@
 import 'dart:async';
 
 import 'package:distributed.objects/objects.dart';
+import 'package:distributed.port_daemon/src/express_server.dart';
+import 'package:distributed.port_daemon/src/node_database.dart';
+import 'package:distributed.port_daemon/src/port_daemon_impl.dart';
 import 'package:distributed.port_daemon/src/ports.dart';
-import 'package:distributed.port_daemon/src/http_daemon.dart';
 
 abstract class PortDaemon {
-  factory PortDaemon({HostMachine hostMachine}) = ExpressHttpDaemon;
+  static Future<PortDaemon> spawn({HostMachine hostMachine}) async {
+    hostMachine ??= createHostMachine('localhost', Ports.defaultDaemonPort);
+    var nodeDatabase = new NodeDatabase();
+    var webServer = await ExpressServer.start(
+      hostMachine: hostMachine,
+      nodeDatabase: nodeDatabase,
+    );
+    return new PortDaemonImpl(nodeDatabase, webServer);
+  }
 
   /// The set of names of all nodes registered with this daemon.
   Set<String> get nodes;
@@ -16,20 +26,16 @@ abstract class PortDaemon {
   /// Signals to this daemon that [nodeName] is still available.
   void keepAlive(String nodeName);
 
-  /// Starts listening for requests.
-  ///
-  /// Returns a future that completes when the server is ready for connections.
-  Future start();
-
   /// Stops listening for new connections.
   void stop();
 
   /// Assigns a port to a new [nodeName].
   ///
-  /// Returns a future that completes with the port number.
+  /// Returns a future that completes with the port number or [Ports.error] if
+  /// [nodeName] could not be registered.
   Future<int> registerNode(String nodeName);
 
-  /// Frees the port held by node [nodeName].
+  /// Frees the port held by node [nodeName] and forgets [nodeName] exists.
   ///
   /// An argument error is thrown if such a node does not exist.
   Future deregisterNode(String nodeName);
@@ -37,5 +43,5 @@ abstract class PortDaemon {
   /// Returns the port for [nodeName].
   ///
   /// If no node is found, returns [Ports.error].
-  Future<int> lookupPort(String nodeName);
+  Future<int> getPort(String nodeName);
 }

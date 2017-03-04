@@ -14,7 +14,6 @@ dependencies:
     path: ../objects
   web_socket_channel: "<=2.0.0"
   meta:
-  fixnum:
   express:
   seltzer:
     git: git://github.com/matanlurey/seltzer.git

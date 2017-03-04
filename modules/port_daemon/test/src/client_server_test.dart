@@ -16,9 +16,8 @@ void main() {
   PortDaemonClient client;
 
   Future commonSetUp() async {
-    daemon = new PortDaemon(hostMachine: hostMachine);
+    daemon = await PortDaemon.spawn(hostMachine: hostMachine);
     client = new PortDaemonClient(daemonHostMachine: hostMachine);
-    await daemon.start();
   }
 
   Future commonTearDown() async {
@@ -50,7 +49,7 @@ void main() {
 
     test('should register a node', () async {
       expect(await client.register('A'), greaterThan(0));
-      expect(await daemon.lookupPort('A'), greaterThan(0));
+      expect(await daemon.getPort('A'), greaterThan(0));
     });
 
     test('should fail to register a currently registered node', () async {
@@ -60,9 +59,9 @@ void main() {
 
     test('should be able to deregister a node', () async {
       expect(await client.register('A'), greaterThan(0));
-      expect(await daemon.lookupPort('A'), greaterThan(0));
+      expect(await daemon.getPort('A'), greaterThan(0));
       expect(await client.deregister('A'), true);
-      expect(await daemon.lookupPort('A'), Ports.error);
+      expect(await daemon.getPort('A'), Ports.error);
     });
 
     test('should exchange the list of nodes registered on the server',
@@ -77,7 +76,7 @@ void main() {
       expect(await client.lookup('A'), lessThan(0));
       var port = await client.register('A');
       expect(port, greaterThan(0));
-      expect(await daemon.lookupPort('A'), port);
+      expect(await daemon.getPort('A'), port);
       expect(await client.lookup('A'), port);
     });
   });
