@@ -6,10 +6,10 @@ import 'package:distributed.objects/objects.dart';
 
 /// Monitors a [Connection] by periodically sending and expecting messages.
 ///
-/// If the remote connection is closed, [onDead] will complete.  This class is
-/// necessary because web socket handles remain in-memory even when the remote
-/// connection has closed.  Relying on a web socket's done future to complete
-/// blocks forever.
+/// [onDead] completes when the remote or local connection is closed. This class
+/// is necessary because a web socket's done future will never complete simply
+/// because the remote end of the socket is closed.  The socket must be
+/// explicitly closed.
 class ConnectionMonitor {
   static const _monitor = 'monitor';
 
