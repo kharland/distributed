@@ -2,9 +2,9 @@ import 'dart:async';
 
 import 'package:distributed.connection/socket.dart';
 import 'package:distributed.connection/src/socket_server.dart';
+import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed.node/node.dart';
 import 'package:distributed.node/platform/vm.dart';
-import 'package:distributed.node/src/logging.dart';
 import 'package:distributed.node/src/node/cross_platform_node.dart';
 import 'package:distributed.node/src/peer_connector.dart';
 import 'package:distributed.port_daemon/port_daemon_client.dart';

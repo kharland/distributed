@@ -1,13 +1,13 @@
 import 'dart:async';
 
-import 'package:distributed.objects/objects.dart';
 import 'package:distributed.connection/socket.dart';
+import 'package:distributed.connection/src/connection_monitor.dart';
 import 'package:distributed.connection/src/data_channels.dart';
 import 'package:distributed.connection/src/socket/socket_channels.dart';
+import 'package:distributed.objects/objects.dart';
 import 'package:stream_channel/stream_channel.dart';
 
 export 'src/connection_guard.dart';
-export 'src/message/message_categories.dart';
 
 class Connection implements DataChannels<Message> {
   static final _MessageTransformer _transformer = new _MessageTransformer();
@@ -25,7 +25,13 @@ class Connection implements DataChannels<Message> {
       : user = _transformer.bind(original.user),
         system = _transformer.bind(original.system),
         error = _transformer.bind(original.error),
-        _doneFuture = original.done;
+        _doneFuture = original.done {
+    var monitor = new ConnectionMonitor(this);
+    monitor.onDead.then((_) {
+      close();
+      monitor.stop();
+    });
+  }
 
   static Future<Connection> open(String url) async {
     var socket = await Socket.connect(url);

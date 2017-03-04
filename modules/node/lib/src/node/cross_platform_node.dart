@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:distributed.connection/connection.dart';
+import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed.node/node.dart';
-import 'package:distributed.node/src/logging.dart';
 import 'package:distributed.node/src/peer_connector.dart';
 import 'package:distributed.objects/objects.dart';
 import 'package:meta/meta.dart';
@@ -38,16 +38,15 @@ class CrossPlatformNode implements Node {
   Stream<Peer> get onDisconnect => _onDisconnectController.stream;
 
   @override
-  Stream<ConnectionResult> connect(Peer peer) async* {
+  Future<ConnectionResult> connect(Peer peer) async {
     assert(!_connections.containsKey(peer));
-    await for (var result in _connector.connect(toPeer(), peer)) {
-      if (result.error.isNotEmpty) {
-        globalLogger.error(result.error);
-      } else {
-        addConnection(result.connection, result.receiver);
-      }
-      yield result;
+    ConnectionResult result = await _connector.connect(toPeer(), peer).first;
+    if (result.error.isNotEmpty) {
+      globalLogger.error(result.error);
+    } else {
+      addConnection(result.connection, result.receiver);
     }
+    return result;
   }
 
   @override
@@ -102,13 +101,8 @@ class CrossPlatformNode implements Node {
     ..hostMachine = hostMachine);
 
   void _handleSystemMessage(Message message) {
-    switch (message.category) {
-      case MessageCategories.error:
-        globalLogger.error(message.payload);
-        break;
-      default:
-        globalLogger.error('Unsupported message received ${message.category}');
-    }
+    globalLogger.log(message.payload);
+    throw new UnimplementedError();
   }
 
   void _handleErrorMessage(Message message) {
