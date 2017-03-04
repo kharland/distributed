@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:distributed.connection/src/timeout.dart';
-import 'package:distributed.node/src/logging.dart';
+import 'package:distributed.monitoring/logging.dart';
+import 'package:distributed.monitoring/keep_alive.dart';
 import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/port_daemon_client.dart';
 import 'package:distributed.port_daemon/src/api.dart';
-import 'package:distributed.port_daemon/src/database_helpers.dart';
 import 'package:distributed.port_daemon/src/ports.dart';
 import 'package:meta/meta.dart';
 import 'package:seltzer/platform/vm.dart';

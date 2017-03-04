@@ -8,10 +8,12 @@ homepage: https://github.com/kharland/distributed_dart
 dependencies:
   distributed.connection:
     path: ../connection
-  distributed.port_daemon:
-    path: ../port_daemon
+  distributed.monitoring:
+    path: ../monitoring
   distributed.objects:
     path: ../objects
+  distributed.port_daemon:
+    path: ../port_daemon
   fixnum:
   logging:
   seltzer:

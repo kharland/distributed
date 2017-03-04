@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io' show InternetAddress;
 
-import 'package:distributed.node/src/logging.dart';
+import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/port_daemon.dart';
 import 'package:distributed.port_daemon/src/database/database.dart';

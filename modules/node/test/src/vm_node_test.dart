@@ -46,6 +46,21 @@ void main() {
         ping.send(pong.toPeer(), 'ping', 'ping-message');
       });
     });
+
+    test('should register when a node has disconnected', () async {
+      ping.connect(pong.toPeer());
+
+      return _onConnection(ping, pong, (peers) {
+        _onDisconnection(
+            ping,
+            pong,
+            ((_) {
+              expect(ping.peers, isEmpty);
+              expect(pong.peers, isEmpty);
+            }));
+        pong.disconnect(ping.toPeer());
+      });
+    });
   });
 }
 
@@ -57,4 +72,14 @@ Future<List<Peer>> _onConnection(
     Future.wait([
       a.onConnect.first,
       b.onConnect.first,
+    ]).then(expectAsync1(callback));
+
+Future<List<Peer>> _onDisconnection(
+  Node a,
+  Node b,
+  Future<Null> callback(List<Peer> peers),
+) =>
+    Future.wait([
+      a.onDisconnect.first,
+      b.onDisconnect.first,
     ]).then(expectAsync1(callback));

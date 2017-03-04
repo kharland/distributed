@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:distributed.connection/connection.dart';
 import 'package:distributed.connection/socket.dart';
-import 'package:distributed.node/src/logging.dart';
+import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/port_daemon_client.dart';
 import 'package:distributed.port_daemon/src/ports.dart';

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:distributed.node/src/logging.dart';
+import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/src/api.dart';
 import 'package:distributed.port_daemon/src/database_helpers.dart';

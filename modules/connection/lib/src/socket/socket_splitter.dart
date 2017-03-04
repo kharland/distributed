@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:distributed.connection/socket.dart';
+import 'package:distributed.connection/src/pair.dart';
 import 'package:stream_channel/stream_channel.dart';
-import 'package:test/src/utils.dart';
 
 /// Splits a [Socket] into multiple [StreamChannel] instances.
 ///

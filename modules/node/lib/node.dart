@@ -23,7 +23,7 @@ abstract class Node {
   Stream<Peer> get onDisconnect;
 
   /// Connects this node to [peer].
-  Stream<ConnectionResult> connect(Peer peer);
+  Future<ConnectionResult> connect(Peer peer);
 
   /// Disconnects from the remote peer identified by [name].
   void disconnect(Peer peer);
@@ -63,7 +63,7 @@ class DelegatingNode implements Node {
   Stream<Peer> get onDisconnect => delegate.onDisconnect;
 
   @override
-  Stream<ConnectionResult> connect(Peer peer) => delegate.connect(peer);
+  Future<ConnectionResult> connect(Peer peer) => delegate.connect(peer);
 
   @override
   void disconnect(Peer peer) {

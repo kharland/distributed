@@ -1,0 +1,11 @@
+name: distributed.monitoring
+
+version: 0.0.0
+description: distributed monitoring utilities.
+authors:
+  - Kendal Harland <kjharland@google.com>
+homepage: https://github.com/kharland/distributed_dart
+dependencies:
+dev_dependencies:
+  dart_style:
+  test:

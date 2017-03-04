@@ -6,14 +6,16 @@ authors:
   - Kendal Harland <kjharland@google.com>
 homepage: https://github.com/kharland/distributed_dart
 dependencies:
+  distributed.monitoring:
+    path: ../monitoring
+  distributed.objects:
+    path: ../objects
   web_socket_channel: "<=2.0.0"
   meta:
   fixnum:
   express:
   seltzer:
     git: git://github.com/matanlurey/seltzer.git
-  distributed.objects:
-    path: ../objects
 dev_dependencies:
   dart_style:
   test:
