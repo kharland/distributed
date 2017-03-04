@@ -25,16 +25,14 @@ void main() {
 
     test('should register when a connection is made', () async {
       ping.connect(pong.toPeer());
-
       return _onConnection(ping, pong, (peers) {
-        expect(peers.first, pong.toPeer());
-        expect(peers.last, ping.toPeer());
+        expect(ping.peers, [pong.toPeer()]);
+        expect(pong.peers, [ping.toPeer()]);
       });
     });
 
     test('should send and receive messages', () async {
       ping.connect(pong.toPeer());
-
       return _onConnection(ping, pong, (peers) {
         pong.receive('ping').listen(expectAsync1((Message message) {
           expect(message, createMessage('ping', 'ping-message'));
@@ -49,7 +47,6 @@ void main() {
 
     test('should register when a node has disconnected', () async {
       ping.connect(pong.toPeer());
-
       return _onConnection(ping, pong, (peers) {
         _onDisconnection(
             ping,
