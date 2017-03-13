@@ -1,18 +1,17 @@
+import 'dart:async';
+
 /// A signal for communicating that a node is still available.
 ///
 /// If a node does not ping the daemon repeatedly in [KeepAlive.time] second
 /// intervals,  it is automatically deregistered from the daemon.
 ///
 /// Do not extend this class.
-
-import 'dart:async';
-
 class KeepAlive {
   /// The time between successive signals.
   static const time = const Duration(seconds: 1);
 
   /// The number of signals that can be missed before a node is considered dead.
-  static const numRetries = 3;
+  static const _numRetries = 3;
 
   /// The name of the node sending signals for this [KeepAlive].
   final String name;
@@ -24,7 +23,7 @@ class KeepAlive {
   Timer _timer;
 
   KeepAlive(this.name) {
-    ack();
+    keepAlive();
   }
 
   bool get isDead => _deathController.isClosed;
@@ -33,12 +32,12 @@ class KeepAlive {
   Stream<String> get onDead => _deathController.stream;
 
   /// Acknowledges that a signal has been received.
-  void ack() {
+  void keepAlive() {
     _errorIfDead();
     _currentRetries = 0;
     _timer?.cancel();
     _timer = new Timer.periodic(time, (_) {
-      if (++_currentRetries > numRetries) {
+      if (++_currentRetries > _numRetries) {
         letDie();
       }
     });

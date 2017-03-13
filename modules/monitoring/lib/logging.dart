@@ -1,4 +1,3 @@
-// TODO: move this to a common package
 import 'dart:io';
 
 bool enableLogging = true;
@@ -11,6 +10,8 @@ final _disabledLogger = new Logger.disabled();
 abstract class Logger {
   factory Logger(String prefix) = _ShellLogger;
 
+  factory Logger.file(File file) = _FileLogger;
+
   factory Logger.disabled() = _NoOpLogger;
 
   /// Logs [message].
@@ -18,9 +19,22 @@ abstract class Logger {
 
   /// Logs [message] as an error.
   void error(String message);
+}
 
-  /// Changes the log message prefix used by this logger
-  set prefix(String value);
+class _FileLogger implements Logger {
+  final File _file;
+
+  _FileLogger(this._file);
+
+  @override
+  void error(String message) {
+    _file.writeAsStringSync(message);
+  }
+
+  @override
+  void log(String message) {
+    _file.writeAsStringSync(message);
+  }
 }
 
 class _ShellLogger implements Logger {
@@ -37,11 +51,6 @@ class _ShellLogger implements Logger {
   void error(String message) {
     stderr.writeln('[$_prefix] $message');
   }
-
-  @override
-  set prefix(String value) {
-    _prefix = value;
-  }
 }
 
 class _NoOpLogger implements Logger {
@@ -50,7 +59,4 @@ class _NoOpLogger implements Logger {
 
   @override
   void log(String message) {}
-
-  @override
-  set prefix(String value) {}
 }

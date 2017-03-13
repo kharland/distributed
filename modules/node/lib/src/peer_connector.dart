@@ -8,7 +8,7 @@ import 'package:distributed.port_daemon/port_daemon_client.dart';
 import 'package:distributed.port_daemon/src/ports.dart';
 
 /// Connects one [Peer] to another.
-abstract class PeerConnector {
+abstract class Connector {
   /// Creates a request initiated by [sender] and received by [receiver].
   ///
   /// After completing the connection, this connector might attempt to open more
@@ -26,15 +26,13 @@ abstract class PeerConnector {
   Future<ConnectionResult> receiveSocket(Peer receiver, Socket socket);
 }
 
-/// A [PeerConnector] that creates one [Connection] per call to [connect].
-class OneShotConnector implements PeerConnector {
+/// A [Connector] that creates one [Connection] per call to [connect].
+class OneShotConnector implements Connector {
   static const _idCategory = 'id';
   static const _statusCategory = 'status';
   static const _statusOk = 'ok';
 
   Logger logger = globalLogger;
-
-  OneShotConnector();
 
   @override
   Stream<ConnectionResult> connect(Peer sender, Peer receiver) async* {

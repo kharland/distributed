@@ -18,13 +18,11 @@ class VmNode extends DelegatingNode {
 
   static Future<VmNode> spawn({
     @required String name,
+    Logger logger,
     HostMachine hostMachine,
-    PeerConnector incomingConnector,
   }) async {
-    hostMachine ??= createHostMachine(
-      'localhost',
-      Ports.defaultDaemonPort,
-    );
+    hostMachine ??= createHostMachine('localhost', Ports.defaultDaemonPort);
+    logger ??= new Logger(name);
 
     var daemonClient = new PortDaemonClient(daemonHostMachine: hostMachine);
     int port = await daemonClient.register(name);
@@ -33,9 +31,10 @@ class VmNode extends DelegatingNode {
     }
 
     var socketServer = await SocketServer.bind(hostMachine.address, port);
-    var delegate = new CrossPlatformNode(hostMachine: hostMachine, name: name);
+    var delegate = new CrossPlatformNode(
+        hostMachine: hostMachine, name: name, logger: logger);
 
-    incomingConnector ??= new OneShotConnector();
+    var incomingConnector = new OneShotConnector();
     socketServer.onSocket.forEach((Socket socket) async {
       final connectionResult =
           await incomingConnector.receiveSocket(delegate.toPeer(), socket);
@@ -43,11 +42,12 @@ class VmNode extends DelegatingNode {
           connectionResult.connection, connectionResult.sender);
     });
 
-    return new VmNode(daemonClient, socketServer, delegate);
+    return new VmNode(daemonClient, socketServer, delegate, logger);
   }
 
-  VmNode(this._daemonClient, this._server, Node delegate) : super(delegate) {
-    globalLogger.log('Registered $name at ${hostMachine.daemonUrl}');
+  VmNode(this._daemonClient, this._server, Node delegate, Logger logger)
+      : super(delegate) {
+    logger.log('Registered $name at ${hostMachine.daemonUrl}');
   }
 
   @override
