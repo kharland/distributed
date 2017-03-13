@@ -8,8 +8,10 @@ import 'package:meta/meta.dart';
 
 /// An object for communicating with a [PortDaemon].
 abstract class PortDaemonClient {
-  factory PortDaemonClient({@required HostMachine daemonHostMachine}) =
-      HttpDaemonClient;
+  factory PortDaemonClient({
+    @required String name,
+    @required HostMachine daemonHostMachine,
+  }) = HttpDaemonClient;
 
   /// The [HostMachine] where this client's [PortDaemon] is running.
   HostMachine get daemonHostMachine;
@@ -27,14 +29,14 @@ abstract class PortDaemonClient {
   /// Returns [Ports.error] if no such node is registered with the daemon.
   Future<int> lookup(String nodeName);
 
-  /// Instructs the daemon server to register [nodeName] under a new port.
+  /// Instructs the daemon server to register this client under a new port.
   ///
   /// Returns a Future that completes with the new port if registration
   /// succeeded or [Ports.error] if it failed.
-  Future<int> register(String nodeName);
+  Future<int> register();
 
-  /// Instructs the daemon server to deregister [nodeName].
+  /// Instructs the daemon server to deregister this client.
   ///
   /// Returns a future that completes with true iff deregistration succeeded.
-  Future<bool> deregister(String nodeName);
+  Future<bool> deregister();
 }
