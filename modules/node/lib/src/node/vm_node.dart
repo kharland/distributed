@@ -24,8 +24,9 @@ class VmNode extends DelegatingNode {
     hostMachine ??= createHostMachine('localhost', Ports.defaultDaemonPort);
     logger ??= new Logger(name);
 
-    var daemonClient = new PortDaemonClient(daemonHostMachine: hostMachine);
-    int port = await daemonClient.register(name);
+    var daemonClient =
+        new PortDaemonClient(name: name, daemonHostMachine: hostMachine);
+    int port = await daemonClient.register();
     if (port == Ports.error) {
       throw new Exception('Failed to register node');
     }
@@ -54,6 +55,6 @@ class VmNode extends DelegatingNode {
   Future shutdown() async {
     await super.shutdown();
     await _server.close(force: true);
-    await _daemonClient.deregister(name);
+    await _daemonClient.deregister();
   }
 }

@@ -15,11 +15,14 @@ import 'package:seltzer/seltzer.dart';
 class HttpDaemonClient implements PortDaemonClient {
   static const _seltzer = const VmSeltzerHttp();
 
+  final String name;
   final _http = new HttpWithTimeout();
-
   Timer _keepAliveTimer;
 
-  HttpDaemonClient({@required this.daemonHostMachine});
+  HttpDaemonClient({
+    @required this.name,
+    @required this.daemonHostMachine,
+  });
 
   @override
   @virtual
@@ -55,14 +58,14 @@ class HttpDaemonClient implements PortDaemonClient {
   }
 
   @override
-  Future<int> register(String nodeName) async {
+  Future<int> register() async {
     await _expectDaemonIsRunning();
     try {
-      var response = await _http.send(_post('node/$nodeName'));
+      var response = await _http.send(_post('node/$name'));
       Registration result =
           deserialize(await response.readAsString(), Registration);
       if (result.port != Ports.error) {
-        _startKeepAlive(nodeName);
+        _startKeepAlive(name);
       }
       return result.port;
     } catch (e) {
@@ -72,10 +75,10 @@ class HttpDaemonClient implements PortDaemonClient {
   }
 
   @override
-  Future<bool> deregister(String nodeName) async {
+  Future<bool> deregister() async {
     await _expectDaemonIsRunning();
     try {
-      var response = await _http.send(_delete('node/$nodeName'));
+      var response = await _http.send(_delete('node/$name'));
       var failed =
           new DeregistrationResult.fromString(await response.readAsString())
               .failed;

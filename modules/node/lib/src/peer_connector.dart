@@ -36,10 +36,10 @@ class OneShotConnector implements Connector {
 
   @override
   Stream<ConnectionResult> connect(Peer sender, Peer receiver) async* {
-    var daemonClient =
-        new PortDaemonClient(daemonHostMachine: receiver.hostMachine);
-    var receiverAddress = receiver.hostMachine.address;
+    var daemonClient = new PortDaemonClient(
+        name: sender.name, daemonHostMachine: receiver.hostMachine);
 
+    var receiverAddress = receiver.hostMachine.address;
     var receiverPort = await daemonClient.lookup(receiver.name);
     if (receiverPort == Ports.error) {
       yield new ConnectionResult.failed(
