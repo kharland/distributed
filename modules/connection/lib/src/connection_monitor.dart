@@ -41,7 +41,7 @@ class ConnectionMonitor {
       connection.close();
     });
     connection.system.stream.where((m) => m.category == _monitor).forEach((_) {
-      _keepAlive.ack();
+      _keepAlive.keepAlive();
     });
   }
 

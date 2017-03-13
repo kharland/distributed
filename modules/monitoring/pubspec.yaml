@@ -6,6 +6,7 @@ authors:
   - Kendal Harland <kjharland@google.com>
 homepage: https://github.com/kharland/distributed_dart
 dependencies:
+  quiver:
 dev_dependencies:
   dart_style:
   test:

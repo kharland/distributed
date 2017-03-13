@@ -17,7 +17,7 @@ class NodeDatabase {
   /// Signals that node [name] is still available.
   void keepAlive(String name) {
     if (_nodeNameToKeepAlive.containsKey(name)) {
-      _nodeNameToKeepAlive[name].ack();
+      _nodeNameToKeepAlive[name].keepAlive();
     }
   }
 
