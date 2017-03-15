@@ -32,11 +32,11 @@ void main() {
       await ping.connect(pong.toPeer());
 
       pong.receive('ping').listen(expectAsync1((Message message) {
-        expect(message, createMessage('ping', 'ping-message', ping.toPeer()));
+        expect(message, $message('ping', 'ping-message', ping.toPeer()));
         pong.send(ping.toPeer(), 'pong', 'pong-message');
       }));
       ping.receive('pong').listen(expectAsync1((Message message) {
-        expect(message, createMessage('pong', 'pong-message', pong.toPeer()));
+        expect(message, $message('pong', 'pong-message', pong.toPeer()));
       }));
       ping.send(pong.toPeer(), 'ping', 'ping-message');
     });

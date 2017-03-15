@@ -11,7 +11,7 @@ import 'package:test/test.dart';
 void main() {
   useSeltzerInVm();
 
-  final hostMachine = createHostMachine('localhost', 9000);
+  final hostMachine = $hostMachine('localhost', 9000);
   PortDaemon daemon;
   PortDaemonClient clientA;
   PortDaemonClient clientB;

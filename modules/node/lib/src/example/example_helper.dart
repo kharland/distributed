@@ -4,7 +4,5 @@ import 'package:distributed.port_daemon/ports.dart';
 
 const pingDuration = const Duration(seconds: 1);
 
-final ping =
-    createPeer('ping', createHostMachine('localhost', Ports.defaultDaemonPort));
-final pong =
-    createPeer('pong', createHostMachine('localhost', Ports.defaultDaemonPort));
+final ping = $peer('ping', $hostMachine('localhost', Ports.defaultDaemonPort));
+final pong = $peer('pong', $hostMachine('localhost', Ports.defaultDaemonPort));

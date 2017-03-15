@@ -8,12 +8,19 @@ part of distributed.objects.src.peer;
 // **************************************************************************
 
 Serializers _$serializers = (new Serializers().toBuilder()
+      ..add(PortAssignmentList.serializer)
+      ..addBuilderFactory(
+          const FullType(
+              BuiltMap, const [const FullType(String), const FullType(int)]),
+          () => new MapBuilder<String, int>())
       ..add(Registration.serializer)
       ..add(Message.serializer)
       ..add(Peer.serializer)
       ..add(HostMachine.serializer)
       ..add(SpawnRequest.serializer))
     .build();
+Serializer<PortAssignmentList> _$portAssignmentListSerializer =
+    new _$PortAssignmentListSerializer();
 Serializer<Registration> _$registrationSerializer =
     new _$RegistrationSerializer();
 Serializer<Message> _$messageSerializer = new _$MessageSerializer();
@@ -21,6 +28,58 @@ Serializer<Peer> _$peerSerializer = new _$PeerSerializer();
 Serializer<HostMachine> _$hostMachineSerializer = new _$HostMachineSerializer();
 Serializer<SpawnRequest> _$spawnRequestSerializer =
     new _$SpawnRequestSerializer();
+
+class _$PortAssignmentListSerializer
+    implements StructuredSerializer<PortAssignmentList> {
+  @override
+  final Iterable<Type> types = const [PortAssignmentList, _$PortAssignmentList];
+  @override
+  final String wireName = 'PortAssignmentList';
+
+  @override
+  Iterable serialize(Serializers serializers, PortAssignmentList object,
+      {FullType specifiedType: FullType.unspecified}) {
+    final result = [
+      'assignments',
+      serializers.serialize(object.assignments,
+          specifiedType: const FullType(
+              BuiltMap, const [const FullType(String), const FullType(int)])),
+    ];
+
+    return result;
+  }
+
+  @override
+  PortAssignmentList deserialize(Serializers serializers, Iterable serialized,
+      {FullType specifiedType: FullType.unspecified}) {
+    final result = new PortAssignmentListBuilder();
+
+    var key;
+    var value;
+    var expectingKey = true;
+    for (final item in serialized) {
+      if (expectingKey) {
+        key = item;
+        expectingKey = false;
+      } else {
+        value = item;
+        expectingKey = true;
+
+        switch (key as String) {
+          case 'assignments':
+            result.assignments.replace(serializers.deserialize(value,
+                specifiedType: const FullType(BuiltMap, const [
+                  const FullType(String),
+                  const FullType(int)
+                ])) as dynamic);
+            break;
+        }
+      }
+    }
+
+    return result.build();
+  }
+}
 
 class _$RegistrationSerializer implements StructuredSerializer<Registration> {
   @override
@@ -32,10 +91,11 @@ class _$RegistrationSerializer implements StructuredSerializer<Registration> {
   Iterable serialize(Serializers serializers, Registration object,
       {FullType specifiedType: FullType.unspecified}) {
     final result = [
-      'name',
-      serializers.serialize(object.name, specifiedType: const FullType(String)),
       'port',
       serializers.serialize(object.port, specifiedType: const FullType(int)),
+      'error',
+      serializers.serialize(object.error,
+          specifiedType: const FullType(String)),
     ];
 
     return result;
@@ -58,13 +118,13 @@ class _$RegistrationSerializer implements StructuredSerializer<Registration> {
         expectingKey = true;
 
         switch (key as String) {
-          case 'name':
-            result.name = serializers.deserialize(value,
-                specifiedType: const FullType(String)) as dynamic;
-            break;
           case 'port':
             result.port = serializers.deserialize(value,
                 specifiedType: const FullType(int)) as dynamic;
+            break;
+          case 'error':
+            result.error = serializers.deserialize(value,
+                specifiedType: const FullType(String)) as dynamic;
             break;
         }
       }
@@ -296,21 +356,109 @@ class _$SpawnRequestSerializer implements StructuredSerializer<SpawnRequest> {
 
 // **************************************************************************
 // Generator: BuiltValueGenerator
+// Target: abstract class PortAssignmentList
+// **************************************************************************
+
+class _$PortAssignmentList extends PortAssignmentList {
+  @override
+  final BuiltMap<String, int> assignments;
+
+  factory _$PortAssignmentList([updates(PortAssignmentListBuilder b)]) =>
+      (new PortAssignmentListBuilder()..update(updates)).build();
+
+  _$PortAssignmentList._({this.assignments}) : super._() {
+    if (assignments == null) throw new ArgumentError.notNull('assignments');
+  }
+
+  @override
+  PortAssignmentList rebuild(updates(PortAssignmentListBuilder b)) =>
+      (toBuilder()..update(updates)).build();
+
+  @override
+  _$PortAssignmentListBuilder toBuilder() =>
+      new _$PortAssignmentListBuilder()..replace(this);
+
+  @override
+  bool operator ==(dynamic other) {
+    if (other is! PortAssignmentList) return false;
+    return assignments == other.assignments;
+  }
+
+  @override
+  int get hashCode {
+    return $jf($jc(0, assignments.hashCode));
+  }
+
+  @override
+  String toString() {
+    return 'PortAssignmentList {'
+        'assignments=${assignments.toString()},\n'
+        '}';
+  }
+}
+
+class _$PortAssignmentListBuilder extends PortAssignmentListBuilder {
+  PortAssignmentList _$v;
+
+  @override
+  MapBuilder<String, int> get assignments {
+    _$this;
+    return super.assignments ??= new MapBuilder<String, int>();
+  }
+
+  @override
+  set assignments(MapBuilder<String, int> assignments) {
+    _$this;
+    super.assignments = assignments;
+  }
+
+  _$PortAssignmentListBuilder() : super._();
+
+  PortAssignmentListBuilder get _$this {
+    if (_$v != null) {
+      super.assignments = _$v.assignments?.toBuilder();
+      _$v = null;
+    }
+    return this;
+  }
+
+  @override
+  void replace(PortAssignmentList other) {
+    if (other == null) throw new ArgumentError.notNull('other');
+    _$v = other;
+  }
+
+  @override
+  void update(updates(PortAssignmentListBuilder b)) {
+    if (updates != null) updates(this);
+  }
+
+  @override
+  PortAssignmentList build() {
+    final result =
+        _$v ?? new _$PortAssignmentList._(assignments: assignments?.build());
+    replace(result);
+    return result;
+  }
+}
+
+// **************************************************************************
+// Generator: BuiltValueGenerator
 // Target: abstract class Registration
 // **************************************************************************
 
 class _$Registration extends Registration {
   @override
-  final String name;
-  @override
   final int port;
+  @override
+  final String error;
 
   factory _$Registration([updates(RegistrationBuilder b)]) =>
       (new RegistrationBuilder()..update(updates)).build();
 
-  _$Registration._({this.name, this.port}) : super._() {
-    if (name == null) throw new ArgumentError.notNull('name');
+  _$Registration._({this.port, this.error}) : super._() {
     if (port == null) throw new ArgumentError.notNull('port');
+    if (error == null) throw new ArgumentError.notNull('error');
   }
 
   @override
@@ -324,37 +472,25 @@ class _$Registration extends Registration {
   @override
   bool operator ==(dynamic other) {
     if (other is! Registration) return false;
-    return name == other.name && port == other.port;
+    return port == other.port && error == other.error;
   }
 
   @override
   int get hashCode {
-    return $jf($jc($jc(0, name.hashCode), port.hashCode));
+    return $jf($jc($jc(0, port.hashCode), error.hashCode));
   }
 
   @override
   String toString() {
     return 'Registration {'
-        'name=${name.toString()},\n'
         'port=${port.toString()},\n'
+        'error=${error.toString()},\n'
         '}';
   }
 }
 
 class _$RegistrationBuilder extends RegistrationBuilder {
   Registration _$v;
-
-  @override
-  String get name {
-    _$this;
-    return super.name;
-  }
-
-  @override
-  set name(String name) {
-    _$this;
-    super.name = name;
-  }
 
   @override
   int get port {
@@ -368,12 +504,24 @@ class _$RegistrationBuilder extends RegistrationBuilder {
     super.port = port;
   }
 
+  @override
+  String get error {
+    _$this;
+    return super.error;
+  }
+
+  @override
+  set error(String error) {
+    _$this;
+    super.error = error;
+  }
+
   _$RegistrationBuilder() : super._();
 
   RegistrationBuilder get _$this {
     if (_$v != null) {
-      super.name = _$v.name;
       super.port = _$v.port;
+      super.error = _$v.error;
       _$v = null;
     }
     return this;
@@ -392,7 +540,7 @@ class _$RegistrationBuilder extends RegistrationBuilder {
 
   @override
   Registration build() {
-    final result = _$v ?? new _$Registration._(name: name, port: port);
+    final result = _$v ?? new _$Registration._(port: port, error: error);
     replace(result);
     return result;
   }
