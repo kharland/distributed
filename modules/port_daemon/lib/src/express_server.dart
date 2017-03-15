@@ -79,7 +79,7 @@ class ExpressServer implements WebServer {
   ) async {
     String name = ctx.params['name'];
     db.deregisterNode(name).then((isSuccess) {
-      ctx.sendText(new DeregistrationResult(name, false).toString());
+      ctx.sendText(new DeregistrationResult(name, !isSuccess).toString());
       ctx.end();
     }).catchError((e, stacktrace) {
       globalLogger.error(e);
