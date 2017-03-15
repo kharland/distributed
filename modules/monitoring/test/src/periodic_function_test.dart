@@ -1,4 +1,4 @@
-import 'package:distributed.monitoring/resource.dart';
+import 'package:distributed.monitoring/periodic_function.dart';
 import 'package:quiver/testing/async.dart';
 import 'package:stream_channel/stream_channel.dart';
 import 'package:test/test.dart';

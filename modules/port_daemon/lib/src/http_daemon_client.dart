@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:distributed.connection/src/timeout.dart';
 import 'package:distributed.monitoring/logging.dart';
-import 'package:distributed.monitoring/resource.dart';
+import 'package:distributed.monitoring/periodic_function.dart';
 import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/port_daemon_client.dart';
 import 'package:distributed.port_daemon/src/api.dart';

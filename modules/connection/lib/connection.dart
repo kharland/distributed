@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:distributed.connection/socket.dart';
 import 'package:distributed.connection/src/socket/socket_channels.dart';
+import 'package:distributed.monitoring/periodic_function.dart';
 import 'package:distributed.monitoring/resource.dart';
 import 'package:distributed.objects/objects.dart';
 import 'package:stream_channel/stream_channel.dart';

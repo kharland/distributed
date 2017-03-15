@@ -6,10 +6,9 @@ import 'package:distributed.connection/src/socket/socket_splitter.dart';
 import 'package:distributed.connection/src/timeout.dart';
 import 'package:stream_channel/stream_channel.dart';
 
-/// A [SocketChannels] that closes when its remote breaks the connection.
+/// Splits a [Socket] into multiple named [StreamChannel]s.
 ///
-/// This class is only meant to be used for connecting to other
-/// [SocketChannels].
+/// This is only meant to be used for connecting to another [SocketChannels].
 class SocketChannels {
   static const _keyUsr = '0';
   static const _keySys = '1';
