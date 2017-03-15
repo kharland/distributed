@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:distributed.connection/src/timeout.dart';
 import 'package:distributed.monitoring/logging.dart';
-import 'package:distributed.monitoring/keep_alive.dart';
+import 'package:distributed.monitoring/periodic_function.dart';
 import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/port_daemon_client.dart';
 import 'package:distributed.port_daemon/src/api.dart';
-import 'package:distributed.port_daemon/src/ports.dart';
+import 'package:distributed.port_daemon/ports.dart';
 import 'package:meta/meta.dart';
 import 'package:seltzer/platform/vm.dart';
 import 'package:seltzer/seltzer.dart';
@@ -16,20 +16,23 @@ class HttpDaemonClient implements PortDaemonClient {
   static const _seltzer = const VmSeltzerHttp();
 
   final String name;
+  final Logger logger;
+
+  @override
+  final HostMachine daemonHostMachine;
   final _http = new HttpWithTimeout();
-  Timer _keepAliveTimer;
+
+  PeriodicFunction _keepAliveSignal;
 
   HttpDaemonClient({
     @required this.name,
     @required this.daemonHostMachine,
-  });
+    Logger logger,
+  })
+      : this.logger = logger ?? new Logger(name);
 
   @override
-  @virtual
-  final HostMachine daemonHostMachine;
-
-  @override
-  Future<bool> get isDaemonRunning async => _pingDaemon('anonymous');
+  Future<bool> get isDaemonRunning async => _pingDaemon(name);
 
   @override
   Future<Map<String, int>> getNodes() async {
@@ -40,7 +43,7 @@ class HttpDaemonClient implements PortDaemonClient {
           new PortAssignmentList.fromString(await response.readAsString());
       return assignments.assignments;
     } catch (e) {
-      globalLogger.error(e);
+      logger.error("getNodes $e");
       return {};
     }
   }
@@ -52,7 +55,7 @@ class HttpDaemonClient implements PortDaemonClient {
       var response = await _http.send(_get('node/$name'));
       return int.parse(await response.readAsString());
     } catch (e) {
-      globalLogger.error(e);
+      logger.error("lookup $e");
       return Ports.error;
     }
   }
@@ -65,11 +68,11 @@ class HttpDaemonClient implements PortDaemonClient {
       Registration result =
           deserialize(await response.readAsString(), Registration);
       if (result.port != Ports.error) {
-        _startKeepAlive(name);
+        _periodicallySendKeepAliveSignal();
       }
       return result.port;
     } catch (e) {
-      globalLogger.error(e);
+      logger.error("register $e");
       return Ports.error;
     }
   }
@@ -83,12 +86,11 @@ class HttpDaemonClient implements PortDaemonClient {
           new DeregistrationResult.fromString(await response.readAsString())
               .failed;
       if (!failed) {
-        _stopKeepAlive();
+        _stopSendingKeepAliveSignal();
       }
       return !failed;
     } catch (e) {
-      globalLogger.error(e);
-
+      logger.error("deregister $e");
       return false;
     }
   }
@@ -98,21 +100,19 @@ class HttpDaemonClient implements PortDaemonClient {
       await _http.send(_get('ping/$nodeName'));
       return true;
     } catch (e) {
-      globalLogger.error('$e'.trim());
+      logger.error("ping $e");
       return false;
     }
   }
 
-  void _startKeepAlive(String nodeName) {
-    var period = KeepAlive.time;
-    _keepAliveTimer = new Timer.periodic(period, (_) {
-      _pingDaemon(nodeName);
+  void _periodicallySendKeepAliveSignal() {
+    _keepAliveSignal = new PeriodicFunction(name, () async {
+      _pingDaemon(name);
     });
   }
 
-  void _stopKeepAlive() {
-    assert(_keepAliveTimer != null);
-    _keepAliveTimer.cancel();
+  void _stopSendingKeepAliveSignal() {
+    _keepAliveSignal.stop();
   }
 
   Future _expectDaemonIsRunning() async {
@@ -133,15 +133,10 @@ class HttpDaemonClient implements PortDaemonClient {
 }
 
 class HttpWithTimeout {
-  Future<SeltzerHttpResponse> send(
-    SeltzerHttpRequest request, [
-    Object payload,
-    Duration timeout = Timeout.defaultDuration,
-  ]) {
+  Future<SeltzerHttpResponse> send(SeltzerHttpRequest request) {
     var timeout = new Timeout(() {
       throw new TimeoutError(request.toString());
     });
-
     return request.send().first.then((response) {
       timeout.cancel();
       return response;

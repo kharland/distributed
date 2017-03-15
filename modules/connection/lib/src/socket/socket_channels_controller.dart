@@ -9,16 +9,13 @@ class SocketChannelsController {
   factory SocketChannelsController() {
     var userSockets = new SocketController();
     var systemSockets = new SocketController();
-    var errorSockets = new SocketController();
     var local = new SocketChannels(
       new StreamChannel(userSockets.local, userSockets.local),
       new StreamChannel(systemSockets.local, systemSockets.local),
-      new StreamChannel(errorSockets.local, errorSockets.local),
     );
     var foreign = new SocketChannels(
       new StreamChannel(userSockets.foreign, userSockets.foreign),
       new StreamChannel(systemSockets.foreign, systemSockets.foreign),
-      new StreamChannel(errorSockets.foreign, errorSockets.foreign),
     );
     return new SocketChannelsController._(local, foreign);
   }

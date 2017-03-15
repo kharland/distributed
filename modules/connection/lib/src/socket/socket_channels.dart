@@ -1,43 +1,35 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:distributed.connection/src/data_channels.dart';
 import 'package:distributed.connection/socket.dart';
 import 'package:distributed.connection/src/socket/socket_splitter.dart';
 import 'package:distributed.connection/src/timeout.dart';
 import 'package:stream_channel/stream_channel.dart';
 
-class SocketChannels implements DataChannels<String> {
+/// Splits a [Socket] into multiple named [StreamChannel]s.
+///
+/// This is only meant to be used for connecting to another [SocketChannels].
+class SocketChannels {
   static const _keyUsr = '0';
   static const _keySys = '1';
-  static const _keyErr = '2';
+
   static final _timeoutError = 'Remote $SocketChannels timed out';
 
-  @override
   final StreamChannel<String> user;
-  @override
   final StreamChannel<String> system;
-  @override
-  final StreamChannel<String> error;
 
   bool _isOpen = true;
 
-  SocketChannels(
-    this.user,
-    this.system,
-    this.error,
-  );
+  SocketChannels(this.user, this.system);
 
   static Future<SocketChannels> outgoing(Socket socket) async {
     var splitter = new SocketSplitter(socket);
-    var userPair = splitter.split();
-    var systemPair = splitter.split();
-    var errorPair = splitter.split();
+    var userSplit = splitter.split();
+    var systemSplit = splitter.split();
 
     splitter.primaryChannel.sink.add(JSON.encode({
-      _keyUsr: userPair.first,
-      _keySys: systemPair.first,
-      _keyErr: errorPair.first,
+      _keyUsr: userSplit.id,
+      _keySys: systemSplit.id,
     }));
 
     var timeout = new Timeout(() {
@@ -48,11 +40,7 @@ class SocketChannels implements DataChannels<String> {
     var message = JSON.decode(await splitter.primaryChannel.stream.first);
     timeout.cancel();
     if (message['ok']) {
-      return new SocketChannels(
-        userPair.last,
-        systemPair.last,
-        errorPair.last,
-      );
+      return new SocketChannels(userSplit.channel, systemSplit.channel);
     } else {
       throw new Exception('$SocketChannels: ${message['error']}');
     }
@@ -69,25 +57,23 @@ class SocketChannels implements DataChannels<String> {
     timeout.cancel();
 
     var channels = new SocketChannels(
-      splitter.split(message[_keyUsr]).last,
-      splitter.split(message[_keySys]).last,
-      splitter.split(message[_keyErr]).last,
+      splitter.split(message[_keyUsr]).channel,
+      splitter.split(message[_keySys]).channel,
     );
     splitter.primaryChannel.sink.add(JSON.encode({'ok': true}));
     return channels;
   }
 
-  @override
-  Future get done =>
-      Future.wait([user.sink.done, system.sink.done, error.sink.done]);
+  Future get done => Future.wait([
+        user.sink.done,
+        system.sink.done,
+      ]);
 
-  @override
   Future close() async {
     if (_isOpen) {
       _isOpen = false;
       user.sink.close();
       system.sink.close();
-      error.sink.close();
       return done;
     }
   }

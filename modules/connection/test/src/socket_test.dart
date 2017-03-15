@@ -30,11 +30,5 @@ void main() {
       socket.add('A');
       testSocket.add('B');
     });
-
-    // TODO: Enable when seltzer supports address.
-    //test('address should be the socket host address', () async {
-    //  socket = new Socket(controller.local, controller.local);
-    //  expect(socket.address, 'localhost');
-    //});
   });
 }

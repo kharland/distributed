@@ -9,6 +9,7 @@ enum OperatingSystem {
   linux,
 }
 
+/// A helper class to make logging easier.
 class FileSystem {
   final String root;
   final Clock _clock;

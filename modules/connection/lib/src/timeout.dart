@@ -1,7 +1,7 @@
 import 'dart:async';
 
 class Timeout {
-  static const defaultDuration = const Duration(seconds: 3);
+  static const defaultDuration = const Duration(seconds: 1);
 
   final Timer _timer;
 

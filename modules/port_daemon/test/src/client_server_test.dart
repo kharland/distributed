@@ -4,7 +4,7 @@ import 'dart:async';
 import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/port_daemon.dart';
 import 'package:distributed.port_daemon/port_daemon_client.dart';
-import 'package:distributed.port_daemon/src/ports.dart';
+import 'package:distributed.port_daemon/ports.dart';
 import 'package:seltzer/platform/vm.dart';
 import 'package:test/test.dart';
 
@@ -23,8 +23,9 @@ void main() {
   }
 
   Future commonTearDown() async {
+    await clientA.deregister();
+    await clientB.deregister();
     daemon.stop();
-    Future.wait(daemon.nodes.map(daemon.deregisterNode));
   }
 
   group('$PortDaemonClient', () {
@@ -33,7 +34,9 @@ void main() {
     tearDown(() => commonTearDown());
 
     test('should be able to ping the daemon', () async {
-      expect(await clientA.isDaemonRunning, isTrue);
+      for (int i = 0; i < 5; i++) {
+        expect(await clientA.isDaemonRunning, isTrue);
+      }
     });
   });
 

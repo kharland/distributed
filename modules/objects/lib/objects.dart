@@ -19,9 +19,11 @@ Object deserialize(String serialized, Type type) => serializers.deserialize(
       specifiedType: new FullType(type),
     );
 
-Message createMessage(String category, String payload) => new Message((b) => b
-  ..category = category
-  ..payload = payload);
+Message createMessage(String category, String payload, Peer sender) =>
+    new Message((b) => b
+      ..category = category
+      ..payload = payload
+      ..sender = sender);
 
 Peer createPeer(String name, HostMachine hostMachine) => new Peer((b) => b
   ..name = name
@@ -69,6 +71,9 @@ abstract class RegistrationBuilder
 abstract class Message implements Built<Message, MessageBuilder> {
   static Serializer<Message> get serializer => _$messageSerializer;
 
+  /// The [Peer] that created this [Message].
+  Peer get sender;
+
   /// A value used to group this [Message] with other [Message]s.
   String get category;
 
@@ -80,6 +85,9 @@ abstract class Message implements Built<Message, MessageBuilder> {
 }
 
 abstract class MessageBuilder implements Builder<Message, MessageBuilder> {
+  @virtual
+  Peer sender;
+
   @virtual
   String category;
 
@@ -141,6 +149,32 @@ abstract class HostMachineBuilder
 
   HostMachineBuilder._();
   factory HostMachineBuilder() = _$HostMachineBuilder;
+}
+
+abstract class SpawnRequest
+    implements Built<SpawnRequest, SpawnRequestBuilder> {
+  static Serializer<SpawnRequest> get serializer => _$spawnRequestSerializer;
+
+  /// The name of the node to spawn.
+  String get nodeName;
+
+  /// The uri containing the node's source code.
+  String get uri;
+
+  SpawnRequest._();
+  factory SpawnRequest([updates(SpawnRequestBuilder b)]) = _$SpawnRequest;
+}
+
+abstract class SpawnRequestBuilder
+    implements Builder<SpawnRequest, SpawnRequestBuilder> {
+  @virtual
+  String nodeName;
+
+  @virtual
+  String uri;
+
+  SpawnRequestBuilder._();
+  factory SpawnRequestBuilder() = _$SpawnRequestBuilder;
 }
 
 Serializers serializers = _$serializers;

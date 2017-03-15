@@ -16,6 +16,7 @@ dependencies:
     path: ../port_daemon
   fixnum:
   logging:
+  resource:
   seltzer:
     git: git://github.com/matanlurey/seltzer.git
 dev_dependencies:

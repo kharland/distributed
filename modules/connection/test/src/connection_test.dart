@@ -1,34 +1,22 @@
 import 'package:distributed.connection/connection.dart';
-import 'package:distributed.connection/src/connection_monitor.dart';
 import 'package:distributed.connection/src/socket/socket_channels_controller.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('$ConnectionMonitor', () {
+  group('$Connection', () {
     ConnectionController controller;
-    ConnectionMonitor monitor;
 
     setUp(() {
       controller = new ConnectionController();
-      monitor = new ConnectionMonitor(controller.local);
     });
 
     tearDown(() {
       controller.local.close();
-      monitor.stop();
     });
 
-    test('onDead should emit when the remote channel closes', () {
-      monitor.onDead.then(expectAsync1((_) {
-        expect(true, true);
-      }));
+    test('should close if the remote closes.', () {
       controller.foreign.close();
-    });
-
-    test('should send messages at regular intervals to the remote', () {
-      controller.foreign.system.stream.listen(expectAsync1((message) {
-        expect(message.category, 'monitor');
-      }, count: 2));
+      expect(controller.local.done, completes);
     });
   });
 }
