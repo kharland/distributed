@@ -7,9 +7,9 @@ import 'package:test/test.dart';
 
 void main() {
   const daemonPort = 9000;
-  final hostMachine = createHostMachine('localhost', daemonPort);
+  final hostMachine = $hostMachine('localhost', daemonPort);
 
-  Peer createTestPeer(String name) => createPeer(name, hostMachine);
+  Peer createTestPeer(String name) => $peer(name, hostMachine);
 
   group('$OneShotConnector', () {
     final senderPeer = createTestPeer('sender');
@@ -23,12 +23,13 @@ void main() {
       connector = new OneShotConnector();
       portDaemon = await PortDaemon.spawn(hostMachine: hostMachine);
 
-      var senderPort = await portDaemon.registerNode(senderPeer.name);
-      var receiverPort = await portDaemon.registerNode(receiverPeer.name);
+      var senderRegistration = await portDaemon.registerNode(senderPeer.name);
+      var receiverRegistration =
+          await portDaemon.registerNode(receiverPeer.name);
 
-      await SocketServer.bind(hostMachine.address, senderPort);
-      receiverServer =
-          await SocketServer.bind(hostMachine.address, receiverPort);
+      await SocketServer.bind(hostMachine.address, senderRegistration.port);
+      receiverServer = await SocketServer.bind(
+          hostMachine.address, receiverRegistration.port);
     });
 
     tearDown(() async {

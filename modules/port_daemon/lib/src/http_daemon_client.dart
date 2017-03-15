@@ -5,7 +5,6 @@ import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed.monitoring/periodic_function.dart';
 import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/port_daemon_client.dart';
-import 'package:distributed.port_daemon/src/api.dart';
 import 'package:distributed.port_daemon/ports.dart';
 import 'package:meta/meta.dart';
 import 'package:seltzer/platform/vm.dart';
@@ -39,9 +38,9 @@ class HttpDaemonClient implements PortDaemonClient {
     await _expectDaemonIsRunning();
     try {
       var response = await _http.send(_get('list/node'));
-      var assignments =
-          new PortAssignmentList.fromString(await response.readAsString());
-      return assignments.assignments;
+      PortAssignmentList assignments =
+          deserialize(await response.readAsString(), PortAssignmentList);
+      return assignments.assignments.toMap();
     } catch (e) {
       logger.error("getNodes $e");
       return {};
@@ -82,13 +81,14 @@ class HttpDaemonClient implements PortDaemonClient {
     await _expectDaemonIsRunning();
     try {
       var response = await _http.send(_delete('node/$name'));
-      var failed =
-          new DeregistrationResult.fromString(await response.readAsString())
-              .failed;
-      if (!failed) {
+      var error = await response.readAsString();
+      if (error.isEmpty) {
         _stopSendingKeepAliveSignal();
+        return true;
+      } else {
+        logger.error(error);
+        return false;
       }
-      return !failed;
     } catch (e) {
       logger.error("deregister $e");
       return false;

@@ -39,7 +39,7 @@ class VmNode extends DelegatingNode {
     Logger logger,
     HostMachine hostMachine,
   }) async {
-    hostMachine ??= createHostMachine('localhost', Ports.defaultDaemonPort);
+    hostMachine ??= $hostMachine('localhost', Ports.defaultDaemonPort);
     logger ??= new Logger(name);
 
     var daemonClient = new PortDaemonClient(

@@ -79,7 +79,7 @@ class _MessageTransformer implements StreamChannelTransformer<Message, String> {
   @override
   StreamChannel<Message> bind(StreamChannel<String> channel) {
     var controller = new StreamController<Message>(sync: true)
-      ..stream.map((message) => serialize(message, Message)).pipe(channel.sink);
+      ..stream.map((message) => serialize(message)).pipe(channel.sink);
 
     return new StreamChannel<Message>(
       channel.stream

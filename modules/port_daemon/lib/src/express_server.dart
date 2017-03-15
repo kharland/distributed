@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed.objects/objects.dart';
-import 'package:distributed.port_daemon/src/api.dart';
+import 'package:distributed.port_daemon/ports.dart';
 import 'package:distributed.port_daemon/src/node_database.dart';
 import 'package:distributed.port_daemon/src/web_server.dart';
 import 'package:express/express.dart' as express;
@@ -53,7 +53,7 @@ class ExpressServer implements WebServer {
 
   static Future _handlePingRequest(HttpContext ctx, NodeDatabase db) async {
     db.keepAlive(ctx.params['name']);
-    ctx.sendBytes([1]);
+    ctx.sendText('');
     ctx.end();
   }
 
@@ -61,14 +61,12 @@ class ExpressServer implements WebServer {
     HttpContext ctx,
     NodeDatabase db,
   ) async {
-    String name = ctx.params['name'];
-    db.registerNode(name).then((int port) {
-      ctx.sendText(serialize(createRegistration(name, port), Registration));
+    db.registerNode(ctx.params['name']).then((Registration registration) {
+      ctx.sendText(serialize(registration));
       ctx.end();
     }).catchError((e, stacktrace) {
-      globalLogger.error(e);
-      globalLogger.error(stacktrace);
-      ctx.sendText(serialize(createRegistration(), Registration));
+      globalLogger..error(e)..error(stacktrace);
+      ctx.sendText(serialize($registration(Ports.error, e.toString())));
       ctx.end();
     });
   }
@@ -77,14 +75,12 @@ class ExpressServer implements WebServer {
     HttpContext ctx,
     NodeDatabase db,
   ) async {
-    String name = ctx.params['name'];
-    db.deregisterNode(name).then((isSuccess) {
-      ctx.sendText(new DeregistrationResult(name, !isSuccess).toString());
+    db.deregisterNode(ctx.params['name']).then((String result) {
+      ctx.sendText(result);
       ctx.end();
     }).catchError((e, stacktrace) {
-      globalLogger.error(e);
-      globalLogger.error(stacktrace);
-      ctx.sendText(new DeregistrationResult(e.toString(), true).toString());
+      globalLogger..error(e)..error(stacktrace);
+      ctx.sendText(e.toString());
       ctx.end();
     });
   }
@@ -96,6 +92,10 @@ class ExpressServer implements WebServer {
     db.getPort(ctx.params['name']).then((int port) {
       ctx.sendText(port.toString());
       ctx.end();
+    }).catchError((e, stacktrace) {
+      globalLogger..error(e)..error(stacktrace);
+      ctx.sendText(Ports.error.toString());
+      ctx.end();
     });
   }
 
@@ -106,7 +106,7 @@ class ExpressServer implements WebServer {
     for (int i = 0; i < nodes.length; i++) {
       assignments[nodes.elementAt(i)] = ports[i];
     }
-    ctx.sendText(new PortAssignmentList(assignments));
+    ctx.sendText(serialize($portAssignmentList(assignments)));
     ctx.end();
   }
 }

@@ -2,52 +2,82 @@ library distributed.objects.src.peer;
 
 import 'dart:convert';
 
+import 'package:built_collection/built_collection.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
 import 'package:meta/meta.dart';
 
 part 'objects.g.dart';
 
-String serialize(Built builtValue, Type type) =>
-    JSON.encode(serializers.serialize(
-      builtValue,
-      specifiedType: new FullType(type),
-    ));
+String serialize(Built builtValue) =>
+    JSON.encode(serializers.serialize(builtValue,
+        specifiedType: new FullType(builtValue.runtimeType)));
 
-Object deserialize(String serialized, Type type) => serializers.deserialize(
-      JSON.decode(serialized),
-      specifiedType: new FullType(type),
-    );
+Object deserialize(String serialized, Type type) => serializers
+    .deserialize(JSON.decode(serialized), specifiedType: new FullType(type));
 
-Message createMessage(String category, String payload, Peer sender) =>
+Message $message(String category, String payload, Peer sender) =>
     new Message((b) => b
       ..category = category
       ..payload = payload
       ..sender = sender);
 
-Peer createPeer(String name, HostMachine hostMachine) => new Peer((b) => b
+Peer $peer(String name, HostMachine hostMachine) => new Peer((b) => b
   ..name = name
   ..hostMachine = hostMachine);
 
-HostMachine createHostMachine(String address, int daemonPort) =>
+HostMachine $hostMachine(String address, int daemonPort) =>
     new HostMachine((b) => b
       ..address = address
       ..daemonPort = daemonPort);
 
-Registration createRegistration([String name = '', int port = -1]) =>
-    new Registration((b) => b
-      ..name = name
-      ..port = port);
+PortAssignmentList $portAssignmentList(Map<String, int> assignments) =>
+    new PortAssignmentList((b) =>
+        b..assignments = (new MapBuilder<String, int>()..addAll(assignments)));
+
+Registration $registration(int port, String error) => new Registration((b) => b
+  ..port = port
+  ..error = error);
+
+SpawnRequest $spawnRequest(String nodeName, String uri) =>
+    new SpawnRequest((b) => b
+      ..nodeName = nodeName
+      ..uri = uri);
+
+abstract class PortAssignmentList
+    implements Built<PortAssignmentList, PortAssignmentListBuilder> {
+  static Serializer<PortAssignmentList> get serializer =>
+      _$portAssignmentListSerializer;
+
+  /// A mapping of a node's name to it's registered port.
+  BuiltMap<String, int> get assignments;
+
+  PortAssignmentList._();
+  factory PortAssignmentList([updates(PortAssignmentListBuilder b)]) =
+      _$PortAssignmentList;
+}
+
+abstract class PortAssignmentListBuilder
+    implements Builder<PortAssignmentList, PortAssignmentListBuilder> {
+  @virtual
+  MapBuilder<String, int> assignments;
+
+  PortAssignmentListBuilder._();
+  factory PortAssignmentListBuilder() = _$PortAssignmentListBuilder;
+}
 
 abstract class Registration
     implements Built<Registration, RegistrationBuilder> {
   static Serializer<Registration> get serializer => _$registrationSerializer;
 
-  /// The name of the node being registered.
-  String get name;
-
-  /// The port registered to the node with [name] or -1 if registration failed
+  /// The registered port.
+  ///
+  /// This value is unreliable if [error] is not empty.
   int get port;
+
+  /// The error message if registration failed or the empty string if
+  /// registration succeeded.
+  String get error;
 
   Registration._();
   factory Registration([updates(RegistrationBuilder b)]) = _$Registration;
@@ -56,13 +86,10 @@ abstract class Registration
 abstract class RegistrationBuilder
     implements Builder<Registration, RegistrationBuilder> {
   @virtual
-  String name;
-
-  @virtual
   int port;
 
   @virtual
-  bool failed;
+  String error;
 
   RegistrationBuilder._();
   factory RegistrationBuilder() = _$RegistrationBuilder;

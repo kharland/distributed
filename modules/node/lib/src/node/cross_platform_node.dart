@@ -66,7 +66,7 @@ class CrossPlatformNode implements Node {
   @override
   void send(Peer peer, String action, String data) {
     assert(_connections.containsKey(peer), '$peer not in $peers');
-    var message = createMessage(action, data, toPeer());
+    var message = $message(action, data, toPeer());
     _logger.log("Message to ${peer.displayName}: ${message}");
     _connections[peer].sendMessage(message);
   }

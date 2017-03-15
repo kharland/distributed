@@ -48,8 +48,7 @@ class OneShotConnector implements Connector {
 
     var connection =
         await Connection.open('ws://$receiverAddress:$receiverPort');
-    connection.sendMessage(
-        createMessage(_idCategory, serialize(sender, Peer), sender));
+    connection.sendMessage($message(_idCategory, serialize(sender), sender));
 
     var receiverStatus = await connection.messages.take(1).first;
     if (receiverStatus.payload.isEmpty) {
@@ -71,10 +70,10 @@ class OneShotConnector implements Connector {
 
     if (sender == null) {
       var error = 'Invalid sender info';
-      connection.sendMessage(createMessage(_statusCategory, error, receiver));
+      connection.sendMessage($message(_statusCategory, error, receiver));
       return new ConnectionResult.failed(error);
     } else {
-      connection.sendMessage(createMessage(_statusCategory, '', receiver));
+      connection.sendMessage($message(_statusCategory, '', receiver));
       return new ConnectionResult(
         sender: sender,
         receiver: receiver,

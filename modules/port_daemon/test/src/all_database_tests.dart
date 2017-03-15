@@ -1,4 +1,4 @@
-import 'package:distributed.port_daemon/src/database/database.dart';
+import 'package:distributed.port_daemon/src/database.dart';
 import 'package:test/test.dart';
 
 import 'database_test.dart';

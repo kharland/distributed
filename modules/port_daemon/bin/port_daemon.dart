@@ -9,7 +9,7 @@ Future main(List<String> args) async {
   var argResults = _parseArgs(args);
   var port = int.parse(argResults['port']);
   var daemon =
-      await PortDaemon.spawn(hostMachine: createHostMachine('localhost', port));
+      await PortDaemon.spawn(hostMachine: $hostMachine('localhost', port));
 
   print("Daemon listening at ${daemon.url}");
 }
