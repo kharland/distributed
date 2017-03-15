@@ -34,10 +34,9 @@ class ExpressServer implements WebServer {
       ..get('/list/node',
           (express.HttpContext ctx) => _handleNodeListRequest(ctx, db))
       ..post('/node/:name',
-          (express.HttpContext ctx) => _handlRegisterNodeRequest(ctx, db))
+          (express.HttpContext ctx) => _handleRegisterNodeRequest(ctx, db))
       ..delete('/node/:name',
           (express.HttpContext ctx) => _handleDeregisterNodeRequest(ctx, db));
-
     await expressInstance.listen(hostMachine.address, hostMachine.daemonPort);
     return new ExpressServer._(hostMachine, expressInstance);
   }
@@ -58,7 +57,7 @@ class ExpressServer implements WebServer {
     ctx.end();
   }
 
-  static Future _handlRegisterNodeRequest(
+  static Future _handleRegisterNodeRequest(
     HttpContext ctx,
     NodeDatabase db,
   ) async {
@@ -79,7 +78,7 @@ class ExpressServer implements WebServer {
     NodeDatabase db,
   ) async {
     String name = ctx.params['name'];
-    db.deregisterNode(name).then((_) {
+    db.deregisterNode(name).then((isSuccess) {
       ctx.sendText(new DeregistrationResult(name, false).toString());
       ctx.end();
     }).catchError((e, stacktrace) {

@@ -1,3 +1,8 @@
 name: distributed
+dependencies:
+  distributed.node:
+    path: modules/node
+  distributed.port_daemon:
+    path: modules/port_daemon
 dev_dependencies:
   dart_style:

@@ -57,17 +57,18 @@ class CrossPlatformNode implements Node {
   }
 
   @override
-  void disconnect(Peer peer) {
+  Future<Null> disconnect(Peer peer) async {
     assert(_connections.containsKey(peer));
-    _connections.remove(peer).close();
+    await _connections.remove(peer).close();
     _logger.log('Disconnected from $peer');
   }
 
   @override
   void send(Peer peer, String action, String data) {
     assert(_connections.containsKey(peer), '$peer not in $peers');
-    _logger.log("Sending ${peer.displayName}: ${createMessage(action, data)}");
-    _connections[peer].user.sink.add(createMessage(action, data));
+    var message = createMessage(action, data, toPeer());
+    _logger.log("Message to ${peer.displayName}: ${message}");
+    _connections[peer].sendMessage(message);
   }
 
   @override
@@ -90,12 +91,10 @@ class CrossPlatformNode implements Node {
   void addConnection(Connection connection, Peer peer) {
     assert(!_connections.containsKey(peer));
     connection
-      ..system.stream.forEach(_handleSystemMessage)
-      ..error.stream.forEach(_handleErrorMessage)
       ..done.then((_) {
         _handleConnectionClosed(peer);
       })
-      ..user.stream.forEach(_userMessageController.add);
+      ..messages.forEach(_userMessageController.add);
     _connections[peer] = connection;
     _logger.log('Connected to ${peer.displayName}');
     _connectController.add(peer);
@@ -105,15 +104,6 @@ class CrossPlatformNode implements Node {
   Peer toPeer() => new Peer((b) => b
     ..name = name
     ..hostMachine = hostMachine);
-
-  void _handleSystemMessage(Message message) {
-    _logger.log(message.payload);
-    throw new UnimplementedError();
-  }
-
-  void _handleErrorMessage(Message message) {
-    _logger.error(message.payload);
-  }
 
   void _handleConnectionClosed(Peer peer) {
     _connections.remove(peer);

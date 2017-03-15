@@ -26,7 +26,7 @@ abstract class Node {
   Future<ConnectionResult> connect(Peer peer);
 
   /// Disconnects from the remote peer identified by [name].
-  void disconnect(Peer peer);
+  Future<Null> disconnect(Peer peer);
 
   /// Returns a peer with the same information as this [Node].
   Peer toPeer();
@@ -66,9 +66,7 @@ class DelegatingNode implements Node {
   Future<ConnectionResult> connect(Peer peer) => delegate.connect(peer);
 
   @override
-  void disconnect(Peer peer) {
-    delegate.disconnect(peer);
-  }
+  Future<Null> disconnect(Peer peer) => delegate.disconnect(peer);
 
   @override
   Peer toPeer() => delegate.toPeer();

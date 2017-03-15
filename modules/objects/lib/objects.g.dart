@@ -11,13 +11,16 @@ Serializers _$serializers = (new Serializers().toBuilder()
       ..add(Registration.serializer)
       ..add(Message.serializer)
       ..add(Peer.serializer)
-      ..add(HostMachine.serializer))
+      ..add(HostMachine.serializer)
+      ..add(SpawnRequest.serializer))
     .build();
 Serializer<Registration> _$registrationSerializer =
     new _$RegistrationSerializer();
 Serializer<Message> _$messageSerializer = new _$MessageSerializer();
 Serializer<Peer> _$peerSerializer = new _$PeerSerializer();
 Serializer<HostMachine> _$hostMachineSerializer = new _$HostMachineSerializer();
+Serializer<SpawnRequest> _$spawnRequestSerializer =
+    new _$SpawnRequestSerializer();
 
 class _$RegistrationSerializer implements StructuredSerializer<Registration> {
   @override
@@ -81,6 +84,8 @@ class _$MessageSerializer implements StructuredSerializer<Message> {
   Iterable serialize(Serializers serializers, Message object,
       {FullType specifiedType: FullType.unspecified}) {
     final result = [
+      'sender',
+      serializers.serialize(object.sender, specifiedType: const FullType(Peer)),
       'category',
       serializers.serialize(object.category,
           specifiedType: const FullType(String)),
@@ -109,6 +114,10 @@ class _$MessageSerializer implements StructuredSerializer<Message> {
         expectingKey = true;
 
         switch (key as String) {
+          case 'sender':
+            result.sender = serializers.deserialize(value,
+                specifiedType: const FullType(Peer)) as dynamic;
+            break;
           case 'category':
             result.category = serializers.deserialize(value,
                 specifiedType: const FullType(String)) as dynamic;
@@ -232,6 +241,59 @@ class _$HostMachineSerializer implements StructuredSerializer<HostMachine> {
   }
 }
 
+class _$SpawnRequestSerializer implements StructuredSerializer<SpawnRequest> {
+  @override
+  final Iterable<Type> types = const [SpawnRequest, _$SpawnRequest];
+  @override
+  final String wireName = 'SpawnRequest';
+
+  @override
+  Iterable serialize(Serializers serializers, SpawnRequest object,
+      {FullType specifiedType: FullType.unspecified}) {
+    final result = [
+      'nodeName',
+      serializers.serialize(object.nodeName,
+          specifiedType: const FullType(String)),
+      'uri',
+      serializers.serialize(object.uri, specifiedType: const FullType(String)),
+    ];
+
+    return result;
+  }
+
+  @override
+  SpawnRequest deserialize(Serializers serializers, Iterable serialized,
+      {FullType specifiedType: FullType.unspecified}) {
+    final result = new SpawnRequestBuilder();
+
+    var key;
+    var value;
+    var expectingKey = true;
+    for (final item in serialized) {
+      if (expectingKey) {
+        key = item;
+        expectingKey = false;
+      } else {
+        value = item;
+        expectingKey = true;
+
+        switch (key as String) {
+          case 'nodeName':
+            result.nodeName = serializers.deserialize(value,
+                specifiedType: const FullType(String)) as dynamic;
+            break;
+          case 'uri':
+            result.uri = serializers.deserialize(value,
+                specifiedType: const FullType(String)) as dynamic;
+            break;
+        }
+      }
+    }
+
+    return result.build();
+  }
+}
+
 // **************************************************************************
 // Generator: BuiltValueGenerator
 // Target: abstract class Registration
@@ -343,6 +405,8 @@ class _$RegistrationBuilder extends RegistrationBuilder {
 
 class _$Message extends Message {
   @override
+  final Peer sender;
+  @override
   final String category;
   @override
   final String payload;
@@ -350,7 +414,8 @@ class _$Message extends Message {
   factory _$Message([updates(MessageBuilder b)]) =>
       (new MessageBuilder()..update(updates)).build();
 
-  _$Message._({this.category, this.payload}) : super._() {
+  _$Message._({this.sender, this.category, this.payload}) : super._() {
+    if (sender == null) throw new ArgumentError.notNull('sender');
     if (category == null) throw new ArgumentError.notNull('category');
     if (payload == null) throw new ArgumentError.notNull('payload');
   }
@@ -365,17 +430,21 @@ class _$Message extends Message {
   @override
   bool operator ==(dynamic other) {
     if (other is! Message) return false;
-    return category == other.category && payload == other.payload;
+    return sender == other.sender &&
+        category == other.category &&
+        payload == other.payload;
   }
 
   @override
   int get hashCode {
-    return $jf($jc($jc(0, category.hashCode), payload.hashCode));
+    return $jf(
+        $jc($jc($jc(0, sender.hashCode), category.hashCode), payload.hashCode));
   }
 
   @override
   String toString() {
     return 'Message {'
+        'sender=${sender.toString()},\n'
         'category=${category.toString()},\n'
         'payload=${payload.toString()},\n'
         '}';
@@ -384,6 +453,18 @@ class _$Message extends Message {
 
 class _$MessageBuilder extends MessageBuilder {
   Message _$v;
+
+  @override
+  Peer get sender {
+    _$this;
+    return super.sender;
+  }
+
+  @override
+  set sender(Peer sender) {
+    _$this;
+    super.sender = sender;
+  }
 
   @override
   String get category {
@@ -413,6 +494,7 @@ class _$MessageBuilder extends MessageBuilder {
 
   MessageBuilder get _$this {
     if (_$v != null) {
+      super.sender = _$v.sender;
       super.category = _$v.category;
       super.payload = _$v.payload;
       _$v = null;
@@ -433,7 +515,8 @@ class _$MessageBuilder extends MessageBuilder {
 
   @override
   Message build() {
-    final result = _$v ?? new _$Message._(category: category, payload: payload);
+    final result = _$v ??
+        new _$Message._(sender: sender, category: category, payload: payload);
     replace(result);
     return result;
   }
@@ -641,6 +724,110 @@ class _$HostMachineBuilder extends HostMachineBuilder {
   HostMachine build() {
     final result =
         _$v ?? new _$HostMachine._(address: address, daemonPort: daemonPort);
+    replace(result);
+    return result;
+  }
+}
+
+// **************************************************************************
+// Generator: BuiltValueGenerator
+// Target: abstract class SpawnRequest
+// **************************************************************************
+
+class _$SpawnRequest extends SpawnRequest {
+  @override
+  final String nodeName;
+  @override
+  final String uri;
+
+  factory _$SpawnRequest([updates(SpawnRequestBuilder b)]) =>
+      (new SpawnRequestBuilder()..update(updates)).build();
+
+  _$SpawnRequest._({this.nodeName, this.uri}) : super._() {
+    if (nodeName == null) throw new ArgumentError.notNull('nodeName');
+    if (uri == null) throw new ArgumentError.notNull('uri');
+  }
+
+  @override
+  SpawnRequest rebuild(updates(SpawnRequestBuilder b)) =>
+      (toBuilder()..update(updates)).build();
+
+  @override
+  _$SpawnRequestBuilder toBuilder() =>
+      new _$SpawnRequestBuilder()..replace(this);
+
+  @override
+  bool operator ==(dynamic other) {
+    if (other is! SpawnRequest) return false;
+    return nodeName == other.nodeName && uri == other.uri;
+  }
+
+  @override
+  int get hashCode {
+    return $jf($jc($jc(0, nodeName.hashCode), uri.hashCode));
+  }
+
+  @override
+  String toString() {
+    return 'SpawnRequest {'
+        'nodeName=${nodeName.toString()},\n'
+        'uri=${uri.toString()},\n'
+        '}';
+  }
+}
+
+class _$SpawnRequestBuilder extends SpawnRequestBuilder {
+  SpawnRequest _$v;
+
+  @override
+  String get nodeName {
+    _$this;
+    return super.nodeName;
+  }
+
+  @override
+  set nodeName(String nodeName) {
+    _$this;
+    super.nodeName = nodeName;
+  }
+
+  @override
+  String get uri {
+    _$this;
+    return super.uri;
+  }
+
+  @override
+  set uri(String uri) {
+    _$this;
+    super.uri = uri;
+  }
+
+  _$SpawnRequestBuilder() : super._();
+
+  SpawnRequestBuilder get _$this {
+    if (_$v != null) {
+      super.nodeName = _$v.nodeName;
+      super.uri = _$v.uri;
+      _$v = null;
+    }
+    return this;
+  }
+
+  @override
+  void replace(SpawnRequest other) {
+    if (other == null) throw new ArgumentError.notNull('other');
+    _$v = other;
+  }
+
+  @override
+  void update(updates(SpawnRequestBuilder b)) {
+    if (updates != null) updates(this);
+  }
+
+  @override
+  SpawnRequest build() {
+    final result = _$v ?? new _$SpawnRequest._(nodeName: nodeName, uri: uri);
     replace(result);
     return result;
   }

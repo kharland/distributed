@@ -1,56 +1,77 @@
 import 'dart:async';
 
 import 'package:distributed.connection/socket.dart';
-import 'package:distributed.connection/src/connection_monitor.dart';
-import 'package:distributed.connection/src/data_channels.dart';
 import 'package:distributed.connection/src/socket/socket_channels.dart';
+import 'package:distributed.monitoring/resource.dart';
 import 'package:distributed.objects/objects.dart';
 import 'package:stream_channel/stream_channel.dart';
 
-export 'src/connection_guard.dart';
-
-class Connection implements DataChannels<Message> {
+/// A channel for passing [Message]s.
+///
+/// A outgoing connection can be established using [Connection.open], or an
+/// incoming connection can be established over a socket using
+/// [Connection.receive].
+///
+/// Unlike most dart sinks, if the remote end of the connection is closed, this
+/// connection will also close, regardless of whether any data has been sent or
+/// received.
+class Connection {
   static final _MessageTransformer _transformer = new _MessageTransformer();
-
-  @override
-  final StreamChannel<Message> user;
-  @override
-  final StreamChannel<Message> system;
-  @override
-  final StreamChannel<Message> error;
-
+  final StreamChannel<Message> _userChannel;
+  final StreamChannel<String> _rawChannel;
   final Future _doneFuture;
+  PeriodicFunction _keepAliveSignal;
+  ResourceMonitor<String> _connectionMonitor;
 
-  Connection(DataChannels<String> original)
-      : user = _transformer.bind(original.user),
-        system = _transformer.bind(original.system),
-        error = _transformer.bind(original.error),
-        _doneFuture = original.done {
-    var monitor = new ConnectionMonitor(this);
-    monitor.onDead.then((_) {
-      close();
-      monitor.stop();
-    });
-  }
-
+  /// Opens a new [Connection] to url.
+  ///
+  /// It is expected that the remote end of the connection will be created via
+  /// [Connection.receive].
   static Future<Connection> open(String url) async {
     var socket = await Socket.connect(url);
     return new Connection(await SocketChannels.outgoing(socket));
   }
 
-  static Future<Connection> receive(Socket socket) async {
-    return new Connection(await SocketChannels.incoming(socket));
+  /// Receives a new [Connection] over [socket].
+  ///
+  /// It is expected that the remote end of the connection was created via
+  /// [Connection.open].
+  static Future<Connection> receive(Socket socket) async =>
+      new Connection(await SocketChannels.incoming(socket));
+
+  Connection(SocketChannels socketChannels)
+      : _userChannel = _transformer.bind(socketChannels.user),
+        _rawChannel = socketChannels.system,
+        _doneFuture = socketChannels.done {
+    _keepAliveSignal = new PeriodicFunction('conn', () {
+      _rawChannel.sink.add(null);
+    });
+    _connectionMonitor = new ResourceMonitor('conn', _rawChannel.stream);
+    _connectionMonitor.onGone.then((_) {
+      close();
+    });
   }
 
-  @override
+  /// Sends [message] over this connection.
+  void sendMessage(Message message) {
+    _userChannel.sink.add(message);
+  }
+
+  /// The [Stream] of messages sent to this connection.
+  Stream<Message> get messages => _userChannel.stream;
+
+  /// A future that completes when this connection is closed.
+  ///
+  /// If the remote closes the connection, this is guaranteed to complete.
   Future get done => _doneFuture;
 
-  @override
-  Future close() => Future.wait([
-        user.sink.close(),
-        system.sink.close(),
-        error.sink.close(),
-      ]).then((_) {});
+  Future<Null> close() => Future.wait([
+        _userChannel.sink.close(),
+        _rawChannel.sink.close(),
+      ]).then((_) {
+        _keepAliveSignal.stop();
+        _connectionMonitor.stop();
+      });
 }
 
 class _MessageTransformer implements StreamChannelTransformer<Message, String> {

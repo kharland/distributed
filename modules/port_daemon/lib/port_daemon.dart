@@ -1,15 +1,16 @@
 import 'dart:async';
 
+import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed.objects/objects.dart';
+import 'package:distributed.port_daemon/ports.dart';
 import 'package:distributed.port_daemon/src/express_server.dart';
 import 'package:distributed.port_daemon/src/node_database.dart';
 import 'package:distributed.port_daemon/src/port_daemon_impl.dart';
-import 'package:distributed.port_daemon/src/ports.dart';
 
 abstract class PortDaemon {
   static Future<PortDaemon> spawn({HostMachine hostMachine}) async {
     hostMachine ??= createHostMachine('localhost', Ports.defaultDaemonPort);
-    var nodeDatabase = new NodeDatabase();
+    var nodeDatabase = new NodeDatabase(new Logger('node database'));
     var webServer = await ExpressServer.start(
       hostMachine: hostMachine,
       nodeDatabase: nodeDatabase,

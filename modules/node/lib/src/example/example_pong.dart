@@ -1,11 +1,12 @@
 import 'dart:async';
 
+import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed.node/platform/vm.dart';
 
 import 'example_helper.dart';
 
-Future main(List<String> args) async {
-  var node = await VmNode.spawn(name: pong.name);
+Future main(List<String> args, [String message]) async {
+  var node = await VmNode.spawn(name: pong.name, logger: new Logger('pong'));
   var pongCounter = 0;
 
   node

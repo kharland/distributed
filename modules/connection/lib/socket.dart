@@ -2,9 +2,7 @@ import 'dart:async';
 
 import 'package:distributed.connection/src/socket/seltzer_socket.dart';
 
-/// A two-way communication channel for sending raw data.
-///
-/// A socket is the lowest-level medium for communication between two nodes.
+/// A bidirectional communication channel.
 class Socket extends StreamView<String> implements StreamSink<String> {
   final StreamSink<String> _sink;
 
@@ -34,13 +32,4 @@ class Socket extends StreamView<String> implements StreamSink<String> {
 
   @override
   Future close() async => _sink.close();
-}
-
-class SocketException implements Exception {
-  final String message;
-
-  SocketException([this.message = '']);
-
-  @override
-  String toString() => '$SocketException: $message';
 }

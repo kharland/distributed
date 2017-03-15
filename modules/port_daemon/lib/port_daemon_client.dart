@@ -1,9 +1,10 @@
 import 'dart:async';
 
+import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/port_daemon.dart';
 import 'package:distributed.port_daemon/src/http_daemon_client.dart';
-import 'package:distributed.port_daemon/src/ports.dart';
+import 'package:distributed.port_daemon/ports.dart';
 import 'package:meta/meta.dart';
 
 /// An object for communicating with a [PortDaemon].
@@ -11,6 +12,7 @@ abstract class PortDaemonClient {
   factory PortDaemonClient({
     @required String name,
     @required HostMachine daemonHostMachine,
+    Logger logger,
   }) = HttpDaemonClient;
 
   /// The [HostMachine] where this client's [PortDaemon] is running.

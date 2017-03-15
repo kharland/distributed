@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:args/args.dart';
 import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/port_daemon.dart';
-import 'package:distributed.port_daemon/src/ports.dart';
+import 'package:distributed.port_daemon/ports.dart';
 
 Future main(List<String> args) async {
   var argResults = _parseArgs(args);

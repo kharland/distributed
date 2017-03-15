@@ -5,7 +5,7 @@ import 'package:distributed.connection/socket.dart';
 import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/port_daemon_client.dart';
-import 'package:distributed.port_daemon/src/ports.dart';
+import 'package:distributed.port_daemon/ports.dart';
 
 /// Connects one [Peer] to another.
 abstract class Connector {
@@ -30,7 +30,6 @@ abstract class Connector {
 class OneShotConnector implements Connector {
   static const _idCategory = 'id';
   static const _statusCategory = 'status';
-  static const _statusOk = 'ok';
 
   Logger logger = globalLogger;
 
@@ -47,12 +46,13 @@ class OneShotConnector implements Connector {
       return;
     }
 
-    var connection = await Connection
-        .open('ws://$receiverAddress:$receiverPort')
-      ..system.sink.add(createMessage(_idCategory, serialize(sender, Peer)));
+    var connection =
+        await Connection.open('ws://$receiverAddress:$receiverPort');
+    connection.sendMessage(
+        createMessage(_idCategory, serialize(sender, Peer), sender));
 
-    var receiverStatus = await connection.system.stream.take(1).first;
-    if (receiverStatus == createMessage(_statusCategory, _statusOk)) {
+    var receiverStatus = await connection.messages.take(1).first;
+    if (receiverStatus.payload.isEmpty) {
       yield new ConnectionResult(
         sender: sender,
         receiver: receiver,
@@ -67,14 +67,14 @@ class OneShotConnector implements Connector {
   @override
   Future<ConnectionResult> receiveSocket(Peer receiver, Socket socket) async {
     var connection = await Connection.receive(socket);
-    var sender = await _waitForSenderInfo(connection.system.stream);
+    var sender = await _waitForSenderInfo(connection.messages);
 
     if (sender == null) {
       var error = 'Invalid sender info';
-      connection.system.sink.add(createMessage(_statusCategory, error));
+      connection.sendMessage(createMessage(_statusCategory, error, receiver));
       return new ConnectionResult.failed(error);
     } else {
-      connection.system.sink.add(createMessage(_statusCategory, _statusOk));
+      connection.sendMessage(createMessage(_statusCategory, '', receiver));
       return new ConnectionResult(
         sender: sender,
         receiver: receiver,

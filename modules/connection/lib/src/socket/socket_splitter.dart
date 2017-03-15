@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:distributed.connection/socket.dart';
-import 'package:distributed.connection/src/pair.dart';
 import 'package:stream_channel/stream_channel.dart';
 
 /// Splits a [Socket] into multiple [StreamChannel] instances.
@@ -22,9 +21,9 @@ class SocketSplitter {
   StreamChannel<String> _primaryChannel;
   int _nextAutoId = 0;
 
-  SocketSplitter(this._socket) : _broker = new _IntIdBroker() {
+  SocketSplitter(this._socket) : _broker = new _MessageBroker() {
     int primaryId = _nextAutoId;
-    _primaryChannel = split(primaryId).last;
+    _primaryChannel = split(primaryId).channel;
     _broker.addRecipient(_nextAutoId++, _primaryChannel.sink);
     _socket.forEach(_broker.deliver);
   }
@@ -38,9 +37,9 @@ class SocketSplitter {
 
   /// Creates a new [StreamChannel] communicating over the original socket.
   ///
-  /// The first element of the returned [Pair] is the channel's id, the second
+  /// The first element of the returned [SplitResult] is the channel's id, the second
   /// element is the channel.
-  Pair<int, StreamChannel<String>> split([int id]) {
+  SplitResult split([int id]) {
     var channelId = id ?? _nextAutoId;
     var controller = new StreamChannelController<String>(sync: true);
 
@@ -50,7 +49,7 @@ class SocketSplitter {
       _socket.add(_broker.addressMessage(channelId, message));
     });
 
-    return new Pair<int, StreamChannel<String>>(channelId, controller.local);
+    return new SplitResult(channelId, controller.local);
   }
 
   void _recordId(int id) {
@@ -63,31 +62,20 @@ class SocketSplitter {
   }
 }
 
-abstract class _MessageBroker<T> {
-  void addRecipient(T key, StreamSink<String> recipient);
-
-  void deliver(String message);
-
-  String addressMessage(T recipientKey, String message);
-}
-
-class _IntIdBroker implements _MessageBroker<int> {
+class _MessageBroker {
   static const _delimiter = ':';
 
   final Map<int, StreamSink<String>> _recipients = <int, StreamSink<String>>{};
 
-  @override
   void addRecipient(int key, StreamSink<String> recipient) {
     _recipients[key] = recipient;
   }
 
-  @override
   String addressMessage(int recipientKey, String message) {
     assert(_recipients.containsKey(recipientKey));
     return '$recipientKey$_delimiter$message';
   }
 
-  @override
   void deliver(String message) {
     // use indexOf instead split to avoid splitting on a user-added character
     // which matches our delimiter.
@@ -101,4 +89,11 @@ class _IntIdBroker implements _MessageBroker<int> {
     assert(_recipients.containsKey(recipientId));
     _recipients[recipientId].add(message);
   }
+}
+
+class SplitResult {
+  final int id;
+  final StreamChannel<String> channel;
+
+  const SplitResult(this.id, this.channel);
 }

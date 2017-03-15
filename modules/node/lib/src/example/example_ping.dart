@@ -1,13 +1,13 @@
 import 'dart:async';
 
+import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed.node/platform/vm.dart';
 
 import 'example_helper.dart';
-import '../../monitoring/lib/logging.dart';
 
-Future main(List<String> args) async {
+Future main(List<String> args, [String message]) async {
   enableLogging = false;
-  var node = await VmNode.spawn(name: ping.name);
+  var node = await VmNode.spawn(name: ping.name, logger: new Logger('ping'));
   var pingCounter = 0;
 
   void _ping() {

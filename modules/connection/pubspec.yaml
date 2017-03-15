@@ -10,6 +10,7 @@ dependencies:
     path: ../monitoring
   distributed.objects:
     path: ../objects
+  async:
   web_socket_channel: "<=2.0.0"
   meta:
   fixnum:

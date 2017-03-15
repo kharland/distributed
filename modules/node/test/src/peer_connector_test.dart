@@ -37,10 +37,10 @@ void main() {
 
     group('connect', () {
       void expectResult(ConnectionResult result) {
+        expect(result.error, '');
         expect(result.sender, senderPeer);
         expect(result.receiver, receiverPeer);
         expect(result.connection, isNotNull);
-        expect(result.error, isEmpty);
       }
 
       test('should connect two peers', () async {
