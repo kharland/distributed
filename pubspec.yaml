@@ -15,19 +15,18 @@ dependencies:
   distributed.port_daemon:
     path: lib/src/port_daemon
   async:
-  web_socket_channel: "<=2.0.0"
-  meta:
-  fixnum:
-  express:
-  seltzer:
-    git: git://github.com/matanlurey/seltzer.git
-  logging:
-  resource:
-  meta:
+  build_runner:
   built_value:
   built_value_generator:
-  build_runner:
+  express:
+  fixnum:
+  logging:
+  meta:
+  resource:
+  seltzer:
+    git: git://github.com/matanlurey/seltzer.git
   source_gen:
+  web_socket_channel: "<=2.0.0"
 dev_dependencies:
   dart_style:
   test:
