@@ -1,8 +1,35 @@
 name: distributed
+version: 0.0.0
+authors:
+  - Kendal Harland <kjharland@google.com>
+homepage: https://github.com/kharland/distributed_dart
 dependencies:
+  distributed.connection:
+    path: lib/src/connection
+  distributed.monitoring:
+    path: lib/src/monitoring
   distributed.node:
-    path: modules/node
+    path: lib/src/node
+  distributed.objects:
+    path: lib/src/objects
   distributed.port_daemon:
-    path: modules/port_daemon
+    path: lib/src/port_daemon
+  async:
+  web_socket_channel: "<=2.0.0"
+  meta:
+  fixnum:
+  express:
+  seltzer:
+    git: git://github.com/matanlurey/seltzer.git
+  logging:
+  resource:
+  meta:
+  built_value:
+  built_value_generator:
+  build_runner:
+  source_gen:
 dev_dependencies:
   dart_style:
+  test:
+  mockito:
+  quiver:
