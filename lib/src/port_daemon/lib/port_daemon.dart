@@ -13,14 +13,13 @@ class PortDaemon {
   final Logger _logger;
 
   static Future<PortDaemon> spawn({
-    HostMachine hostMachine,
+    int port,
     Logger logger,
   }) async {
     logger ??= new Logger('port_daemon');
-    hostMachine ??= HostMachine.local;
     var nodeDatabase = new NodeDatabase();
     var webServer = await ExpressServer.start(
-      hostMachine: hostMachine,
+      hostMachine: $hostMachine('localhost', port),
       nodeDatabase: nodeDatabase,
       logger: logger,
     );

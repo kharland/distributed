@@ -3,8 +3,6 @@ import 'dart:io';
 abstract class Logger {
   factory Logger(String prefix) = _ShellLogger;
 
-  factory Logger.file(File file) = _FileLogger;
-
   factory Logger.disabled() = _NoOpLogger;
 
   /// Logs [message].
@@ -12,22 +10,6 @@ abstract class Logger {
 
   /// Logs [message] as an error.
   void error(String message);
-}
-
-class _FileLogger implements Logger {
-  final File _file;
-
-  _FileLogger(this._file);
-
-  @override
-  void error(String message) {
-    _file.writeAsStringSync(message);
-  }
-
-  @override
-  void log(String message) {
-    _file.writeAsStringSync(message);
-  }
 }
 
 class _ShellLogger implements Logger {

@@ -11,12 +11,12 @@ import 'package:meta/meta.dart';
 abstract class PortDaemonClient {
   factory PortDaemonClient({
     @required String name,
-    @required HostMachine daemonHostMachine,
+    @required BuiltHostMachine daemonHostMachine,
     Logger logger,
   }) = HttpDaemonClient;
 
-  /// The [HostMachine] where this client's [PortDaemon] is running.
-  HostMachine get daemonHostMachine;
+  /// The [BuiltHostMachine] where this client's [PortDaemon] is running.
+  BuiltHostMachine get daemonHostMachine;
 
   /// Completes with true iff a daemon is running at [daemonHostMachine].
   Future<bool> get isDaemonRunning;

@@ -7,7 +7,7 @@ abstract class Ports {
   static const error = -1;
 
   /// The default port used by the [PortDaemon].
-  static const defaultDaemonPort = 4369;
+  static const defaultPortDaemonPort = 4369;
 
   /// Returns the next available unused port.
   static Future<int> getUnusedPort() =>

@@ -6,7 +6,7 @@ import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/port_daemon_client.dart';
 import 'package:distributed.port_daemon/ports.dart';
 
-/// Connects one [Peer] to another.
+/// Connects one [BuiltPeer] to another.
 abstract class Connector {
   /// Creates a request initiated by [sender] and received by [receiver].
   ///
@@ -16,13 +16,13 @@ abstract class Connector {
   ///
   /// If an error results in a failed connection, the [ConnectionResult] event
   /// will contain an error message explaining the failure, but no [Connection].
-  Stream<ConnectionResult> connect(Peer sender, Peer receiver);
+  Stream<ConnectionResult> connect(BuiltPeer sender, BuiltPeer receiver);
 
   /// Upgrades [socket] to a [Connection] between [receiver] and some peer.
   ///
   /// Returns a future that completes with the [ConnectionResult]. See [connect]
   /// for details on the return value.
-  Future<ConnectionResult> receiveSocket(Peer receiver, Socket socket);
+  Future<ConnectionResult> receiveSocket(BuiltPeer receiver, Socket socket);
 }
 
 /// A [Connector] that creates one [Connection] per call to [connect].
@@ -31,7 +31,8 @@ class OneShotConnector implements Connector {
   static const _statusCategory = 'status';
 
   @override
-  Stream<ConnectionResult> connect(Peer sender, Peer receiver) async* {
+  Stream<ConnectionResult> connect(
+      BuiltPeer sender, BuiltPeer receiver) async* {
     var daemonClient = new PortDaemonClient(
         name: sender.name, daemonHostMachine: receiver.hostMachine);
 
@@ -48,19 +49,20 @@ class OneShotConnector implements Connector {
     connection.add($message(_idCategory, serialize(sender), sender));
 
     var receiverStatus = await connection.messages.take(1).first;
-    if (receiverStatus.payload.isEmpty) {
+    if (receiverStatus.contents.isEmpty) {
       yield new ConnectionResult(
         sender: sender,
         receiver: receiver,
         connection: connection,
       );
     } else {
-      yield new ConnectionResult.failed(receiverStatus.payload);
+      yield new ConnectionResult.failed(receiverStatus.contents);
     }
   }
 
   @override
-  Future<ConnectionResult> receiveSocket(Peer receiver, Socket socket) async {
+  Future<ConnectionResult> receiveSocket(
+      BuiltPeer receiver, Socket socket) async {
     var connection = await Connection.receive(socket);
     var sender = await _waitForSenderInfo(connection.messages);
 
@@ -78,14 +80,14 @@ class OneShotConnector implements Connector {
     }
   }
 
-  Future<Peer> _waitForSenderInfo(Stream<Message> stream) async {
+  Future<BuiltPeer> _waitForSenderInfo(Stream<BuiltMessage> stream) async {
     var message = await stream.take(1).first;
     if (message.category != _idCategory) {
       return null;
     }
 
-    var sender = deserialize(message.payload, Peer) as Peer;
-    if (sender is Peer) {
+    var sender = deserialize(message.contents, BuiltPeer) as BuiltPeer;
+    if (sender is BuiltPeer) {
       return sender;
     } else {
       return null;
@@ -95,8 +97,8 @@ class OneShotConnector implements Connector {
 
 /// The result of attempting a connection.
 class ConnectionResult {
-  final Peer sender;
-  final Peer receiver;
+  final BuiltPeer sender;
+  final BuiltPeer receiver;
   final Connection connection;
   final String error;
 

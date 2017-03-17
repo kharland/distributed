@@ -18,7 +18,7 @@ class HttpDaemonClient implements PortDaemonClient {
   final Logger logger;
 
   @override
-  final HostMachine daemonHostMachine;
+  final BuiltHostMachine daemonHostMachine;
   final _http = new HttpWithTimeout();
 
   PeriodicFunction _keepAliveSignal;
@@ -99,8 +99,11 @@ class HttpDaemonClient implements PortDaemonClient {
     try {
       await _http.send(_get('ping/$nodeName'));
       return true;
-    } catch (e) {
-      logger.error("ping $e");
+    } catch (e, stackTrace) {
+      logger
+        ..error("Failed to ping port daemon")
+        ..error(e.toString())
+        ..error(stackTrace.toString());
       return false;
     }
   }
@@ -116,7 +119,8 @@ class HttpDaemonClient implements PortDaemonClient {
   }
 
   Future _expectDaemonIsRunning() async {
-    assert(await isDaemonRunning, 'No daemon @${daemonHostMachine.daemonUrl}');
+    assert(
+        await isDaemonRunning, 'No daemon @${daemonHostMachine.portDaemonUrl}');
   }
 
   SeltzerHttpRequest _get(String route) =>
@@ -129,7 +133,7 @@ class HttpDaemonClient implements PortDaemonClient {
       _seltzer.post(_createRequestUrl(route));
 
   String _createRequestUrl(String route) =>
-      '${daemonHostMachine.daemonUrl}/$route';
+      '${daemonHostMachine.portDaemonUrl}/$route';
 }
 
 class HttpWithTimeout {

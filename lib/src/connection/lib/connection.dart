@@ -7,7 +7,7 @@ import 'package:distributed.monitoring/periodic_function.dart';
 import 'package:distributed.monitoring/resource.dart';
 import 'package:distributed.objects/objects.dart';
 
-/// A channel for passing [Message]s.
+/// A channel for passing [BuiltMessage]s.
 ///
 /// A outgoing connection can be established using [Connection.open], or an
 /// incoming connection can be established over a socket using
@@ -16,7 +16,7 @@ import 'package:distributed.objects/objects.dart';
 /// Unlike most dart sinks, if the remote end of the connection is closed, this
 /// connection will also close, regardless of whether any data has been sent or
 /// received.
-class Connection implements Sink<Message> {
+class Connection implements Sink<BuiltMessage> {
   final SocketChannels _socketChannels;
   final _closeMemo = new AsyncMemoizer();
   final _doneCompleter = new Completer();
@@ -52,14 +52,14 @@ class Connection implements Sink<Message> {
 
   /// Sends [message] over this connection.
   @override
-  void add(Message message) {
+  void add(BuiltMessage message) {
     _socketChannels.sendToUser(serialize(message));
   }
 
   /// The [Stream] of messages sent to this connection.
-  Stream<Message> get messages => _userStreamSplitter
+  Stream<BuiltMessage> get messages => _userStreamSplitter
       .split()
-      .map((String m) => deserialize(m, Message) as Message)
+      .map((String m) => deserialize(m, BuiltMessage) as BuiltMessage)
       .asBroadcastStream();
 
   /// A future that completes when this connection is closed.

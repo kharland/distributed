@@ -1,11 +1,10 @@
+import 'dart:async';
+
+import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed.node/node.dart';
 
 abstract class NodeProvider {
-  Node create(
-    String name, {
-    String hostname,
-    bool isHidden,
-  });
+  Future<Node> spawn(String name, {Logger logger});
 }
 
 NodeProvider nodeProvider;
