@@ -106,7 +106,7 @@ class HttpDaemonClient implements PortDaemonClient {
   }
 
   void _periodicallySendKeepAliveSignal() {
-    _keepAliveSignal = new PeriodicFunction(name, () async {
+    _keepAliveSignal = new PeriodicFunction(() {
       _pingDaemon(name);
     });
   }

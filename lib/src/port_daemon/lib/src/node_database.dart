@@ -47,8 +47,12 @@ class NodeDatabase {
     await _delegateDatabase.insert(name, port);
     var keepAliveController = new StreamController<Null>(sync: true);
     _nodeNameToKeepAlive[name] = keepAliveController;
-    _nodeNameToMonitor[name] = new ResourceMonitor(
-        name, keepAliveController.stream)..onGone.then(deregisterNode);
+    _nodeNameToMonitor[name] =
+        new ResourceMonitor(name, keepAliveController.stream)
+          ..onGone.then((String nodeName) {
+            keepAliveController.close();
+            deregisterNode(nodeName);
+          });
     return $registration(port, '');
   }
 
@@ -62,7 +66,7 @@ class NodeDatabase {
     }
 
     await _delegateDatabase.remove(name);
-    _nodeNameToKeepAlive.remove(name).close();
+    _nodeNameToKeepAlive.remove(name);
     var nodeResourceMonitor = _nodeNameToMonitor.remove(name);
     if (nodeResourceMonitor.isAvailable) {
       await nodeResourceMonitor.stop();

@@ -1,20 +1,20 @@
 import 'package:distributed.connection/connection.dart';
-import 'package:distributed.connection/src/socket/socket_channels_controller.dart';
+import 'package:distributed.connection/src/socket_channels_controller.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('$Connection', () {
     ConnectionController controller;
 
-    setUp(() {
+    setUp(() async {
       controller = new ConnectionController();
     });
 
-    tearDown(() {
-      controller.local.close();
+    tearDown(() async {
+      controller.close();
     });
 
-    test('should close if the remote closes.', () {
+    test('should close if the remote closes.', () async {
       controller.foreign.close();
       expect(controller.local.done, completes);
     });
@@ -27,10 +27,16 @@ class ConnectionController {
 
   factory ConnectionController() {
     var controller = new SocketChannelsController();
-    var localConnection = new Connection(controller.local);
-    var foreignConnection = new Connection(controller.foreign);
-    return new ConnectionController._(localConnection, foreignConnection);
+    return new ConnectionController._(
+      new Connection(controller.local),
+      new Connection(controller.foreign),
+    );
   }
 
   ConnectionController._(this.local, this.foreign);
+
+  void close() {
+    local.close();
+    foreign.close();
+  }
 }

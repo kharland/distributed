@@ -6,14 +6,11 @@ import 'package:distributed.port_daemon/port_daemon.dart';
 import 'package:test/test.dart';
 
 void main() {
-  const daemonPort = 9000;
-  final hostMachine = $hostMachine('localhost', daemonPort);
-
-  Peer createTestPeer(String name) => $peer(name, hostMachine);
+  final hostMachine = HostMachine.local;
 
   group('$OneShotConnector', () {
-    final senderPeer = createTestPeer('sender');
-    final receiverPeer = createTestPeer('receiver');
+    final senderPeer = $peer('sender', hostMachine);
+    final receiverPeer = $peer('receiver', hostMachine);
 
     OneShotConnector connector;
     PortDaemon portDaemon;
@@ -23,17 +20,16 @@ void main() {
       connector = new OneShotConnector();
       portDaemon = await PortDaemon.spawn(hostMachine: hostMachine);
 
-      var senderRegistration = await portDaemon.registerNode(senderPeer.name);
-      var receiverRegistration =
-          await portDaemon.registerNode(receiverPeer.name);
+      var senderReg = await portDaemon.registerNode(senderPeer.name);
+      var receiverReg = await portDaemon.registerNode(receiverPeer.name);
 
-      await SocketServer.bind(hostMachine.address, senderRegistration.port);
-      receiverServer = await SocketServer.bind(
-          hostMachine.address, receiverRegistration.port);
+      await SocketServer.bind(hostMachine.address, senderReg.port);
+      receiverServer =
+          await SocketServer.bind(hostMachine.address, receiverReg.port);
     });
 
     tearDown(() async {
-      return portDaemon.stop();
+      portDaemon.stop();
     });
 
     group('connect', () {
@@ -46,9 +42,13 @@ void main() {
 
       test('should connect two peers', () async {
         receiverServer.onSocket.listen(expectAsync1((Socket socket) async {
-          expectResult(await connector.receiveSocket(receiverPeer, socket));
+          var result = await connector.receiveSocket(receiverPeer, socket);
+          expectResult(result);
+          result.connection.close();
         }));
-        expectResult(await connector.connect(senderPeer, receiverPeer).first);
+        var result = await connector.connect(senderPeer, receiverPeer).first;
+        expectResult(result);
+        result.connection.close();
       });
     });
   });

@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:built_collection/built_collection.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
+import 'package:distributed.port_daemon/ports.dart';
 import 'package:meta/meta.dart';
 
 part 'objects.g.dart';
@@ -152,6 +153,10 @@ abstract class PeerBuilder implements Builder<Peer, PeerBuilder> {
 }
 
 abstract class HostMachine implements Built<HostMachine, HostMachineBuilder> {
+  static final local = new HostMachine((b) => b
+    ..address = 'localhost'
+    ..daemonPort = Ports.defaultDaemonPort);
+
   static Serializer<HostMachine> get serializer => _$hostMachineSerializer;
 
   /// The address of this machine.

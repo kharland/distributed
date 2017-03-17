@@ -3,8 +3,6 @@ import 'dart:async';
 import 'package:distributed.node/src/peer_connector.dart';
 import 'package:distributed.objects/objects.dart';
 
-export 'package:distributed.objects/objects.dart';
-
 /// A node in a distributed system.
 abstract class Node {
   /// The name used to identify this node.
@@ -26,7 +24,7 @@ abstract class Node {
   Future<ConnectionResult> connect(Peer peer);
 
   /// Disconnects from the remote peer identified by [name].
-  Future<Null> disconnect(Peer peer);
+  void disconnect(Peer peer);
 
   /// Returns a peer with the same information as this [Node].
   Peer toPeer();
@@ -66,7 +64,7 @@ class DelegatingNode implements Node {
   Future<ConnectionResult> connect(Peer peer) => delegate.connect(peer);
 
   @override
-  Future<Null> disconnect(Peer peer) => delegate.disconnect(peer);
+  void disconnect(Peer peer) => delegate.disconnect(peer);
 
   @override
   Peer toPeer() => delegate.toPeer();

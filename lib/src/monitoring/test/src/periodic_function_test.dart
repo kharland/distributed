@@ -22,8 +22,7 @@ void main() {
       var pingInterval = const Duration(milliseconds: 100);
 
       new FakeAsync().run((fakeAsync) {
-        resource = new PeriodicFunction(
-            'a', () => controller.local.sink.add(null),
+        resource = new PeriodicFunction(() => controller.local.sink.add(null),
             period: pingInterval);
         expect(controller.foreign.stream, emitsInOrder([null, null, null]));
         fakeAsync.elapse(pingInterval * 10);
@@ -36,8 +35,7 @@ void main() {
       controller.foreign.stream.forEach(streamEvents.add);
 
       new FakeAsync().run((fakeAsync) {
-        resource = new PeriodicFunction(
-            'a', () => controller.local.sink.add(null),
+        resource = new PeriodicFunction(() => controller.local.sink.add(null),
             period: pingInterval);
         fakeAsync.elapse(pingInterval * 3.5);
         expect(streamEvents, [null, null, null]);

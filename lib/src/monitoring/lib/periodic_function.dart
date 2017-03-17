@@ -1,14 +1,11 @@
 import 'dart:async';
-import 'package:async/async.dart';
 
 const _defaultNumRetries = 3;
-const _defaultPeriod = const Duration(milliseconds: 500);
+const _defaultPeriod = const Duration(milliseconds: 100);
 
 /// A function that calls another function periodically.
 class PeriodicFunction {
   /// The name of the resource.
-  final String name;
-  final _stopMemo = new AsyncMemoizer();
   final Duration _period;
   Timer _timer;
 
@@ -17,7 +14,6 @@ class PeriodicFunction {
   /// [callback] is the function to call.  [period] is the duration between
   /// successive calls.
   PeriodicFunction(
-    this.name,
     void callback(), {
     Duration period: _defaultPeriod,
   })
@@ -27,9 +23,7 @@ class PeriodicFunction {
 
   /// Stops calling the given function.
   void stop() {
-    _stopMemo.runOnce(() {
-      _timer.cancel();
-    });
+    _timer.cancel();
   }
 
   /// Periodically calls [notify].

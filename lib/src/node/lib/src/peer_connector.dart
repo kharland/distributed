@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:distributed.connection/connection.dart';
 import 'package:distributed.connection/socket.dart';
-import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/port_daemon_client.dart';
 import 'package:distributed.port_daemon/ports.dart';
@@ -31,8 +30,6 @@ class OneShotConnector implements Connector {
   static const _idCategory = 'id';
   static const _statusCategory = 'status';
 
-  Logger logger = globalLogger;
-
   @override
   Stream<ConnectionResult> connect(Peer sender, Peer receiver) async* {
     var daemonClient = new PortDaemonClient(
@@ -48,7 +45,7 @@ class OneShotConnector implements Connector {
 
     var connection =
         await Connection.open('ws://$receiverAddress:$receiverPort');
-    connection.sendMessage($message(_idCategory, serialize(sender), sender));
+    connection.add($message(_idCategory, serialize(sender), sender));
 
     var receiverStatus = await connection.messages.take(1).first;
     if (receiverStatus.payload.isEmpty) {
@@ -58,7 +55,6 @@ class OneShotConnector implements Connector {
         connection: connection,
       );
     } else {
-      logger.error(receiverStatus.payload);
       yield new ConnectionResult.failed(receiverStatus.payload);
     }
   }
@@ -70,10 +66,10 @@ class OneShotConnector implements Connector {
 
     if (sender == null) {
       var error = 'Invalid sender info';
-      connection.sendMessage($message(_statusCategory, error, receiver));
+      connection.add($message(_statusCategory, error, receiver));
       return new ConnectionResult.failed(error);
     } else {
-      connection.sendMessage($message(_statusCategory, '', receiver));
+      connection.add($message(_statusCategory, '', receiver));
       return new ConnectionResult(
         sender: sender,
         receiver: receiver,
@@ -85,7 +81,6 @@ class OneShotConnector implements Connector {
   Future<Peer> _waitForSenderInfo(Stream<Message> stream) async {
     var message = await stream.take(1).first;
     if (message.category != _idCategory) {
-      logger.error('Got invalid message category ${message.category}');
       return null;
     }
 
@@ -93,7 +88,6 @@ class OneShotConnector implements Connector {
     if (sender is Peer) {
       return sender;
     } else {
-      logger.error('Got invalid sender info: $sender');
       return null;
     }
   }

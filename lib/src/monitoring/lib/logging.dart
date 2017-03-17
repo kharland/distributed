@@ -1,12 +1,5 @@
 import 'dart:io';
 
-bool enableLogging = true;
-
-Logger get globalLogger => enableLogging ? _logger : _disabledLogger;
-
-final _logger = new Logger('distributed');
-final _disabledLogger = new Logger.disabled();
-
 abstract class Logger {
   factory Logger(String prefix) = _ShellLogger;
 

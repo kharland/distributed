@@ -5,14 +5,22 @@ import 'package:distributed.port_daemon/src/database.dart';
 import 'package:meta/meta.dart';
 import 'package:test/test.dart';
 
+void main() {
+  testDatabase(
+      name: '$MemoryDatabase',
+      setup: () => new MemoryDatabase<String, String>(),
+      teardown: () => null);
+}
+
 /// Common tests for [Database].
 void testDatabase({
+  @required String name,
   @required FutureOr<Database<String, String>> setup(),
   @required FutureOr<Null> teardown(),
 }) {
   Database<String, String> database;
 
-  group('', () {
+  group(name, () {
     setUp(() async {
       // ignore: await_only_futures
       database = await setup();

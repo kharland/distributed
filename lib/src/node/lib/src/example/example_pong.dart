@@ -4,6 +4,7 @@ import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed.node/platform/vm.dart';
 
 import 'example_helper.dart';
+import 'package:distributed.objects/objects.dart';
 
 Future main(List<String> args, [String message]) async {
   var node = await VmNode.spawn(name: pong.name, logger: new Logger('pong'));

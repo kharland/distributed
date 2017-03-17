@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:distributed.connection/socket.dart';
-import 'package:distributed.connection/src/socket/socket_channels.dart';
+import 'package:async/async.dart';
+import 'socket.dart';
+import 'package:distributed.connection/src/socket_channels.dart';
 import 'package:distributed.monitoring/periodic_function.dart';
 import 'package:distributed.monitoring/resource.dart';
 import 'package:distributed.objects/objects.dart';
-import 'package:stream_channel/stream_channel.dart';
 
 /// A channel for passing [Message]s.
 ///
@@ -16,11 +16,12 @@ import 'package:stream_channel/stream_channel.dart';
 /// Unlike most dart sinks, if the remote end of the connection is closed, this
 /// connection will also close, regardless of whether any data has been sent or
 /// received.
-class Connection {
-  static final _MessageTransformer _transformer = new _MessageTransformer();
-  final StreamChannel<Message> _userChannel;
-  final StreamChannel<String> _rawChannel;
-  final Future _doneFuture;
+class Connection implements Sink<Message> {
+  final SocketChannels _socketChannels;
+  final _closeMemo = new AsyncMemoizer();
+  final _doneCompleter = new Completer();
+
+  StreamSplitter<String> _userStreamSplitter;
   PeriodicFunction _keepAliveSignal;
   ResourceMonitor<String> _connectionMonitor;
 
@@ -29,8 +30,7 @@ class Connection {
   /// It is expected that the remote end of the connection will be created via
   /// [Connection.receive].
   static Future<Connection> open(String url) async {
-    var socket = await Socket.connect(url);
-    return new Connection(await SocketChannels.outgoing(socket));
+    return new Connection(await SocketChannels.outgoing(Socket.connect(url)));
   }
 
   /// Receives a new [Connection] over [socket].
@@ -40,52 +40,45 @@ class Connection {
   static Future<Connection> receive(Socket socket) async =>
       new Connection(await SocketChannels.incoming(socket));
 
-  Connection(SocketChannels socketChannels)
-      : _userChannel = _transformer.bind(socketChannels.user),
-        _rawChannel = socketChannels.system,
-        _doneFuture = socketChannels.done {
-    _keepAliveSignal = new PeriodicFunction('conn', () {
-      _rawChannel.sink.add(null);
-    });
-    _connectionMonitor = new ResourceMonitor('conn', _rawChannel.stream);
+  Connection(this._socketChannels) {
+    _userStreamSplitter =
+        new StreamSplitter<String>(_socketChannels.userStream);
+    _keepAliveSignal = new PeriodicFunction(_pingRemote);
+    _connectionMonitor = new ResourceMonitor('', _socketChannels.systemStream);
     _connectionMonitor.onGone.then((_) {
       close();
     });
   }
 
   /// Sends [message] over this connection.
-  void sendMessage(Message message) {
-    _userChannel.sink.add(message);
+  @override
+  void add(Message message) {
+    _socketChannels.sendToUser(serialize(message));
   }
 
   /// The [Stream] of messages sent to this connection.
-  Stream<Message> get messages => _userChannel.stream;
+  Stream<Message> get messages => _userStreamSplitter
+      .split()
+      .map((String m) => deserialize(m, Message) as Message)
+      .asBroadcastStream();
 
   /// A future that completes when this connection is closed.
   ///
   /// If the remote closes the connection, this is guaranteed to complete.
-  Future get done => _doneFuture;
+  Future get done => _doneCompleter.future;
 
-  Future<Null> close() => Future.wait([
-        _userChannel.sink.close(),
-        _rawChannel.sink.close(),
-      ]).then((_) {
-        _keepAliveSignal.stop();
-        _connectionMonitor.stop();
-      });
-}
-
-class _MessageTransformer implements StreamChannelTransformer<Message, String> {
   @override
-  StreamChannel<Message> bind(StreamChannel<String> channel) {
-    var controller = new StreamController<Message>(sync: true)
-      ..stream.map((message) => serialize(message)).pipe(channel.sink);
+  void close() {
+    _closeMemo.runOnce(() {
+      _userStreamSplitter.close();
+      _keepAliveSignal.stop();
+      _connectionMonitor.stop();
+      _socketChannels.close();
+      _doneCompleter.complete();
+    });
+  }
 
-    return new StreamChannel<Message>(
-      channel.stream
-          .map((message) => deserialize(message, Message))
-          .asBroadcastStream(),
-      controller,
-    );
+  void _pingRemote() {
+    _socketChannels.sendToSystem('');
   }
 }

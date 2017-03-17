@@ -22,18 +22,16 @@ class CrossPlatformNode implements Node {
   final _connectController = new StreamController<Peer>.broadcast(sync: true);
   final _disconnectController =
       new StreamController<Peer>.broadcast(sync: true);
-  final _noConnectionsController = new StreamController<Null>();
-  final _onShutdown = new Completer<Null>();
+  final _zeroPeersController = new StreamController<String>(sync: true);
 
-  Logger _logger;
+  final Logger _logger;
 
   CrossPlatformNode({
     @required this.name,
     @required this.hostMachine,
     Logger logger,
-  }) {
-    _logger = logger ?? new Logger(name);
-  }
+  })
+      : _logger = logger ?? new Logger(name);
 
   @override
   List<Peer> get peers => new List.unmodifiable(_connections.keys);
@@ -57,18 +55,19 @@ class CrossPlatformNode implements Node {
   }
 
   @override
-  Future<Null> disconnect(Peer peer) async {
+  void disconnect(Peer peer) {
     assert(_connections.containsKey(peer));
-    await _connections.remove(peer).close();
-    _logger.log('Disconnected from $peer');
+    // The connection will be de-referenced and clients will be notified when
+    // its done future completes. All we must do here is close it.
+    _connections[peer].close();
   }
 
   @override
   void send(Peer peer, String action, String data) {
-    assert(_connections.containsKey(peer), '$peer not in $peers');
+    assert(_connections.containsKey(peer), '$peer is not in $peers');
     var message = $message(action, data, toPeer());
-    _logger.log("Message to ${peer.displayName}: ${message}");
-    _connections[peer].sendMessage(message);
+    _logger.log("Sending message to ${peer.displayName}: ${message}");
+    _connections[peer].add(message);
   }
 
   @override
@@ -77,22 +76,24 @@ class CrossPlatformNode implements Node {
 
   @override
   Future shutdown() async {
-    _userMessageController.close();
+    peers.forEach(disconnect);
+    await _zeroPeersController.stream.first;
     _connectController.close();
-    if (peers.isNotEmpty) {
-      peers.forEach(disconnect);
-      await _noConnectionsController.stream.take(1).first;
-    }
-    _noConnectionsController.close();
+    _userMessageController.close();
+    _zeroPeersController.close();
     _disconnectController.close();
-    _onShutdown.complete();
   }
 
   void addConnection(Connection connection, Peer peer) {
     assert(!_connections.containsKey(peer));
     connection
       ..done.then((_) {
-        _handleConnectionClosed(peer);
+        _connections.remove(peer);
+        _disconnectController.add(peer);
+        _logger.log('Disconnected from $peer');
+        if (peers.isEmpty) {
+          _zeroPeersController.add('');
+        }
       })
       ..messages.forEach(_userMessageController.add);
     _connections[peer] = connection;
@@ -101,15 +102,5 @@ class CrossPlatformNode implements Node {
   }
 
   @override
-  Peer toPeer() => new Peer((b) => b
-    ..name = name
-    ..hostMachine = hostMachine);
-
-  void _handleConnectionClosed(Peer peer) {
-    _connections.remove(peer);
-    if (_connections.isEmpty) {
-      _noConnectionsController.add(null);
-    }
-    _disconnectController.add(peer);
-  }
+  Peer toPeer() => $peer(name, hostMachine);
 }

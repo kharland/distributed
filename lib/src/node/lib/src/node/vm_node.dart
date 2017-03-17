@@ -9,6 +9,7 @@ import 'package:distributed.node/node.dart';
 import 'package:distributed.node/platform/vm.dart';
 import 'package:distributed.node/src/node/cross_platform_node.dart';
 import 'package:distributed.node/src/peer_connector.dart';
+import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/port_daemon_client.dart';
 import 'package:distributed.port_daemon/ports.dart';
 import 'package:meta/meta.dart';
@@ -36,11 +37,11 @@ class VmNode extends DelegatingNode {
 
   static Future<VmNode> spawn({
     @required String name,
-    Logger logger,
     HostMachine hostMachine,
+    Logger logger,
   }) async {
-    hostMachine ??= $hostMachine('localhost', Ports.defaultDaemonPort);
-    logger ??= new Logger(name);
+    hostMachine ??= HostMachine.local;
+    logger ??= createNodeFileLogger(name);
 
     var daemonClient = new PortDaemonClient(
         name: name, daemonHostMachine: hostMachine, logger: logger);

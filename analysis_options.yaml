@@ -3,6 +3,7 @@ analyzer:
 linter:
   rules:
     - avoid_empty_else
+    - close_sinks
     - comment_references
     - control_flow_in_finally
     - empty_statements

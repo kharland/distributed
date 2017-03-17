@@ -5,12 +5,9 @@ import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/port_daemon.dart';
 import 'package:distributed.port_daemon/port_daemon_client.dart';
 import 'package:distributed.port_daemon/ports.dart';
-import 'package:seltzer/platform/vm.dart';
 import 'package:test/test.dart';
 
 void main() {
-  useSeltzerInVm();
-
   final hostMachine = $hostMachine('localhost', 9000);
   PortDaemon daemon;
   PortDaemonClient clientA;

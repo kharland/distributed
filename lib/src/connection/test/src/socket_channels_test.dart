@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:distributed.connection/src/socket/socket_channels.dart';
-import 'package:distributed.connection/src/socket/socket_controller.dart';
+import 'package:distributed.connection/src/socket_channels.dart';
+import 'package:distributed.connection/src/socket_controller.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -23,22 +23,13 @@ void main() {
 
     test('channels should only send and receive the appropriate messages',
         () async {
-      local.user.sink.add('A');
-      local.user.sink.add('B');
-      local.system.sink.add('C');
+      local
+        ..sendToUser('A')
+        ..sendToUser('B')
+        ..sendToSystem('C');
 
-      var userMessages = await foreign.user.stream.take(2).toList();
-      var systemMessage = await foreign.system.stream.first;
-
-      expect(userMessages, ['A', 'B']);
-      expect(systemMessage, 'C');
-    });
-
-    group('done', () {
-      test('should complete when the local $SocketChannels close', () async {
-        local.close();
-        expect(local.done, completes);
-      });
+      expect(foreign.userStream, emitsInOrder(['A', 'B']));
+      expect(foreign.systemStream, emitsInOrder(['C']));
     });
   });
 }

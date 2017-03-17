@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:distributed.connection/socket.dart';
-import 'package:distributed.connection/src/socket/seltzer_socket.dart';
+import 'package:distributed.connection/src/seltzer_socket.dart';
 import 'package:seltzer/platform/vm.dart';
 
 class SocketServer {
@@ -9,9 +9,9 @@ class SocketServer {
   final _onSocketController = new StreamController<Socket>(sync: true);
 
   SocketServer._(this._delegate) {
-    _delegate.socketConnections.forEach((SeltzerWebSocket rawSocket) async {
-      _onSocketController.add(receiveSeltzerSocket(rawSocket));
-    });
+    _delegate.socketConnections
+        .map(SeltzerSocket.receive)
+        .forEach(_onSocketController.add);
   }
 
   static Future<SocketServer> bind(
@@ -33,5 +33,8 @@ class SocketServer {
 
   Stream<Socket> get onSocket => _onSocketController.stream;
 
-  Future close({bool force: false}) => _delegate.close(force: force);
+  Future close({bool force: false}) => Future.wait([
+        _onSocketController.close(),
+        _delegate.close(force: force),
+      ]);
 }

@@ -1,4 +1,3 @@
-import 'package:distributed.node/platform/vm.dart';
 import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/ports.dart';
 
