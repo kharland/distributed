@@ -6,7 +6,7 @@ import 'package:distributed.port_daemon/port_daemon.dart';
 import 'package:test/test.dart';
 
 void main() {
-  final hostMachine = HostMachine.local;
+  final hostMachine = BuiltHostMachine.localHost;
 
   group('$OneShotConnector', () {
     final senderPeer = $peer('sender', hostMachine);
@@ -18,7 +18,7 @@ void main() {
 
     setUp(() async {
       connector = new OneShotConnector();
-      portDaemon = await PortDaemon.spawn(hostMachine: hostMachine);
+      portDaemon = await PortDaemon.spawn();
 
       var senderReg = await portDaemon.registerNode(senderPeer.name);
       var receiverReg = await portDaemon.registerNode(receiverPeer.name);

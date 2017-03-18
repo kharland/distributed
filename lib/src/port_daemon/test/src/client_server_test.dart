@@ -14,7 +14,7 @@ void main() {
   PortDaemonClient clientB;
 
   Future commonSetUp() async {
-    daemon = await PortDaemon.spawn(hostMachine: hostMachine);
+    daemon = await PortDaemon.spawn(port: hostMachine.portDaemonPort);
     clientA = new PortDaemonClient(name: 'A', daemonHostMachine: hostMachine);
     clientB = new PortDaemonClient(name: 'B', daemonHostMachine: hostMachine);
   }

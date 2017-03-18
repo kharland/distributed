@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:async/async.dart';
 
 const _defaultNumRetries = 3;
-const _defaultPeriod = const Duration(milliseconds: 500);
+const _defaultPeriod = const Duration(milliseconds: 600);
 
 /// An object that expects a periodic signal from some remote resource.
 ///

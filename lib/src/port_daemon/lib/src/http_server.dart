@@ -15,11 +15,11 @@ import 'package:meta/meta.dart';
 /// package:express.  It's recommended that only once instance be created at a
 /// time.
 class ExpressServer implements WebServer {
-  final HostMachine _hostMachine;
+  final BuiltHostMachine _hostMachine;
   final express.Express _express;
 
   static Future<ExpressServer> start({
-    @required HostMachine hostMachine,
+    @required BuiltHostMachine hostMachine,
     @required NodeDatabase nodeDatabase,
     @required Logger logger,
   }) async {
@@ -42,14 +42,15 @@ class ExpressServer implements WebServer {
           '/node/:name',
           (express.HttpContext ctx) =>
               _handleDeregisterNodeRequest(ctx, db, logger));
-    await expressInstance.listen(hostMachine.address, hostMachine.daemonPort);
+    await expressInstance.listen(
+        hostMachine.address, hostMachine.portDaemonPort);
     return new ExpressServer._(hostMachine, expressInstance);
   }
 
   ExpressServer._(this._hostMachine, this._express);
 
   @override
-  String get url => _hostMachine.daemonUrl;
+  String get url => _hostMachine.portDaemonUrl;
 
   @override
   void stop() {
@@ -72,6 +73,7 @@ class ExpressServer implements WebServer {
     Logger logger,
   ) async {
     db.registerNode(ctx.params['name']).then((Registration registration) {
+      logger.log('Registered ${ctx.params['name']} to ${registration.port}');
       ctx.sendText(serialize(registration));
       ctx.end();
     }).catchError((e, stacktrace) {
@@ -87,6 +89,7 @@ class ExpressServer implements WebServer {
     Logger logger,
   ) async {
     db.deregisterNode(ctx.params['name']).then((String result) {
+      logger.log('Deregistered ${ctx.params['name']}');
       ctx.sendText(result);
       ctx.end();
     }).catchError((e, stacktrace) {

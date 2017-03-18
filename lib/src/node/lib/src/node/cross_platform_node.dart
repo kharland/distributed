@@ -4,6 +4,7 @@ import 'package:distributed.connection/connection.dart';
 import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed.node/node.dart';
 import 'package:distributed.node/src/peer_connector.dart';
+import 'package:distributed.objects/interfaces.dart';
 import 'package:distributed.objects/objects.dart';
 import 'package:meta/meta.dart';
 
@@ -13,15 +14,16 @@ class CrossPlatformNode implements Node {
   final String name;
 
   @override
-  final HostMachine hostMachine;
+  final BuiltHostMachine hostMachine;
 
   final _connector = new OneShotConnector();
-  final _connections = <Peer, Connection>{};
+  final _connections = <BuiltPeer, Connection>{};
   final _userMessageController =
-      new StreamController<Message>.broadcast(sync: true);
-  final _connectController = new StreamController<Peer>.broadcast(sync: true);
+      new StreamController<BuiltMessage>.broadcast(sync: true);
+  final _connectController =
+      new StreamController<BuiltPeer>.broadcast(sync: true);
   final _disconnectController =
-      new StreamController<Peer>.broadcast(sync: true);
+      new StreamController<BuiltPeer>.broadcast(sync: true);
   final _zeroPeersController = new StreamController<String>(sync: true);
 
   final Logger _logger;
@@ -29,21 +31,21 @@ class CrossPlatformNode implements Node {
   CrossPlatformNode({
     @required this.name,
     @required this.hostMachine,
-    Logger logger,
+    @required Logger logger,
   })
-      : _logger = logger ?? new Logger(name);
+      : _logger = logger;
 
   @override
-  List<Peer> get peers => new List.unmodifiable(_connections.keys);
+  List<BuiltPeer> get peers => new List.unmodifiable(_connections.keys);
 
   @override
-  Stream<Peer> get onConnect => _connectController.stream;
+  Stream<BuiltPeer> get onConnect => _connectController.stream;
 
   @override
-  Stream<Peer> get onDisconnect => _disconnectController.stream;
+  Stream<BuiltPeer> get onDisconnect => _disconnectController.stream;
 
   @override
-  Future<ConnectionResult> connect(Peer peer) async {
+  Future<ConnectionResult> connect(BuiltPeer peer) async {
     assert(!_connections.containsKey(peer));
     ConnectionResult result = await _connector.connect(toPeer(), peer).first;
     if (result.error.isNotEmpty) {
@@ -55,7 +57,7 @@ class CrossPlatformNode implements Node {
   }
 
   @override
-  void disconnect(Peer peer) {
+  void disconnect(BuiltPeer peer) {
     assert(_connections.containsKey(peer));
     // The connection will be de-referenced and clients will be notified when
     // its done future completes. All we must do here is close it.
@@ -63,16 +65,16 @@ class CrossPlatformNode implements Node {
   }
 
   @override
-  void send(Peer peer, String action, String data) {
+  void send(BuiltPeer peer, String action, String data) {
     assert(_connections.containsKey(peer), '$peer is not in $peers');
     var message = $message(action, data, toPeer());
-    _logger.log("Sending message to ${peer.displayName}: ${message}");
+    _logger.log("Sending ${data} to ${peer.displayName}");
     _connections[peer].add(message);
   }
 
   @override
-  Stream<Message> receive(String action) => _userMessageController.stream
-      .where((Message message) => message.category == action);
+  Stream<BuiltMessage> receive(String action) => _userMessageController.stream
+      .where((BuiltMessage message) => message.category == action);
 
   @override
   Future shutdown() async {
@@ -84,7 +86,7 @@ class CrossPlatformNode implements Node {
     _disconnectController.close();
   }
 
-  void addConnection(Connection connection, Peer peer) {
+  void addConnection(Connection connection, BuiltPeer peer) {
     assert(!_connections.containsKey(peer));
     connection
       ..done.then((_) {
@@ -95,12 +97,16 @@ class CrossPlatformNode implements Node {
           _zeroPeersController.add('');
         }
       })
-      ..messages.forEach(_userMessageController.add);
+      ..messages.forEach((Message message) {
+        _logger.log(
+            'Received ${message.contents} from ${message.sender.displayName}');
+        _userMessageController.add(message);
+      });
     _connections[peer] = connection;
     _logger.log('Connected to ${peer.displayName}');
     _connectController.add(peer);
   }
 
   @override
-  Peer toPeer() => $peer(name, hostMachine);
+  BuiltPeer toPeer() => $peer(name, hostMachine);
 }

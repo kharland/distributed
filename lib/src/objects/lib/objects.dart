@@ -1,10 +1,11 @@
-library distributed.objects.src.peer;
+library distributed.objects;
 
 import 'dart:convert';
 
 import 'package:built_collection/built_collection.dart';
 import 'package:built_value/built_value.dart';
 import 'package:built_value/serializer.dart';
+import 'package:distributed.objects/interfaces.dart';
 import 'package:distributed.port_daemon/ports.dart';
 import 'package:meta/meta.dart';
 
@@ -17,20 +18,21 @@ String serialize(Built builtValue) =>
 Object deserialize(String serialized, Type type) => serializers
     .deserialize(JSON.decode(serialized), specifiedType: new FullType(type));
 
-Message $message(String category, String payload, Peer sender) =>
-    new Message((b) => b
+BuiltMessage $message(String category, String contents, BuiltPeer sender) =>
+    new BuiltMessage((b) => b
       ..category = category
-      ..payload = payload
+      ..contents = contents
       ..sender = sender);
 
-Peer $peer(String name, HostMachine hostMachine) => new Peer((b) => b
-  ..name = name
-  ..hostMachine = hostMachine);
+BuiltPeer $peer(String name, BuiltHostMachine hostMachine) =>
+    new BuiltPeer((b) => b
+      ..name = name
+      ..hostMachine = hostMachine);
 
-HostMachine $hostMachine(String address, int daemonPort) =>
-    new HostMachine((b) => b
+BuiltHostMachine $hostMachine(String address, int portDaemonPort) =>
+    new BuiltHostMachine((b) => b
       ..address = address
-      ..daemonPort = daemonPort);
+      ..portDaemonPort = portDaemonPort);
 
 PortAssignmentList $portAssignmentList(Map<String, int> assignments) =>
     new PortAssignmentList((b) =>
@@ -96,91 +98,99 @@ abstract class RegistrationBuilder
   factory RegistrationBuilder() = _$RegistrationBuilder;
 }
 
-abstract class Message implements Built<Message, MessageBuilder> {
-  static Serializer<Message> get serializer => _$messageSerializer;
+abstract class BuiltMessage
+    implements Built<BuiltMessage, BuiltMessageBuilder>, Message {
+  static Serializer<BuiltMessage> get serializer => _$builtMessageSerializer;
 
-  /// The [Peer] that created this [Message].
-  Peer get sender;
+  @override
+  BuiltPeer get sender;
 
-  /// A value used to group this [Message] with other [Message]s.
+  @override
   String get category;
 
-  /// Data contained in this message. TODO(kharland): Change to 'contents'.
-  String get payload;
+  @override
+  String get contents;
 
-  Message._();
-  factory Message([updates(MessageBuilder b)]) = _$Message;
+  BuiltMessage._();
+  factory BuiltMessage([updates(BuiltMessageBuilder b)]) = _$BuiltMessage;
 }
 
-abstract class MessageBuilder implements Builder<Message, MessageBuilder> {
+abstract class BuiltMessageBuilder
+    implements Builder<BuiltMessage, BuiltMessageBuilder> {
   @virtual
-  Peer sender;
+  BuiltPeer sender;
 
   @virtual
   String category;
 
   @virtual
-  String payload;
+  String contents;
 
-  MessageBuilder._();
-  factory MessageBuilder() = _$MessageBuilder;
+  BuiltMessageBuilder._();
+  factory BuiltMessageBuilder() = _$BuiltMessageBuilder;
 }
 
-abstract class Peer implements Built<Peer, PeerBuilder> {
-  static Serializer<Peer> get serializer => _$peerSerializer;
+abstract class BuiltPeer implements Built<BuiltPeer, BuiltPeerBuilder>, Peer {
+  static Serializer<BuiltPeer> get serializer => _$builtPeerSerializer;
 
-  /// The name of this [Peer].
+  @override
   String get name;
 
-  /// This peer's host machine.
-  HostMachine get hostMachine;
+  @override
+  BuiltHostMachine get hostMachine;
 
+  @override
   String get displayName => '$name@${hostMachine.address}';
 
-  Peer._();
-  factory Peer([updates(PeerBuilder b)]) = _$Peer;
+  BuiltPeer._();
+  factory BuiltPeer([updates(BuiltPeerBuilder b)]) = _$BuiltPeer;
 }
 
-abstract class PeerBuilder implements Builder<Peer, PeerBuilder> {
+abstract class BuiltPeerBuilder
+    implements Builder<BuiltPeer, BuiltPeerBuilder> {
   @virtual
   String name;
 
   @virtual
-  HostMachine hostMachine;
+  BuiltHostMachine hostMachine;
 
-  PeerBuilder._();
-  factory PeerBuilder() = _$PeerBuilder;
+  BuiltPeerBuilder._();
+  factory BuiltPeerBuilder() = _$BuiltPeerBuilder;
 }
 
-abstract class HostMachine implements Built<HostMachine, HostMachineBuilder> {
-  static final local = new HostMachine((b) => b
+abstract class BuiltHostMachine
+    implements Built<BuiltHostMachine, BuiltHostMachineBuilder>, HostMachine {
+  static final localHost = new BuiltHostMachine((b) => b
     ..address = 'localhost'
-    ..daemonPort = Ports.defaultDaemonPort);
+    ..portDaemonPort = Ports.defaultPortDaemonPort);
 
-  static Serializer<HostMachine> get serializer => _$hostMachineSerializer;
+  static Serializer<BuiltHostMachine> get serializer =>
+      _$builtHostMachineSerializer;
 
-  /// The address of this machine.
+  @override
   String get address;
 
-  /// The port where this machine's port daemon is running.
-  int get daemonPort;
+  @override
+  int get portDaemonPort;
 
-  String get daemonUrl => 'http://$address:$daemonPort';
+  @override
+  String get portDaemonUrl => 'http://$address:$portDaemonPort';
 
-  HostMachine._();
-  factory HostMachine([updates(HostMachineBuilder b)]) = _$HostMachine;
+  BuiltHostMachine._();
+  factory BuiltHostMachine([updates(BuiltHostMachineBuilder b)]) =
+      _$BuiltHostMachine;
 }
 
-abstract class HostMachineBuilder
-    implements Builder<HostMachine, HostMachineBuilder> {
+abstract class BuiltHostMachineBuilder
+    implements Builder<BuiltHostMachine, BuiltHostMachineBuilder> {
   @virtual
   String address;
 
   @virtual
-  int daemonPort;
+  int portDaemonPort;
 
-  HostMachineBuilder._();
-  factory HostMachineBuilder() = _$HostMachineBuilder;
+  BuiltHostMachineBuilder._();
+  factory BuiltHostMachineBuilder() = _$BuiltHostMachineBuilder;
 }
 
 abstract class SpawnRequest

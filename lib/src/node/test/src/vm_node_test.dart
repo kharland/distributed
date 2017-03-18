@@ -54,11 +54,11 @@ void main() {
     test('should send and receive messages', () async {
       await ping.connect(pong.toPeer());
 
-      pong.receive('ping').listen(expectAsync1((Message message) {
+      pong.receive('ping').listen(expectAsync1((BuiltMessage message) {
         expect(message, $message('ping', 'ping-message', ping.toPeer()));
         pong.send(ping.toPeer(), 'pong', 'pong-message');
       }));
-      ping.receive('pong').listen(expectAsync1((Message message) {
+      ping.receive('pong').listen(expectAsync1((BuiltMessage message) {
         expect(message, $message('pong', 'pong-message', pong.toPeer()));
       }));
       ping.send(pong.toPeer(), 'ping', 'ping-message');
