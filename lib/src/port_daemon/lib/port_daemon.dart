@@ -13,7 +13,7 @@ class PortDaemon {
   final Logger _logger;
 
   static Future<PortDaemon> spawn({
-    int port,
+    int port: Ports.defaultPortDaemonPort,
     Logger logger,
   }) async {
     logger ??= new Logger('port_daemon');

@@ -29,10 +29,10 @@ BuiltPeer $peer(String name, BuiltHostMachine hostMachine) =>
       ..name = name
       ..hostMachine = hostMachine);
 
-BuiltHostMachine $hostMachine(String address, int daemonPort) =>
+BuiltHostMachine $hostMachine(String address, int portDaemonPort) =>
     new BuiltHostMachine((b) => b
       ..address = address
-      ..portDaemonPort = daemonPort);
+      ..portDaemonPort = portDaemonPort);
 
 PortAssignmentList $portAssignmentList(Map<String, int> assignments) =>
     new PortAssignmentList((b) =>
