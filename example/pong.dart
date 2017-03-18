@@ -5,7 +5,7 @@ import 'package:distributed.node/platform/vm.dart';
 
 import 'example_helper.dart';
 
-Future main(List<String> args, [String message]) async {
+Future main() async {
   configureDistributed();
   var node = await Node.spawn(pong.name);
 

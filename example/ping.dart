@@ -1,14 +1,13 @@
 import 'dart:async';
 
 import 'package:distributed/distributed.dart';
-import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed.node/platform/vm.dart';
 
 import 'example_helper.dart';
 
-Future main(List<String> args, [String message]) async {
+Future main() async {
   configureDistributed();
-  var node = await Node.spawn(ping.name, logger: new Logger('ping'));
+  var node = await Node.spawn(ping.name);
 
   await node.connect(pong).then((result) {
     if (result.error.isNotEmpty) {
