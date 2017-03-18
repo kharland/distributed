@@ -32,7 +32,7 @@ A node is a single actor in a distributed system. Each node belongs to a single 
 The __port daemon__ is a name-server for the nodes running at its address.  When a node is spawned, it receives a port from the daemon
 and attaches itself to the address: `ws://<ip-address>:<port>`.  Other nodes (__peers__) use the node's name to request its port from the daemon before establishing a connection.
 
-The port daemon allows nodes to retain their names;  If a node goes offline and its port is consumed by another process, it can simply obtain a new port from the daemon.  Peers can reconnect at a later time be querying the port daemon using the same name.
+The port daemon allows nodes to retain their names;  If a node goes offline and its port is consumed by another process, it can simply obtain a new port from the daemon.  Peers can reconnect at a later time by querying the port daemon using the same name.
 
 A port daemon _must_ be running wherever nodes are running.   A node will not start without a daemon running.  If the daemon goes offline while a node is running, the node will shut itself down.  __TODO(#58)__
 
