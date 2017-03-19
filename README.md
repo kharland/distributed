@@ -89,4 +89,4 @@ Let's break this down:
 #### Shutting a node down
 - TODO
 
-For details on how the system is implemented/how it works see the [wiki](https://github.com/kharland/distributed/wiki) (_coming soon_)
+See the [wiki](https://github.com/kharland/distributed/wiki) for details on how the system is implemented/how it works. (_coming soon_)
