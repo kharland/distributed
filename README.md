@@ -75,7 +75,7 @@ node.receive('Greet').listen((Message message) {
 Let's break this down: 
 
 -  `Node.receive` tells the node to begin listening for messages in the specified __message category__.  In this case, "Greet" is the 
-   category.  Any peer can send a message to this node using the category "Hello" and it will handled by this listener.
+   category.  Any peer can send a message to this node using the category "Greet" and it will handled by this listener.
 -  A `Message` is an object containing a reference to the peer who sent it, the category the message belongs to, and the contents of the 
    message packaged as a string.
 -  `Node.send` is used to send a message to a peer.  In this example, we let the peer send the first message while we simply respond 
