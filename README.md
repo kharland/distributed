@@ -64,10 +64,10 @@ await node.connect(barPeer);
 Once connections are established, recieving and sending messages is simple: __TODO(#70)__
 ```dart
 node.receive('Greet').listen((Message message) {
-  print("${message.sender} sent: ${message.contents}");
+  print('${message.sender} sent: ${message.contents}');
 
-  var response = "Hello!";
-  print("Responding with: $response");
+  var response = 'Hello!';
+  print('Responding with: $response');
   node.send(message.sender, 'Greet', response);
 });
 ```
@@ -80,7 +80,7 @@ Let's break this down:
    message packaged as a string.
 -  `Node.send` is used to send a message to a peer.  In this example, we let the peer send the first message while we simply respond 
    with "Hello!".  The signature for `Node.send` is `send(Peer reciever, String category, String contents)`.  __TODO(#68)__
--  __Note__:  We did not have to respond with the category 'Greet'.  We can use any category name, so long as `message.sender` is 
+-  __Note__:  We did not have to respond with the category "Greet".  We can use any category name, so long as `message.sender` is 
    listening for it.
    
 #### Disconnecting from Peers
