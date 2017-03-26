@@ -6,7 +6,7 @@ import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed.node/node.dart';
 import 'package:distributed.node/platform/vm.dart';
 import 'package:distributed.node/src/node/cross_platform_node.dart';
-import 'package:distributed.node/src/peer_connector.dart';
+import 'package:distributed.node/src/connector.dart';
 import 'package:distributed.objects/interfaces.dart';
 import 'package:distributed.port_daemon/port_daemon_client.dart';
 import 'package:distributed.port_daemon/ports.dart';
@@ -15,7 +15,6 @@ import 'package:meta/meta.dart';
 /// A node that runs on the Dart VM.
 class VmNode extends DelegatingNode {
   final PortDaemonClient _daemonClient;
-  final SocketServer _server;
 
   static Future<VmNode> spawn({
     @required String name,
@@ -24,7 +23,7 @@ class VmNode extends DelegatingNode {
     var hostMachine = HostMachine.localHost;
     var daemonClient = new PortDaemonClient(
       name: name,
-      daemonHostMachine: hostMachine,
+      remoteHost: hostMachine,
       logger: logger,
     );
     int port = await daemonClient.register();
@@ -34,7 +33,6 @@ class VmNode extends DelegatingNode {
     }
     logger.log('Registered $name at ${hostMachine.portDaemonUrl}');
 
-    var socketServer = await SocketServer.bind(hostMachine.address, port);
     var delegate = new CrossPlatformNode(
         hostMachine: hostMachine, name: name, logger: logger);
 
@@ -43,7 +41,7 @@ class VmNode extends DelegatingNode {
       final connectionResult =
           await incomingConnector.receiveSocket(delegate.toPeer(), socket);
       delegate.addConnection(
-          connectionResult.connection, connectionResult.sender);
+          connectionResult.socket, connectionResult.sender);
     });
 
     return new VmNode(daemonClient, socketServer, delegate);

@@ -2,8 +2,7 @@ import 'dart:async';
 
 import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed.node/src/configuration.dart';
-import 'package:distributed.node/src/peer_connector.dart';
-import 'package:distributed.objects/objects.dart';
+import 'package:distributed.objects/interfaces.dart';
 
 /// A node in a distributed system.
 abstract class Node {
@@ -11,31 +10,31 @@ abstract class Node {
   String get name;
 
   // This node's host machine.
-  BuiltHostMachine get hostMachine;
+  HostMachine get hostMachine;
 
   /// The list of peers that are connected to this [Node].
-  List<BuiltPeer> get peers;
+  List<Peer> get peers;
 
-  /// Emits events when this node connects to a [BuiltPeer].
-  Stream<BuiltPeer> get onConnect;
+  /// Emits events when this node connects to a [Peer].
+  Stream<Peer> get onConnect;
 
-  /// Emits events when this node disconnects from a [BuiltPeer].
-  Stream<BuiltPeer> get onDisconnect;
+  /// Emits events when this node disconnects from a [Peer].
+  Stream<Peer> get onDisconnect;
 
   /// Connects this node to [peer].
-  Future<ConnectionResult> connect(BuiltPeer peer);
+  Future<bool> connect(Peer peer);
 
   /// Disconnects from the remote peer identified by [name].
-  void disconnect(BuiltPeer peer);
+  void disconnect(Peer peer);
 
   /// Returns a peer with the same information as this [Node].
-  BuiltPeer toPeer();
+  Peer toPeer();
 
   /// Send a command of type [action] to [peer] with [data].
-  void send(BuiltPeer peer, String action, String data);
+  void send(Peer peer, String action, String data);
 
   /// Returns a stream that emits any [action] messages this node receives.
-  Stream<BuiltMessage> receive(String action);
+  Stream<Message> receive(String action);
 
   /// Closes all connections and disables the node. Be sure to call [disconnect]
   /// before calling [shutdown] to remove the node from any connected networks.
@@ -54,33 +53,33 @@ class DelegatingNode implements Node {
   String get name => delegate.name;
 
   @override
-  BuiltHostMachine get hostMachine => delegate.hostMachine;
+  HostMachine get hostMachine => delegate.hostMachine;
 
   @override
-  List<BuiltPeer> get peers => delegate.peers;
+  List<Peer> get peers => delegate.peers;
 
   @override
-  Stream<BuiltPeer> get onConnect => delegate.onConnect;
+  Stream<Peer> get onConnect => delegate.onConnect;
 
   @override
-  Stream<BuiltPeer> get onDisconnect => delegate.onDisconnect;
+  Stream<Peer> get onDisconnect => delegate.onDisconnect;
 
   @override
-  Future<ConnectionResult> connect(BuiltPeer peer) => delegate.connect(peer);
+  Future<bool> connect(Peer peer) => delegate.connect(peer);
 
   @override
-  void disconnect(BuiltPeer peer) => delegate.disconnect(peer);
+  void disconnect(Peer peer) => delegate.disconnect(peer);
 
   @override
-  BuiltPeer toPeer() => delegate.toPeer();
+  Peer toPeer() => delegate.toPeer();
 
   @override
-  void send(BuiltPeer peer, String action, String data) {
+  void send(Peer peer, String action, String data) {
     delegate.send(peer, action, data);
   }
 
   @override
-  Stream<BuiltMessage> receive(String action) => delegate.receive(action);
+  Stream<Message> receive(String action) => delegate.receive(action);
 
   @override
   Future shutdown() => delegate.shutdown();

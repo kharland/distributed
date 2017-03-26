@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:distributed.connection/src/timeout.dart';
 import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed.monitoring/periodic_function.dart';
+import 'package:distributed.objects/interfaces.dart';
 import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/port_daemon_client.dart';
 import 'package:distributed.port_daemon/ports.dart';
@@ -18,14 +19,14 @@ class HttpDaemonClient implements PortDaemonClient {
   final Logger logger;
 
   @override
-  final BuiltHostMachine daemonHostMachine;
+  final HostMachine remoteHost;
   final _http = new HttpWithTimeout();
 
   PeriodicFunction _keepAliveSignal;
 
   HttpDaemonClient({
     @required this.name,
-    @required this.daemonHostMachine,
+    @required this.remoteHost,
     Logger logger,
   })
       : this.logger = logger ?? new Logger(name);
@@ -48,14 +49,15 @@ class HttpDaemonClient implements PortDaemonClient {
   }
 
   @override
-  Future<int> lookup(String name) async {
+  Future<String> lookup(String name) async {
     await _expectDaemonIsRunning();
     try {
       var response = await _http.send(_get('node/$name'));
-      return int.parse(await response.readAsString());
+      final port = int.parse(await response.readAsString());
+      return 'ws://${remoteHost.address}:$port';
     } catch (e) {
       logger.error("lookup $e");
-      return Ports.error;
+      return '';
     }
   }
 
@@ -120,7 +122,7 @@ class HttpDaemonClient implements PortDaemonClient {
 
   Future _expectDaemonIsRunning() async {
     assert(
-        await isDaemonRunning, 'No daemon @${daemonHostMachine.portDaemonUrl}');
+        await isDaemonRunning, 'No daemon @${remoteHost.portDaemonUrl}');
   }
 
   SeltzerHttpRequest _get(String route) =>
@@ -133,13 +135,13 @@ class HttpDaemonClient implements PortDaemonClient {
       _seltzer.post(_createRequestUrl(route));
 
   String _createRequestUrl(String route) =>
-      '${daemonHostMachine.portDaemonUrl}/$route';
+      '${remoteHost.portDaemonUrl}/$route';
 }
 
 class HttpWithTimeout {
   Future<SeltzerHttpResponse> send(SeltzerHttpRequest request) {
     var timeout = new Timeout(() {
-      throw new TimeoutError(request.toString());
+      throw new TimeoutException(request.toString());
     });
     return request.send().first.then((response) {
       timeout.cancel();

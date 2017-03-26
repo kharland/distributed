@@ -1,15 +1,15 @@
-import 'package:distributed.connection/src/socket_channels.dart';
+import 'package:distributed.connection/src/message_router.dart';
 import 'package:distributed.connection/src/socket_controller.dart';
 
 class SocketChannelsController {
-  final SocketChannels local;
-  final SocketChannels foreign;
+  final MessageRouter local;
+  final MessageRouter foreign;
 
   factory SocketChannelsController() {
     final sockets = new SocketController();
     return new SocketChannelsController._(
-      new SocketChannels(sockets.local),
-      new SocketChannels(sockets.foreign),
+      new MessageRouter(sockets.local),
+      new MessageRouter(sockets.foreign),
     );
   }
 

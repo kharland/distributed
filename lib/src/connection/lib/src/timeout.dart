@@ -12,9 +12,3 @@ class Timeout {
     _timer.cancel();
   }
 }
-
-class TimeoutError implements Exception {
-  final String message;
-
-  TimeoutError([this.message = '']);
-}

@@ -1,21 +1,21 @@
 import 'dart:async';
 
-import 'package:distributed.connection/src/socket_channels.dart';
+import 'package:distributed.connection/src/message_router.dart';
 import 'package:distributed.connection/src/socket_controller.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group('$SocketChannels', () {
-    SocketChannels local;
-    SocketChannels foreign;
+  group('$MessageRouter', () {
+    MessageRouter local;
+    MessageRouter foreign;
 
     setUp(() async {
       var testConnection = new SocketController();
       await Future.wait([
-        SocketChannels.outgoing(testConnection.foreign).then((channels) {
+        new MessageRouter(testConnection.foreign).then((channels) {
           foreign = channels;
         }),
-        SocketChannels.incoming(testConnection.local).then((channels) {
+        new MessageRouter(testConnection.local).then((channels) {
           local = channels;
         })
       ]);
