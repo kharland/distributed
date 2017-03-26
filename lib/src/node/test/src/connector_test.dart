@@ -1,6 +1,6 @@
 import 'package:distributed.connection/socket.dart';
 import 'package:distributed.connection/src/socket_server.dart';
-import 'package:distributed.node/src/peer_connector.dart';
+import 'package:distributed.node/src/connector.dart';
 import 'package:distributed.objects/objects.dart';
 import 'package:distributed.port_daemon/port_daemon.dart';
 import 'package:test/test.dart';
@@ -37,18 +37,18 @@ void main() {
         expect(result.error, '');
         expect(result.sender, senderPeer);
         expect(result.receiver, receiverPeer);
-        expect(result.connection, isNotNull);
+        expect(result.socket, isNotNull);
       }
 
       test('should connect two peers', () async {
         receiverServer.onSocket.listen(expectAsync1((Socket socket) async {
           var result = await connector.receiveSocket(receiverPeer, socket);
           expectResult(result);
-          result.connection.close();
+          result.socket.close();
         }));
         var result = await connector.connect(senderPeer, receiverPeer).first;
         expectResult(result);
-        result.connection.close();
+        result.socket.close();
       });
     });
   });

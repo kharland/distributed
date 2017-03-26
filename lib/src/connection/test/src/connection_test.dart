@@ -1,5 +1,5 @@
 import 'package:distributed.connection/connection.dart';
-import 'package:distributed.connection/src/socket_channels_controller.dart';
+import 'package:distributed.connection/src/socket_controller.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -26,7 +26,7 @@ class ConnectionController {
   final Connection foreign;
 
   factory ConnectionController() {
-    var controller = new SocketChannelsController();
+    var controller = new SocketController();
     return new ConnectionController._(
       new Connection(controller.local),
       new Connection(controller.foreign),
