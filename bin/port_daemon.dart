@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:args/args.dart';
-import 'package:distributed.monitoring/logging.dart';
-import 'package:distributed.port_daemon/port_daemon.dart';
-import 'package:distributed.port_daemon/ports.dart';
+import 'package:distributed/src/monitoring/logging.dart';
+import 'package:distributed/src/port_daemon/port_daemon.dart';
+import 'package:distributed/src/port_daemon/ports.dart';
 
 Future main(List<String> args) async {
   var argResults = _parseArgs(args);
