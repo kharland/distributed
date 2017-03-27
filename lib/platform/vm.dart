@@ -16,7 +16,7 @@ void configureDistributed() {
 class _VmNodeProvider implements NodeProvider {
   @override
   Future<Node> spawn(String name, {@required Logger logger}) async {
-    HostMachine hostMachine = HostMachine.localHost;
+    final hostMachine = HostMachine.localHost;
     final daemonClient = new PortDaemonClient(
       name: name,
       daemonHost: hostMachine,
@@ -40,7 +40,7 @@ class _VmNodeProvider implements NodeProvider {
         logger: logger,
       ),
     )
-      ..onShutdown.then((_) {
+      ..onShutdown.then((_) async {
         daemonClient.deregister();
       });
   }
