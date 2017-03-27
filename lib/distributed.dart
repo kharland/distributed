@@ -1,3 +1,3 @@
-export 'package:distributed.node/node.dart';
-export 'package:distributed.objects/interfaces.dart';
-export 'package:distributed.monitoring/logging.dart';
+export 'package:distributed/src/node/node.dart';
+export 'package:distributed/src/objects/interfaces.dart';
+export 'package:distributed/src/monitoring/logging.dart';

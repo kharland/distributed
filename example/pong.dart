@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:distributed/distributed.dart';
-import 'package:distributed.node/platform/vm.dart';
+import 'package:distributed/platform/vm.dart';
 
 import 'example_helper.dart';
 
@@ -9,9 +9,9 @@ Future main() async {
   configureDistributed();
   var node = await Node.spawn(pong.name);
 
-  await node.connect(ping).then((result) {
-    if (result.error.isNotEmpty) {
-      print("(${result.error}. Waiting for connection...");
+  await node.connect(ping).then((connected) {
+    if (!connected) {
+      print("Waiting for connection...");
     }
   });
 
