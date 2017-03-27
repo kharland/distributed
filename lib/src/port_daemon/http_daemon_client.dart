@@ -72,14 +72,10 @@ class HttpDaemonClient implements PortDaemonClient {
   Future<bool> deregister() async {
     await _expectDaemonIsRunning();
     try {
+      _stopSendingKeepAliveSignal();
       var response = await _http.send(_delete('node/$name'));
       var error = await response.readAsString();
-      if (error.isEmpty) {
-        _stopSendingKeepAliveSignal();
-        return true;
-      } else {
-        return false;
-      }
+      return error.isEmpty;
     } catch (e) {
       return false;
     }
@@ -125,12 +121,30 @@ class HttpDaemonClient implements PortDaemonClient {
 
 class HttpWithTimeout {
   Future<SeltzerHttpResponse> send(SeltzerHttpRequest request) {
-    var timeout = new Timer(const Duration(seconds: 5), () {
-      throw new TimeoutException(request.toString());
+    final responseCompleter = new Completer<SeltzerHttpResponse>();
+    Timer timeout;
+
+    runZoned(() {
+      timeout = new Timer(const Duration(seconds: 5), () {
+        throw new TimeoutException(request.toString());
+      });
+    }, onError: (e, s) {
+      if (!responseCompleter.isCompleted) {
+        responseCompleter.complete(null);
+      }
     });
-    return request.send().first.then((response) {
-      timeout.cancel();
-      return response;
+
+    runZoned(() {
+      request.send().first.then((response) {
+        timeout.cancel();
+        if (!responseCompleter.isCompleted) {
+          responseCompleter.complete(response);
+        }
+      });
+    }, onError: (e, s) {
+      responseCompleter.complete(null);
     });
+
+    return responseCompleter.future;
   }
 }

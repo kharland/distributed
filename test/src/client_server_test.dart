@@ -8,16 +8,16 @@ import 'package:distributed/src/port_daemon/ports.dart';
 import 'package:test/test.dart';
 
 void main() {
-  final hostMachine = new HostMachine('localhost', 9000);
   PortDaemon daemon;
   PortDaemonClient clientA;
   PortDaemonClient clientB;
 
   Future commonSetUp() async {
-    daemon = await PortDaemon.spawn(
-        hostMachine.portDaemonPort, new Logger.disabled());
-    clientA = new PortDaemonClient(name: 'A', daemonHost: hostMachine);
-    clientB = new PortDaemonClient(name: 'B', daemonHost: hostMachine);
+    daemon = await PortDaemon.spawn(new Logger.disabled());
+    clientA =
+        new PortDaemonClient(name: 'A', daemonHost: HostMachine.localHost);
+    clientB =
+        new PortDaemonClient(name: 'B', daemonHost: HostMachine.localHost);
   }
 
   Future commonTearDown() async {
