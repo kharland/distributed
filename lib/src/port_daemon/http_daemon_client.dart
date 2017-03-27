@@ -21,10 +21,7 @@ class HttpDaemonClient implements PortDaemonClient {
 
   PeriodicFunction _keepAliveSignal;
 
-  HttpDaemonClient({
-    @required this.name,
-    @required this.daemonHost,
-  });
+  HttpDaemonClient({@required this.name, @required this.daemonHost});
 
   @override
   Future<bool> get isDaemonRunning async => _pingDaemon(name);

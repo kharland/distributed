@@ -1,4 +1,3 @@
-@TestOn("vm")
 import 'dart:async';
 
 import 'package:distributed/src/objects/interfaces.dart';
@@ -16,7 +15,7 @@ void main() {
 
   Future commonSetUp() async {
     daemon = await PortDaemon.spawn(
-        port: hostMachine.portDaemonPort, logger: new Logger.disabled());
+        hostMachine.portDaemonPort, new Logger.disabled());
     clientA = new PortDaemonClient(name: 'A', daemonHost: hostMachine);
     clientB = new PortDaemonClient(name: 'B', daemonHost: hostMachine);
   }
@@ -33,9 +32,7 @@ void main() {
     tearDown(() => commonTearDown());
 
     test('should be able to ping the daemon', () async {
-      for (int i = 0; i < 5; i++) {
-        expect(await clientA.isDaemonRunning, isTrue);
-      }
+      expect(await clientA.isDaemonRunning, isTrue);
     });
   });
 

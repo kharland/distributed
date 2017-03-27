@@ -2,21 +2,17 @@ import 'dart:async';
 
 import 'package:distributed/src/monitoring/logging.dart';
 import 'package:distributed/src/objects/objects.dart';
-import 'package:distributed/src/port_daemon/ports.dart';
 import 'package:distributed/src/port_daemon/http_server.dart';
 import 'package:distributed/src/port_daemon/node_database.dart';
+import 'package:distributed/src/port_daemon/ports.dart';
 import 'package:distributed/src/port_daemon/web_server.dart';
-import 'package:meta/meta.dart';
 
 class PortDaemon {
   final NodeDatabase _nodeDatabase;
   final WebServer _webServer;
   final Logger _logger;
 
-  static Future<PortDaemon> spawn({
-    int port: Ports.defaultPortDaemonPort,
-    @required Logger logger,
-  }) async {
+  static Future<PortDaemon> spawn(int port, Logger logger) async {
     var nodeDatabase = new NodeDatabase();
     var webServer = await ExpressServer.start(
       hostMachine: $hostMachine('localhost', port),

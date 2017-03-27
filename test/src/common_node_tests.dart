@@ -3,6 +3,7 @@ import 'package:distributed/src/node/node.dart';
 import 'package:distributed/src/objects/interfaces.dart';
 import 'package:distributed/src/objects/objects.dart';
 import 'package:distributed/src/port_daemon/port_daemon.dart';
+import 'package:distributed/src/port_daemon/ports.dart';
 import 'package:test/test.dart';
 
 void runNodeTests() {
@@ -12,7 +13,8 @@ void runNodeTests() {
 
   group('$Node', () {
     setUp(() async {
-      daemon = await PortDaemon.spawn(logger: new Logger.disabled());
+      daemon = await PortDaemon.spawn(
+          Ports.defaultPortDaemonPort, new Logger.disabled());
       ping = await Node.spawn('ping', logger: new Logger.disabled());
       pong = await Node.spawn('pong', logger: new Logger.disabled());
     });
