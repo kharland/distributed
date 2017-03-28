@@ -4,7 +4,6 @@ A distributed computing library for Dart.  This is heavily based on [Distribued 
 *__Disclaimer__*: This project is still early-stage and there are outstanding bugs blocking some of the functionality in this doc.  Be sure to follow along via the [issue tracker](https://github.com/kharland/distributed/issues)
 
 [![Build Status](https://travis-ci.org/kharland/distributed.svg?branch=master)](https://travis-ci.org/kharland/distributed)
-[![Coverage Status](https://coveralls.io/repos/github/kharland/distributed_dart/badge.svg?branch=master)](https://coveralls.io/github/kharland/distributed_dart?branch=master)
 
 ## Quick Start
 Run the port daemon and spawn the two ping-pong example nodes locally.
