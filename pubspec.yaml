@@ -13,6 +13,7 @@ dependencies:
   logging:
   meta:
   resource:
+  route:
   seltzer:
     git: git://github.com/matanlurey/seltzer
   source_gen:

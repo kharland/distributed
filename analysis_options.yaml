@@ -6,7 +6,6 @@ linter:
     - close_sinks
     - comment_references
     - control_flow_in_finally
-    - empty_statements
     - hash_and_equals
     - iterable_contains_unrelated_type
     - list_remove_unrelated_type
