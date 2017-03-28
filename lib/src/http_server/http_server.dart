@@ -1,19 +1,22 @@
 import 'dart:async';
-import 'dart:io' as io;
+import 'dart:io';
 
-import 'package:distributed/src/http_server/router.dart';
+import 'package:distributed/src/http_server/request_handler.dart';
 
-class HttpServer {
-  final io.HttpServer _delegate;
+class HttpServerBuilder {
+  RequestHandler _firstHandler;
+  RequestHandler _lastHandler;
 
-  static Future<HttpServer> bind(
-      String address, int port, Router router) async {
-    var httpServer = await io.HttpServer.bind(address, port);
-    httpServer.listen(router.route);
-    return new HttpServer._(httpServer);
+  void addHandler(RequestHandler handler) {
+    if (_firstHandler == null) {
+      _firstHandler = handler;
+      _lastHandler = _firstHandler;
+    } else {
+      _lastHandler.successor = handler;
+      _lastHandler = handler;
+    }
   }
 
-  HttpServer._(this._delegate);
-
-  Future close() => _delegate.close(force: true);
+  Future<HttpServer> bind(String address, int port) async =>
+      await HttpServer.bind(address, port)..listen(_firstHandler.handle);
 }
