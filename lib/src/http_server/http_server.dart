@@ -3,7 +3,6 @@ import 'dart:io' as io;
 
 import 'package:distributed/src/http_server/router.dart';
 
-/// An HttpServer that
 class HttpServer {
   final io.HttpServer _delegate;
 
