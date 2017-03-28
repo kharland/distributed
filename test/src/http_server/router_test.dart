@@ -15,7 +15,7 @@ void main() {
         request = new MockHttpRequest();
       });
 
-      /// Mocks all method on [route] to return true values.
+      /// Mocks all methods on [route] to return true values.
       void mockReturnTrueForAll(MockRoute route) {
         when(route.accepts(request)).thenReturn(true);
         when(route.sendToHandler(request)).thenReturn(new Future.value(true));
