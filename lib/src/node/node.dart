@@ -45,5 +45,5 @@ abstract class Node {
   Future shutdown();
 
   static Future<Node> spawn(String name, {Logger logger}) =>
-      nodeProvider.spawn(name, logger: logger ??= new Logger(name));
+      nodeProvider.spawn(name, logger ??= new Logger(name));
 }

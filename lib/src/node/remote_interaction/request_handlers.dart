@@ -7,8 +7,8 @@ import 'package:distributed/src/http_server/request_handler.dart';
 
 /* Default RouteHandler RequestMatchers */
 
-final connectMatcher = new RequestMatcher(r'/connect/[a-z0-9]+', POST);
-final disconnectMatcher = new RequestMatcher(r'/connect/[a-z0-9]+', DELETE);
+final connectMatcher = new RequestMatcher(r'/connect');
+final disconnectMatcher = new RequestMatcher(r'/disconnect');
 
 /// Forces a connection between a given [Node] and [Peer].
 ///
@@ -24,8 +24,7 @@ class ConnectHandler extends RequestHandler {
   @override
   Future handle(HttpRequest request) async {
     if (!_matcher.matches(request)) return super.handle(request);
-    var peerString = await _readAsString(request);
-    var peer = Peer.deserialize(peerString);
+    var peer = Peer.deserialize(await _readAsString(request));
     if (!await _node.connect(peer)) {
       throw new Exception('Connection failed');
     }
@@ -48,8 +47,7 @@ class DisconnectHandler extends RequestHandler {
   @override
   Future handle(HttpRequest request) async {
     if (!_matcher.matches(request)) return super.handle(request);
-    var peerString = await _readAsString(request);
-    var peer = Peer.deserialize(peerString);
+    var peer = Peer.deserialize(await _readAsString(request));
     _node.disconnect(peer);
     await _node.onDisconnect.take(1).first;
   }
@@ -61,5 +59,3 @@ class DisconnectHandler extends RequestHandler {
 Future<String> _readAsString(HttpRequest request) => request
     .transform(new Utf8Decoder())
     .fold('', (encoded, next) => '$encoded$next');
-
-// TODO: Security Handlers

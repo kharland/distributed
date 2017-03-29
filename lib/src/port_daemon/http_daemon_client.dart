@@ -5,7 +5,6 @@ import 'package:distributed/src/objects/interfaces.dart';
 import 'package:distributed/src/objects/objects.dart';
 import 'package:distributed/src/port_daemon/port_daemon_client.dart';
 import 'package:distributed/src/port_daemon/ports.dart';
-import 'package:meta/meta.dart';
 import 'package:seltzer/platform/vm.dart';
 import 'package:seltzer/seltzer.dart';
 
@@ -21,7 +20,7 @@ class HttpDaemonClient implements PortDaemonClient {
 
   PeriodicFunction _keepAliveSignal;
 
-  HttpDaemonClient({@required this.name, @required this.daemonHost});
+  HttpDaemonClient(this.name, this.daemonHost);
 
   @override
   Future<bool> get isDaemonRunning async => _pingDaemon(name);
@@ -51,12 +50,39 @@ class HttpDaemonClient implements PortDaemonClient {
     }
   }
 
-  static int registerCount = 0;
   @override
-  Future<int> register() async {
+  Future<String> lookupServer(String nodeName) async {
+    await _expectDaemonIsRunning();
+    try {
+      var response = await _http.send(_get('node/server/$nodeName'));
+      final port = int.parse(await response.readAsString());
+      return port == Ports.error ? '' : 'http://${daemonHost.address}:$port';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  @override
+  Future<int> registerNode() async {
     await _expectDaemonIsRunning();
     try {
       var response = await _http.send(_post('node/$name'));
+      Registration result =
+          deserialize(await response.readAsString(), Registration);
+      if (result.port != Ports.error) {
+        _periodicallySendKeepAliveSignal();
+      }
+      return result.port;
+    } catch (e) {
+      return Ports.error;
+    }
+  }
+
+  @override
+  Future<int> registerServer() async {
+    await _expectDaemonIsRunning();
+    try {
+      var response = await _http.send(_post('node/server/$name'));
       Registration result =
           deserialize(await response.readAsString(), Registration);
       if (result.port != Ports.error) {
