@@ -6,7 +6,7 @@ import 'package:distributed/src/configuration.dart';
 import 'package:distributed/src/connection/connection_manager.dart';
 import 'package:distributed/src/connection/peer_verifier.dart';
 import 'package:distributed/src/node/cross_platform_node.dart';
-import 'package:distributed/src/node/remote_interaction_server/server.dart';
+import 'package:distributed/src/node/remote_interaction/server.dart';
 import 'package:distributed/src/port_daemon/port_daemon_client.dart';
 import 'package:distributed/src/port_daemon/ports.dart';
 import 'package:meta/meta.dart';
@@ -69,6 +69,6 @@ class _VmNodeProvider implements NodeProvider {
       logger
           .log('Registered server at ${daemonClient.daemonHost.portDaemonUrl}');
     }
-    return await bindNodeServer(daemonClient.daemonHost.address, port, node);
+    return await bindServer(daemonClient.daemonHost.address, port, node);
   }
 }
