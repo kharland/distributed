@@ -58,7 +58,6 @@ class HttpDaemonClient implements PortDaemonClient {
       final port = int.parse(await response.readAsString());
       return port == Ports.error ? '' : 'http://${daemonHost.address}:$port';
     } catch (e) {
-      print(e);
       return '';
     }
   }
@@ -74,9 +73,7 @@ class HttpDaemonClient implements PortDaemonClient {
         _periodicallySendKeepAliveSignal();
       }
       return result.port;
-    } catch (e, s) {
-      print(e);
-      print(s);
+    } catch (e) {
       return Ports.error;
     }
   }
@@ -92,9 +89,7 @@ class HttpDaemonClient implements PortDaemonClient {
         _periodicallySendKeepAliveSignal();
       }
       return result.port;
-    } catch (e, s) {
-      print(e);
-      print(s);
+    } catch (e) {
       return Ports.error;
     }
   }
