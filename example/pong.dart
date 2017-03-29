@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:distributed/distributed.dart';
 import 'package:distributed/platform/vm.dart';
 
-import 'example_helper.dart';
+import 'ping_pong_helper.dart';
 
 Future main() async {
   configureDistributed();
