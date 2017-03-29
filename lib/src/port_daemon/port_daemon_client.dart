@@ -4,16 +4,12 @@ import 'package:distributed/src/objects/interfaces.dart';
 import 'package:distributed/src/port_daemon/http_daemon_client.dart';
 import 'package:distributed/src/port_daemon/port_daemon.dart';
 import 'package:distributed/src/port_daemon/ports.dart';
-import 'package:meta/meta.dart';
 
 // TODO: Use HttpDaemonClient as collection of methods and refactor
 // This class into clients for web/node/cli/ etc.
 /// An object for communicating with a [PortDaemon].
 abstract class PortDaemonClient {
-  factory PortDaemonClient({
-    @required String name,
-    @required HostMachine daemonHost,
-  }) = HttpDaemonClient;
+  factory PortDaemonClient(name, daemonHost) = HttpDaemonClient;
 
   /// The [HostMachine] where this client's [PortDaemon] is running.
   HostMachine get daemonHost;
@@ -35,7 +31,11 @@ abstract class PortDaemonClient {
   ///
   /// Returns a Future that completes with the new port if registration
   /// succeeded or [Ports.error] if it failed.
-  Future<int> register();
+  Future<int> registerNode();
+
+  Future<String> lookupServer(String nodeName);
+
+  Future<int> registerServer();
 
   /// Instructs the daemon server to deregister this client.
   ///

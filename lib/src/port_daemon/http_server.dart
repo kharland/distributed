@@ -26,14 +26,12 @@ class ExpressServer implements WebServer {
     express.logger = (_) => logger.error(_);
     var db = nodeDatabase;
     var expressInstance = new express.Express()
-      ..get('/ping/:name',
-          (express.HttpContext ctx) => _handlePingRequest(ctx, db, logger))
+      ..get('/list/node',
+          (express.HttpContext ctx) => _handleNodeListRequest(ctx, db, logger))
       ..get(
           '/node/:name',
           (express.HttpContext ctx) =>
-              _handleNodeLookupRequest(ctx, db, logger))
-      ..get('/list/node',
-          (express.HttpContext ctx) => _handleNodeListRequest(ctx, db, logger))
+              _handleLookupNodeRequest(ctx, db, logger))
       ..post(
           '/node/:name',
           (express.HttpContext ctx) =>
@@ -41,7 +39,17 @@ class ExpressServer implements WebServer {
       ..delete(
           '/node/:name',
           (express.HttpContext ctx) =>
-              _handleDeregisterNodeRequest(ctx, db, logger));
+              _handleDeregisterNodeRequest(ctx, db, logger))
+      ..get(
+          '/node/server/:name',
+          (express.HttpContext ctx) =>
+              _handleLookupServerRequest(ctx, db, logger))
+      ..post(
+          '/node/server/:name',
+          (express.HttpContext ctx) =>
+              _handleRegisterServerRequest(ctx, db, logger))
+      ..get('/ping/:name',
+          (express.HttpContext ctx) => _handlePingRequest(ctx, db, logger));
     await expressInstance.listen(
         hostMachine.address, hostMachine.portDaemonPort);
     return new ExpressServer._(hostMachine, expressInstance);
@@ -83,6 +91,23 @@ class ExpressServer implements WebServer {
     });
   }
 
+  static Future _handleRegisterServerRequest(
+    express.HttpContext ctx,
+    NodeDatabase db,
+    Logger logger,
+  ) async {
+    db.registerNodeServer(ctx.params['name']).then((Registration registration) {
+      logger.log(
+          'Registered server for ${ctx.params['name']} to ${registration.port}');
+      ctx.sendText(serialize(registration));
+      ctx.end();
+    }).catchError((e, stacktrace) {
+      logger..error(e)..error(stacktrace);
+      ctx.sendText(serialize($registration(Ports.error, e.toString())));
+      ctx.end();
+    });
+  }
+
   static Future _handleDeregisterNodeRequest(
     HttpContext ctx,
     NodeDatabase db,
@@ -99,12 +124,27 @@ class ExpressServer implements WebServer {
     });
   }
 
-  static Future _handleNodeLookupRequest(
+  static Future _handleLookupNodeRequest(
     HttpContext ctx,
     NodeDatabase db,
     Logger logger,
   ) async {
     db.getPort(ctx.params['name']).then((int port) {
+      ctx.sendText(port.toString());
+      ctx.end();
+    }).catchError((e, stacktrace) {
+      logger..error(e)..error(stacktrace);
+      ctx.sendText(Ports.error.toString());
+      ctx.end();
+    });
+  }
+
+  static Future _handleLookupServerRequest(
+    express.HttpContext ctx,
+    NodeDatabase db,
+    Logger logger,
+  ) async {
+    db.getServerPort(ctx.params['name']).then((int port) {
       ctx.sendText(port.toString());
       ctx.end();
     }).catchError((e, stacktrace) {

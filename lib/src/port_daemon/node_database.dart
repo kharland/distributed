@@ -55,8 +55,32 @@ class NodeDatabase {
       ..gone.then((_) {
         keepAliveController.close();
         deregisterNode(name);
+        _deregisterNodeServer(name);
       });
     return $registration(port, '');
+  }
+
+  // TODO: dedup this and registerNode
+  Future<Registration> registerNodeServer(String nodeName) async {
+    final serverName = _getServerName(nodeName);
+    // Make sure no node with [name] is already registered.
+    int port = await getPort(serverName);
+    if (port >= 0) {
+      return $registration(Ports.error, NODE_ALREADY_HAS_SERVER);
+    }
+
+    // Check if a free port is available.
+    port = await Ports.getUnusedPort();
+    if (port == Ports.error) {
+      return $registration(Ports.error, NO_AVAILABLE_PORT);
+    }
+
+    await _delegateDatabase.insert(serverName, port);
+    return $registration(port, '');
+  }
+
+  void _deregisterNodeServer(String nodeName) {
+    deregisterNode(_getServerName(nodeName));
   }
 
   /// Frees the port held by the node named [name].
@@ -71,7 +95,7 @@ class NodeDatabase {
     await _delegateDatabase.remove(name);
     _nodeNameToKeepAlive.remove(name);
     var nodeResourceMonitor = _nodeNameToMonitor.remove(name);
-    if (nodeResourceMonitor.isAlive) {
+    if (nodeResourceMonitor?.isAlive == true) {
       await nodeResourceMonitor.stop();
     }
     _onDeregistered.add(name);
@@ -83,4 +107,9 @@ class NodeDatabase {
   /// If no node is found, returns [Ports.error].
   Future<int> getPort(String nodeName) async =>
       await _delegateDatabase.get(nodeName) ?? Ports.error;
+
+  Future<int> getServerPort(String nodeName) async =>
+      await _delegateDatabase.get(_getServerName(nodeName)) ?? Ports.error;
+
+  String _getServerName(String name) => '${name}_server';
 }

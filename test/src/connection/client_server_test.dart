@@ -14,10 +14,8 @@ void main() {
 
   Future commonSetUp() async {
     daemon = await PortDaemon.spawn(new Logger.disabled());
-    clientA =
-        new PortDaemonClient(name: 'A', daemonHost: HostMachine.localHost);
-    clientB =
-        new PortDaemonClient(name: 'B', daemonHost: HostMachine.localHost);
+    clientA = new PortDaemonClient('A', HostMachine.localHost);
+    clientB = new PortDaemonClient('B', HostMachine.localHost);
   }
 
   Future commonTearDown() async {
@@ -43,23 +41,23 @@ void main() {
 
     test('nodes should return the nodes registered with the daemon', () async {
       expect(daemon.nodes, isEmpty);
-      await clientA.register();
-      await clientB.register();
+      await clientA.registerNode();
+      await clientB.registerNode();
       expect(daemon.nodes, ['A', 'B']);
     });
 
     test('should register a node', () async {
-      expect(await clientA.register(), greaterThan(0));
+      expect(await clientA.registerNode(), greaterThan(0));
       expect(await daemon.getPort('A'), greaterThan(0));
     });
 
     test('should fail to register a currently registered node', () async {
-      expect(await clientA.register(), greaterThan(0));
-      expect(await clientA.register(), Ports.error);
+      expect(await clientA.registerNode(), greaterThan(0));
+      expect(await clientA.registerNode(), Ports.error);
     });
 
     test('should be able to deregister a node', () async {
-      expect(await clientA.register(), greaterThan(0));
+      expect(await clientA.registerNode(), greaterThan(0));
       expect(await daemon.getPort('A'), greaterThan(0));
       expect(await clientA.deregister(), true);
       expect(await daemon.getPort('A'), Ports.error);
@@ -68,14 +66,14 @@ void main() {
     test('should exchange the list of nodes registered on the server',
         () async {
       expect(await clientA.getNodes(), isEmpty);
-      expect(await clientA.register(), greaterThan(0));
-      expect(await clientB.register(), greaterThan(0));
+      expect(await clientA.registerNode(), greaterThan(0));
+      expect(await clientB.registerNode(), greaterThan(0));
       expect((await clientA.getNodes()).keys, unorderedEquals(['A', 'B']));
     });
 
     test("should exchange a node's information", () async {
       expect(await clientA.lookup('A'), '');
-      var port = await clientA.register();
+      var port = await clientA.registerNode();
       expect(port, greaterThan(0));
       expect(await daemon.getPort('A'), port);
       expect(await clientA.lookup('A'), 'ws://localhost:$port');

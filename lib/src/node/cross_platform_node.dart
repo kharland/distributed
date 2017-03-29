@@ -46,8 +46,7 @@ class CrossPlatformNode implements Node {
 
   @override
   Future<bool> connect(Peer peer) async {
-    final portDaemonClient =
-        new PortDaemonClient(name: name, daemonHost: peer.hostMachine);
+    final portDaemonClient = new PortDaemonClient(name, peer.hostMachine);
     final peerUrl = await portDaemonClient.lookup(peer.name);
 
     if (peerUrl.isEmpty) {
