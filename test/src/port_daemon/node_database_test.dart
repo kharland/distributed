@@ -9,7 +9,7 @@ void main() {
   group('$NodeDatabase', () {
     NodeDatabase db;
 
-    setUp(() async {
+    setUp(() {
       db = new NodeDatabase();
     });
 
