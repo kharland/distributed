@@ -9,7 +9,7 @@ abstract class NodeProvider {
   ///
   /// [name] is the name of the node. [logger] is the [Logger] the [Node] will
   /// use.  If [supportRemoteInteraction] is true, the node may be interacted
-  /// with remotely via the node server api; The default is false.
+  /// with remotely via the remote interaction api; The default is false.
   Future<Node> spawn(
     String name,
     Logger logger, {
