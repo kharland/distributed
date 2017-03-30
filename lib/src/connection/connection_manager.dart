@@ -1,13 +1,12 @@
 import 'dart:async';
 
 import 'package:distributed/src/connection/message_channel.dart';
-import 'package:distributed/src/connection/socket.dart';
-import 'package:distributed/src/monitoring/logging.dart';
 import 'package:distributed/src/connection/peer_verifier.dart';
+import 'package:distributed/src/connection/socket.dart';
+import 'package:distributed/src/connection/socket_server.dart';
+import 'package:distributed/src/monitoring/logging.dart';
 import 'package:distributed/src/objects/interfaces.dart';
 import 'package:meta/meta.dart';
-
-import 'socket_server.dart';
 
 /// An interface for managing a group of connections.
 ///
@@ -87,7 +86,7 @@ class VmConnectionManager implements ConnectionManager {
 
   @override
   Future<bool> connect(String url) async {
-    final socket = Socket.connect(url);
+    final socket = await Socket.connect(url);
     final verification = await _peerVerifier.verifyOutgoing(socket);
     if (verification.error.isNotEmpty) {
       throw new Exception(verification.error);

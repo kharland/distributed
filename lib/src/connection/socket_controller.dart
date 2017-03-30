@@ -42,4 +42,7 @@ class TestSocket extends StreamView<String> implements Socket {
   void close() {
     _sink.close();
   }
+
+  @override
+  String get remoteHost => '';
 }
