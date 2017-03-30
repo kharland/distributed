@@ -18,11 +18,11 @@ class PeerVerifier {
 
   PeerVerifier(this._localPeer);
 
-  /// See [verifyRemotePeer]
+  /// See [verifyRemotePeer].
   Future<VerificationResult> verifyOutgoing(Socket socket) =>
       verifyRemotePeer(socket, _localPeer, incoming: false);
 
-  /// See [verifyRemotePeer]
+  /// See [verifyRemotePeer].
   Future<VerificationResult> verifyIncoming(Socket socket) =>
       verifyRemotePeer(socket, _localPeer, incoming: true);
 }
@@ -85,8 +85,12 @@ Future<VerificationResult> _verifyIncomingConnection(
   if (sender == Peer.Null) {
     return new VerificationResult._error(VerificationError.INVALID_RESPONSE);
   } else {
+    // Use the socket's external ip instead of the original, internal ip sent by
+    // the peer.
+    var correctedSender = new Peer(sender.name,
+        new HostMachine(socket.remoteHost, sender.hostMachine.portDaemonPort));
     socket.add(serialize(createIdMessage(receiver)));
-    return new VerificationResult._('', sender);
+    return new VerificationResult._('', correctedSender);
   }
 }
 

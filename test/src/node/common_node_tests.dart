@@ -24,8 +24,12 @@ void runNodeTests() {
     });
 
     test('should register when a connection is made', () async {
-      expect(pong.onConnect, emits(ping.toPeer()));
-      expect(ping.onConnect, emits(pong.toPeer()));
+      var expectedPing = new Peer(ping.name,
+          new HostMachine('127.0.0.1', ping.hostMachine.portDaemonPort));
+      var expectedPong = new Peer(pong.name,
+          new HostMachine('127.0.0.1', pong.hostMachine.portDaemonPort));
+      expect(pong.onConnect, emits(expectedPing));
+      expect(ping.onConnect, emits(expectedPong));
       await ping.connect(pong.toPeer());
     });
 

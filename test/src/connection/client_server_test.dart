@@ -76,7 +76,7 @@ void main() {
       var port = await clientA.registerNode();
       expect(port, greaterThan(0));
       expect(await daemon.getPort('A'), port);
-      expect(await clientA.lookup('A'), 'ws://localhost:$port');
+      expect(await clientA.lookup('A'), 'ws://127.0.0.1:$port');
     });
   });
 }

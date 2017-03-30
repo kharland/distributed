@@ -162,7 +162,7 @@ abstract class BuiltPeerBuilder
 abstract class BuiltHostMachine
     implements Built<BuiltHostMachine, BuiltHostMachineBuilder>, HostMachine {
   static final localHost = new BuiltHostMachine((b) => b
-    ..address = 'localhost'
+    ..address = '127.0.0.1'
     ..portDaemonPort = Ports.defaultPortDaemonPort);
 
   static Serializer<BuiltHostMachine> get serializer =>
