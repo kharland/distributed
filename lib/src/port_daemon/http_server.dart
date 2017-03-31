@@ -27,7 +27,7 @@ class ExpressServer implements WebServer {
     var db = nodeDatabase;
     var expressInstance = new express.Express()
       ..get('/list/node',
-          (express.HttpContext ctx) => _handleNodeListRequest(ctx, db, logger))
+          (express.HttpContext ctx) => throw new UnimplementedError())
       ..get(
           '/node/:name',
           (express.HttpContext ctx) =>
@@ -49,7 +49,9 @@ class ExpressServer implements WebServer {
           (express.HttpContext ctx) =>
               _handleRegisterServerRequest(ctx, db, logger))
       ..get('/ping/:name',
-          (express.HttpContext ctx) => _handlePingRequest(ctx, db, logger));
+          (express.HttpContext ctx) => _handleKeepAliveRequest(ctx, db, logger))
+      ..get('/ping',
+          (express.HttpContext ctx) => _handlePingRequest(ctx, logger));
     await expressInstance.listen(
         hostMachine.address, hostMachine.portDaemonPort);
     return new ExpressServer._(hostMachine, expressInstance);
@@ -65,7 +67,12 @@ class ExpressServer implements WebServer {
     _express.close();
   }
 
-  static Future _handlePingRequest(
+  static Future _handlePingRequest(HttpContext ctx, Logger logger) async {
+    ctx.sendText('');
+    ctx.end();
+  }
+
+  static Future _handleKeepAliveRequest(
     HttpContext ctx,
     NodeDatabase db,
     Logger logger,
@@ -152,20 +159,5 @@ class ExpressServer implements WebServer {
       ctx.sendText(Ports.error.toString());
       ctx.end();
     });
-  }
-
-  static Future _handleNodeListRequest(
-    HttpContext ctx,
-    NodeDatabase db,
-    Logger logger,
-  ) async {
-    var nodes = db.nodes;
-    var ports = await Future.wait(nodes.map(db.getPort));
-    var assignments = <String, int>{};
-    for (int i = 0; i < nodes.length; i++) {
-      assignments[nodes.elementAt(i)] = ports[i];
-    }
-    ctx.sendText(serialize($portAssignmentList(assignments)));
-    ctx.end();
   }
 }

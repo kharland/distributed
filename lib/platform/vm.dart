@@ -7,7 +7,7 @@ import 'package:distributed/src/connection/connection_manager.dart';
 import 'package:distributed/src/connection/peer_verifier.dart';
 import 'package:distributed/src/node/cross_platform_node.dart';
 import 'package:distributed/src/node/remote_interaction/server.dart';
-import 'package:distributed/src/port_daemon/port_daemon_client.dart';
+import 'package:distributed/src/port_daemon/client.dart';
 import 'package:distributed/src/port_daemon/ports.dart';
 import 'package:meta/meta.dart';
 
@@ -22,53 +22,53 @@ class _VmNodeProvider implements NodeProvider {
     Logger logger, {
     bool supportRemoteInteraction: false,
   }) async {
-    final daemonClient = new PortDaemonClient(name, HostMachine.localHost);
-    final node = await spawnNode(name, logger, daemonClient);
+    final hostMachine = HostMachine.localHost;
+    final daemonClient = new PortDaemonClient(hostMachine.portDaemonUrl);
+    final node = await spawnNode(name, logger, daemonClient, hostMachine);
 
     HttpServer remoteInteractionServer;
     if (supportRemoteInteraction) {
-      remoteInteractionServer = await spawnServer(node, logger, daemonClient);
+      remoteInteractionServer =
+          await spawnServer(node, logger, daemonClient, hostMachine);
     }
 
     node.onShutdown.then((_) {
       remoteInteractionServer?.close(force: true);
-      daemonClient.deregister();
+      daemonClient.deregisterNode(name);
     });
 
     return node;
   }
 
   @visibleForTesting
-  Future<Node> spawnNode(
-      String name, Logger logger, PortDaemonClient daemonClient) async {
-    final port = await daemonClient.registerNode();
+  Future<Node> spawnNode(String name, Logger logger,
+      PortDaemonClient daemonClient, HostMachine hostMachine) async {
+    final port = await daemonClient.registerNode(name);
     if (port == Ports.error) {
       throw new Exception('Failed to register node');
     } else {
-      logger
-          .log('Registered $name at ${daemonClient.daemonHost.portDaemonUrl}');
+      logger.log('Registered $name at ${daemonClient.daemonUrl}');
     }
 
-    final asPeer = new Peer(name, daemonClient.daemonHost);
+    final asPeer = new Peer(name, hostMachine);
     return new CrossPlatformNode.fromPeer(asPeer,
         logger: logger,
         connectionManager: await VmConnectionManager.bind(
-          daemonClient.daemonHost.address,
+          hostMachine.address,
           port,
           peerVerifier: new PeerVerifier(asPeer),
           logger: logger,
         ));
   }
 
-  Future<HttpServer> spawnServer(
-      Node node, Logger logger, PortDaemonClient daemonClient) async {
-    final port = await daemonClient.registerServer();
+  Future<HttpServer> spawnServer(Node node, Logger logger,
+      PortDaemonClient daemonClient, HostMachine hostMachine) async {
+    final port = await daemonClient.registerRIServer(node.name);
     if (port == Ports.error) {
       throw new Exception('Failed to register node server');
     } else {
-      logger
-          .log('Registered server at ${daemonClient.daemonHost.portDaemonUrl}');
+      logger.log('Registered server at ${daemonClient.daemonUrl}');
     }
-    return await bindServer(daemonClient.daemonHost.address, port, node);
+    return await bindServer(hostMachine.address, port, node);
   }
 }

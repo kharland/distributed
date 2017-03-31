@@ -7,7 +7,7 @@ import 'src/monitoring/periodic_function_test.dart' as periodic_function_test;
 import 'src/monitoring/signal_monitor_test.dart' as resource_test;
 import 'src/connection/message_router_test.dart' as message_router_test;
 import 'src/node/vm_node_test.dart' as vm_node_test;
-import 'src/connection/client_server_test.dart' as client_server_test;
+import 'src/port_daemon/client_server_test.dart' as client_server_test;
 import 'src/http_server/server_builder_test.dart' as http_server_builder_test;
 import 'src/node/control_handlers_test.dart' as control_handlers_test;
 

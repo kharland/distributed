@@ -8,7 +8,6 @@ part of distributed.objects;
 // **************************************************************************
 
 Serializers _$serializers = (new Serializers().toBuilder()
-      ..add(PortAssignmentList.serializer)
       ..addBuilderFactory(
           const FullType(
               BuiltMap, const [const FullType(String), const FullType(int)]),
@@ -19,8 +18,6 @@ Serializers _$serializers = (new Serializers().toBuilder()
       ..add(BuiltHostMachine.serializer)
       ..add(SpawnRequest.serializer))
     .build();
-Serializer<PortAssignmentList> _$portAssignmentListSerializer =
-    new _$PortAssignmentListSerializer();
 Serializer<Registration> _$registrationSerializer =
     new _$RegistrationSerializer();
 Serializer<BuiltMessage> _$builtMessageSerializer =
@@ -30,51 +27,6 @@ Serializer<BuiltHostMachine> _$builtHostMachineSerializer =
     new _$BuiltHostMachineSerializer();
 Serializer<SpawnRequest> _$spawnRequestSerializer =
     new _$SpawnRequestSerializer();
-
-class _$PortAssignmentListSerializer
-    implements StructuredSerializer<PortAssignmentList> {
-  @override
-  final Iterable<Type> types = const [PortAssignmentList, _$PortAssignmentList];
-  @override
-  final String wireName = 'PortAssignmentList';
-
-  @override
-  Iterable serialize(Serializers serializers, PortAssignmentList object,
-      {FullType specifiedType: FullType.unspecified}) {
-    final result = <Object>[
-      'assignments',
-      serializers.serialize(object.assignments,
-          specifiedType: const FullType(
-              BuiltMap, const [const FullType(String), const FullType(int)])),
-    ];
-
-    return result;
-  }
-
-  @override
-  PortAssignmentList deserialize(Serializers serializers, Iterable serialized,
-      {FullType specifiedType: FullType.unspecified}) {
-    final result = new PortAssignmentListBuilder();
-
-    final iterator = serialized.iterator;
-    while (iterator.moveNext()) {
-      final key = iterator.current as String;
-      iterator.moveNext();
-      final dynamic value = iterator.current;
-      switch (key) {
-        case 'assignments':
-          result.assignments.replace(serializers.deserialize(value,
-              specifiedType: const FullType(BuiltMap, const [
-                const FullType(String),
-                const FullType(int)
-              ])) as BuiltMap<String, int>);
-          break;
-      }
-    }
-
-    return result.build();
-  }
-}
 
 class _$RegistrationSerializer implements StructuredSerializer<Registration> {
   @override
@@ -314,96 +266,6 @@ class _$SpawnRequestSerializer implements StructuredSerializer<SpawnRequest> {
     }
 
     return result.build();
-  }
-}
-
-// **************************************************************************
-// Generator: BuiltValueGenerator
-// Target: abstract class PortAssignmentList
-// **************************************************************************
-
-class _$PortAssignmentList extends PortAssignmentList {
-  @override
-  final BuiltMap<String, int> assignments;
-
-  factory _$PortAssignmentList([void updates(PortAssignmentListBuilder b)]) =>
-      (new PortAssignmentListBuilder()..update(updates)).build()
-          as _$PortAssignmentList;
-
-  _$PortAssignmentList._({this.assignments}) : super._() {
-    if (assignments == null) throw new ArgumentError.notNull('assignments');
-  }
-
-  @override
-  PortAssignmentList rebuild(void updates(PortAssignmentListBuilder b)) =>
-      (toBuilder()..update(updates)).build();
-
-  @override
-  _$PortAssignmentListBuilder toBuilder() =>
-      new _$PortAssignmentListBuilder()..replace(this);
-
-  @override
-  bool operator ==(dynamic other) {
-    if (identical(other, this)) return true;
-    if (other is! PortAssignmentList) return false;
-    return assignments == other.assignments;
-  }
-
-  @override
-  int get hashCode {
-    return $jf($jc(0, assignments.hashCode));
-  }
-
-  @override
-  String toString() {
-    return 'PortAssignmentList {'
-        'assignments=${assignments.toString()},\n'
-        '}';
-  }
-}
-
-class _$PortAssignmentListBuilder extends PortAssignmentListBuilder {
-  _$PortAssignmentList _$v;
-
-  @override
-  MapBuilder<String, int> get assignments {
-    _$this;
-    return super.assignments ??= new MapBuilder<String, int>();
-  }
-
-  @override
-  set assignments(MapBuilder<String, int> assignments) {
-    _$this;
-    super.assignments = assignments;
-  }
-
-  _$PortAssignmentListBuilder() : super._();
-
-  PortAssignmentListBuilder get _$this {
-    if (_$v != null) {
-      super.assignments = _$v.assignments?.toBuilder();
-      _$v = null;
-    }
-    return this;
-  }
-
-  @override
-  void replace(PortAssignmentList other) {
-    if (other == null) throw new ArgumentError.notNull('other');
-    _$v = other as _$PortAssignmentList;
-  }
-
-  @override
-  void update(void updates(PortAssignmentListBuilder b)) {
-    if (updates != null) updates(this);
-  }
-
-  @override
-  _$PortAssignmentList build() {
-    final result =
-        _$v ?? new _$PortAssignmentList._(assignments: assignments?.build());
-    replace(result);
-    return result;
   }
 }
 

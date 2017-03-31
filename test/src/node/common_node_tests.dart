@@ -31,6 +31,7 @@ void runNodeTests() {
       expect(pong.onConnect, emits(expectedPing));
       expect(ping.onConnect, emits(expectedPong));
       await ping.connect(pong.toPeer());
+      print("Connected ${ping.peers}");
     });
 
     test('should register when a disconnection occurs', () async {

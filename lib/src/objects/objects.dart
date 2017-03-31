@@ -35,10 +35,6 @@ BuiltHostMachine $hostMachine(String address, int portDaemonPort) =>
       ..address = address
       ..portDaemonPort = portDaemonPort);
 
-PortAssignmentList $portAssignmentList(Map<String, int> assignments) =>
-    new PortAssignmentList((b) =>
-        b..assignments = (new MapBuilder<String, int>()..addAll(assignments)));
-
 Registration $registration(int port, String error) => new Registration((b) => b
   ..port = port
   ..error = error);
@@ -47,28 +43,6 @@ SpawnRequest $spawnRequest(String nodeName, String uri) =>
     new SpawnRequest((b) => b
       ..nodeName = nodeName
       ..uri = uri);
-
-abstract class PortAssignmentList
-    implements Built<PortAssignmentList, PortAssignmentListBuilder> {
-  static Serializer<PortAssignmentList> get serializer =>
-      _$portAssignmentListSerializer;
-
-  /// A mapping of a node's name to it's registered port.
-  BuiltMap<String, int> get assignments;
-
-  PortAssignmentList._();
-  factory PortAssignmentList([updates(PortAssignmentListBuilder b)]) =
-      _$PortAssignmentList;
-}
-
-abstract class PortAssignmentListBuilder
-    implements Builder<PortAssignmentList, PortAssignmentListBuilder> {
-  @virtual
-  MapBuilder<String, int> assignments;
-
-  PortAssignmentListBuilder._();
-  factory PortAssignmentListBuilder() = _$PortAssignmentListBuilder;
-}
 
 abstract class Registration
     implements Built<Registration, RegistrationBuilder> {
