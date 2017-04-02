@@ -9,6 +9,25 @@ import 'package:distributed/src/http_server/request_handler.dart';
 
 final connectMatcher = new RequestMatcher(r'/connect');
 final disconnectMatcher = new RequestMatcher(r'/disconnect');
+final pingMatcher = new RequestMatcher(r'/ping');
+
+/// Handles a ping request.
+///
+/// This handler always sets the reponse status to `HttpStatus.OK` and returns
+/// an empty list.
+class PingHandler extends RequestHandler {
+  final RequestMatcher _matcher;
+
+  PingHandler(this._matcher);
+
+  @override
+  Future handle(HttpRequest request) async {
+    if (!_matcher.matches(request)) return super.handle(request);
+    request
+      ..response.statusCode = HttpStatus.OK
+      ..response.close();
+  }
+}
 
 /// Forces a connection between a given [Node] and [Peer].
 ///
@@ -28,6 +47,7 @@ class ConnectHandler extends RequestHandler {
     if (!await _node.connect(peer)) {
       throw new Exception('Connection failed');
     }
+    request.response.close();
   }
 
   ConnectHandler(this._node, this._matcher);
@@ -50,6 +70,7 @@ class DisconnectHandler extends RequestHandler {
     var peer = Peer.deserialize(await _readAsString(request));
     _node.disconnect(peer);
     await _node.onDisconnect.take(1).first;
+    request.response.close();
   }
 
   DisconnectHandler(this._node, this._matcher);

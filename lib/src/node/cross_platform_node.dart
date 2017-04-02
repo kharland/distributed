@@ -1,13 +1,13 @@
 import 'dart:async';
 
+import 'package:async/async.dart';
 import 'package:distributed/src/connection/connection_manager.dart';
 import 'package:distributed/src/monitoring/logging.dart';
-import 'package:distributed/src/objects/interfaces.dart';
-import 'package:distributed/src/port_daemon/port_daemon_client.dart';
+import 'package:distributed/src/port_daemon/client.dart';
+import 'package:distributed.objects/public.dart';
 import 'package:meta/meta.dart';
 
 import 'node.dart';
-import 'package:async/async.dart';
 
 /// Internal-only [Node] implementation.
 class CrossPlatformNode implements Node {
@@ -46,8 +46,8 @@ class CrossPlatformNode implements Node {
 
   @override
   Future<bool> connect(Peer peer) async {
-    final portDaemonClient = new PortDaemonClient(name, peer.hostMachine);
-    final peerUrl = await portDaemonClient.lookup(peer.name);
+    final daemonClient = new PortDaemonClient(peer.hostMachine.portDaemonUrl);
+    final peerUrl = await daemonClient.getNodeUrl(peer.name);
 
     if (peerUrl.isEmpty) {
       _logger.error('Peer ${peer.name} not found.');

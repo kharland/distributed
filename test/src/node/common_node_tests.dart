@@ -1,7 +1,7 @@
 import 'package:distributed/src/monitoring/logging.dart';
 import 'package:distributed/src/node/node.dart';
-import 'package:distributed/src/objects/interfaces.dart';
-import 'package:distributed/src/objects/objects.dart';
+import 'package:distributed.objects/public.dart';
+import 'package:distributed.objects/private.dart';
 import 'package:distributed/src/port_daemon/port_daemon.dart';
 import 'package:test/test.dart';
 
@@ -24,10 +24,8 @@ void runNodeTests() {
     });
 
     test('should register when a connection is made', () async {
-      var expectedPing = new Peer(ping.name,
-          new HostMachine('127.0.0.1', ping.hostMachine.portDaemonPort));
-      var expectedPong = new Peer(pong.name,
-          new HostMachine('127.0.0.1', pong.hostMachine.portDaemonPort));
+      var expectedPing = new Peer(ping.name, HostMachine.localHost);
+      var expectedPong = new Peer(pong.name, HostMachine.localHost);
       expect(pong.onConnect, emits(expectedPing));
       expect(ping.onConnect, emits(expectedPong));
       await ping.connect(pong.toPeer());

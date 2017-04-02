@@ -1,16 +1,17 @@
 import 'dart:async';
 
 import 'package:distributed/src/monitoring/signal_monitor.dart';
-import 'package:distributed/src/objects/objects.dart';
+import 'package:distributed/src/port_daemon/database.dart';
+import 'package:distributed/src/port_daemon/database_errors.dart';
 import 'package:distributed/src/port_daemon/port_daemon.dart';
 import 'package:distributed/src/port_daemon/ports.dart';
-import 'package:distributed/src/port_daemon/database_errors.dart';
-import 'package:distributed/src/port_daemon/database.dart';
+import 'package:distributed.objects/private.dart';
+
+const errorPortList = const <int>[Ports.error, Ports.error];
 
 /// A database used by a [PortDaemon] for keeping track of registered nodes.
 class NodeDatabase {
-  final _nodeNameToMonitor = <String, SignalMonitor>{};
-  final _nodeNameToKeepAlive = <String, StreamController<Null>>{};
+  final _nodeNameToSignalMonitor = <String, SignalMonitor>{};
   final _delegateDatabase = new MemoryDatabase<String, int>();
   final _onDeregistered = new StreamController<String>(sync: true);
 
@@ -19,13 +20,6 @@ class NodeDatabase {
 
   /// A stream of names for nodes that are deregistered from this database.
   Stream<String> get onDeregistered => _onDeregistered.stream;
-
-  /// Signals that the node with [name] is still available.
-  void keepAlive(String name) {
-    if (_nodeNameToKeepAlive.containsKey(name)) {
-      _nodeNameToKeepAlive[name].add(null);
-    }
-  }
 
   /// Assigns a port to a new node named [name].
   ///
@@ -36,70 +30,29 @@ class NodeDatabase {
   /// corresponding error message.
   /// [Ports.error] if registration failed.
   Future<Registration> registerNode(String name) async {
-    // Make sure no node with [name] is already registered.
-    int port = await getPort(name);
-    if (port >= 0) {
-      return $registration(Ports.error, NODE_ALREADY_EXISTS);
+    final nodeReg = await _obtainPortForEntity(name);
+    if (nodeReg.error.isNotEmpty) {
+      return $registration(errorPortList, nodeReg.error);
     }
 
-    // Check if a free port is available.
-    port = await Ports.getUnusedPort();
-    if (port == Ports.error) {
-      return $registration(Ports.error, NO_AVAILABLE_PORT);
+    final controlServerReg =
+        await _obtainPortForEntity(_getControlServerName(name));
+    if (controlServerReg.error.isNotEmpty) {
+      return $registration(errorPortList, controlServerReg.error);
     }
 
-    await _delegateDatabase.insert(name, port);
-    var keepAliveController = new StreamController<Null>(sync: true);
-    _nodeNameToKeepAlive[name] = keepAliveController;
-    _nodeNameToMonitor[name] = new SignalMonitor(keepAliveController.stream)
-      ..gone.then((_) {
-        keepAliveController.close();
-        deregisterNode(name);
-        _deregisterNodeServer(name);
-      });
-    return $registration(port, '');
-  }
-
-  // TODO: dedup this and registerNode
-  Future<Registration> registerNodeServer(String nodeName) async {
-    final serverName = _getServerName(nodeName);
-    // Make sure no node with [name] is already registered.
-    int port = await getPort(serverName);
-    if (port >= 0) {
-      return $registration(Ports.error, NODE_ALREADY_HAS_SERVER);
-    }
-
-    // Check if a free port is available.
-    port = await Ports.getUnusedPort();
-    if (port == Ports.error) {
-      return $registration(Ports.error, NO_AVAILABLE_PORT);
-    }
-
-    await _delegateDatabase.insert(serverName, port);
-    return $registration(port, '');
-  }
-
-  void _deregisterNodeServer(String nodeName) {
-    deregisterNode(_getServerName(nodeName));
+    return $registration([nodeReg.port, controlServerReg.port], NO_ERROR);
   }
 
   /// Frees the port held by the node named [name].
   ///
   /// An argument error is thrown if such a node does not exist.
   Future<String> deregisterNode(String name) async {
-    var port = await getPort(name);
-    if (port == Ports.error) {
-      return NODE_NOT_FOUND;
-    }
-
-    await _delegateDatabase.remove(name);
-    _nodeNameToKeepAlive.remove(name);
-    var nodeResourceMonitor = _nodeNameToMonitor.remove(name);
+    var nodeResourceMonitor = _nodeNameToSignalMonitor.remove(name);
     if (nodeResourceMonitor?.isAlive == true) {
       await nodeResourceMonitor.stop();
     }
-    _onDeregistered.add(name);
-    return NO_ERROR;
+    return _freeEntityPort(name);
   }
 
   /// Returns the port for the node named [nodeName].
@@ -108,8 +61,39 @@ class NodeDatabase {
   Future<int> getPort(String nodeName) async =>
       await _delegateDatabase.get(nodeName) ?? Ports.error;
 
-  Future<int> getServerPort(String nodeName) async =>
-      await _delegateDatabase.get(_getServerName(nodeName)) ?? Ports.error;
+  Future<int> getControlServerPort(String nodeName) async =>
+      await _delegateDatabase.get(_getControlServerName(nodeName)) ??
+      Ports.error;
 
-  String _getServerName(String name) => '${name}_server';
+  Future<_PortRegistration> _obtainPortForEntity(String name) async {
+    if (await _isRegistered(name)) {
+      return new _PortRegistration.failed(ALREADY_EXISTS);
+    }
+
+    int port = await Ports.getFreePort();
+    if (port == Ports.error) {
+      throw new Exception(NO_AVAILABLE_PORT);
+    }
+
+    return new _PortRegistration(await _delegateDatabase.insert(name, port));
+  }
+
+  Future<String> _freeEntityPort(String name) async {
+    if (!await _isRegistered(name)) return NODE_NOT_FOUND;
+    await _delegateDatabase.remove(name);
+    _onDeregistered.add(name);
+    return NO_ERROR;
+  }
+
+  String _getControlServerName(String name) => '${name}_control_server';
+
+  Future<bool> _isRegistered(String name) async => await getPort(name) >= 0;
+}
+
+class _PortRegistration {
+  final String error;
+  final int port;
+
+  _PortRegistration(this.port) : error = NO_ERROR;
+  _PortRegistration.failed(this.error) : this.port = Ports.error;
 }

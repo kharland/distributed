@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:distributed/src/monitoring/logging.dart';
-import 'package:distributed/src/objects/objects.dart';
-import 'package:distributed/src/port_daemon/ports.dart';
 import 'package:distributed/src/port_daemon/node_database.dart';
+import 'package:distributed/src/port_daemon/ports.dart';
+import 'package:distributed/src/port_daemon/routes.dart' as routes;
 import 'package:distributed/src/port_daemon/web_server.dart';
+import 'package:distributed.objects/private.dart' hide serialize;
+import 'package:distributed.objects/public.dart';
 import 'package:express/express.dart' as express;
 import 'package:express/express.dart' show HttpContext;
 import 'package:meta/meta.dart';
@@ -15,41 +17,37 @@ import 'package:meta/meta.dart';
 /// package:express.  It's recommended that only once instance be created at a
 /// time.
 class ExpressServer implements WebServer {
-  final BuiltHostMachine _hostMachine;
+  final HostMachine _hostMachine;
   final express.Express _express;
 
   static Future<ExpressServer> start({
-    @required BuiltHostMachine hostMachine,
+    @required HostMachine hostMachine,
     @required NodeDatabase nodeDatabase,
     @required Logger logger,
   }) async {
     express.logger = (_) => logger.error(_);
     var db = nodeDatabase;
     var expressInstance = new express.Express()
-      ..get('/list/node',
-          (express.HttpContext ctx) => _handleNodeListRequest(ctx, db, logger))
+      ..get(routes.listNodes,
+          (express.HttpContext ctx) => throw new UnimplementedError())
       ..get(
-          '/node/:name',
+          routes.nodeByName,
           (express.HttpContext ctx) =>
               _handleLookupNodeRequest(ctx, db, logger))
       ..post(
-          '/node/:name',
+          routes.nodeByName,
           (express.HttpContext ctx) =>
               _handleRegisterNodeRequest(ctx, db, logger))
       ..delete(
-          '/node/:name',
+          routes.nodeByName,
           (express.HttpContext ctx) =>
               _handleDeregisterNodeRequest(ctx, db, logger))
       ..get(
-          '/node/server/:name',
+          routes.controlServer,
           (express.HttpContext ctx) =>
-              _handleLookupServerRequest(ctx, db, logger))
-      ..post(
-          '/node/server/:name',
-          (express.HttpContext ctx) =>
-              _handleRegisterServerRequest(ctx, db, logger))
-      ..get('/ping/:name',
-          (express.HttpContext ctx) => _handlePingRequest(ctx, db, logger));
+              _handleControlServerRequest(ctx, db, logger))
+      ..get(routes.ping,
+          (express.HttpContext ctx) => _handlePingRequest(ctx, logger));
     await expressInstance.listen(
         hostMachine.address, hostMachine.portDaemonPort);
     return new ExpressServer._(hostMachine, expressInstance);
@@ -65,12 +63,7 @@ class ExpressServer implements WebServer {
     _express.close();
   }
 
-  static Future _handlePingRequest(
-    HttpContext ctx,
-    NodeDatabase db,
-    Logger logger,
-  ) async {
-    db.keepAlive(ctx.params['name']);
+  static Future _handlePingRequest(HttpContext ctx, Logger logger) async {
     ctx.sendText('');
     ctx.end();
   }
@@ -80,30 +73,21 @@ class ExpressServer implements WebServer {
     NodeDatabase db,
     Logger logger,
   ) async {
-    db.registerNode(ctx.params['name']).then((Registration registration) {
-      logger.log('Registered ${ctx.params['name']} to ${registration.port}');
-      ctx.sendText(serialize(registration));
+    final name = ctx.params['name'];
+    db.registerNode(name).then((Registration registration) {
+      if (registration.error.isEmpty) {
+        logger
+          ..log('Registered $name to ${registration.ports.first}')
+          ..log('Registered $name server to ${registration.ports.last}');
+      } else {
+        logger.error(registration.error);
+      }
+      ctx.sendText(Registration.serialize(registration));
       ctx.end();
     }).catchError((e, stacktrace) {
-      logger..error(e)..error(stacktrace);
-      ctx.sendText(serialize($registration(Ports.error, e.toString())));
-      ctx.end();
-    });
-  }
-
-  static Future _handleRegisterServerRequest(
-    express.HttpContext ctx,
-    NodeDatabase db,
-    Logger logger,
-  ) async {
-    db.registerNodeServer(ctx.params['name']).then((Registration registration) {
-      logger.log(
-          'Registered server for ${ctx.params['name']} to ${registration.port}');
-      ctx.sendText(serialize(registration));
-      ctx.end();
-    }).catchError((e, stacktrace) {
-      logger..error(e)..error(stacktrace);
-      ctx.sendText(serialize($registration(Ports.error, e.toString())));
+      logger..error(e.toString())..error(stacktrace.toString());
+      ctx.sendText(
+          Registration.serialize($registration(errorPortList, e.toString())));
       ctx.end();
     });
   }
@@ -139,12 +123,12 @@ class ExpressServer implements WebServer {
     });
   }
 
-  static Future _handleLookupServerRequest(
+  static Future _handleControlServerRequest(
     express.HttpContext ctx,
     NodeDatabase db,
     Logger logger,
   ) async {
-    db.getServerPort(ctx.params['name']).then((int port) {
+    db.getControlServerPort(ctx.params['name']).then((int port) {
       ctx.sendText(port.toString());
       ctx.end();
     }).catchError((e, stacktrace) {
@@ -152,20 +136,5 @@ class ExpressServer implements WebServer {
       ctx.sendText(Ports.error.toString());
       ctx.end();
     });
-  }
-
-  static Future _handleNodeListRequest(
-    HttpContext ctx,
-    NodeDatabase db,
-    Logger logger,
-  ) async {
-    var nodes = db.nodes;
-    var ports = await Future.wait(nodes.map(db.getPort));
-    var assignments = <String, int>{};
-    for (int i = 0; i < nodes.length; i++) {
-      assignments[nodes.elementAt(i)] = ports[i];
-    }
-    ctx.sendText(serialize($portAssignmentList(assignments)));
-    ctx.end();
   }
 }

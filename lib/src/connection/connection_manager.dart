@@ -5,7 +5,7 @@ import 'package:distributed/src/connection/peer_verifier.dart';
 import 'package:distributed/src/connection/socket.dart';
 import 'package:distributed/src/connection/socket_server.dart';
 import 'package:distributed/src/monitoring/logging.dart';
-import 'package:distributed/src/objects/interfaces.dart';
+import 'package:distributed.objects/public.dart';
 import 'package:meta/meta.dart';
 
 /// An interface for managing a group of connections.

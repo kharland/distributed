@@ -4,10 +4,9 @@ authors:
   - Kendal Harland <kjharland@google.com>
 homepage: https://github.com/kharland/distributed_dart
 dependencies:
+  distributed.objects:
+    path: lib/src/objects/
   async:
-  build_runner:
-  built_value:
-  built_value_generator:
   express:
   fixnum:
   logging:
@@ -15,10 +14,10 @@ dependencies:
   resource:
   seltzer:
     git: git://github.com/matanlurey/seltzer
-  source_gen:
   web_socket_channel: "<=2.0.0"
 dev_dependencies:
   dart_style:
   test:
   mockito:
   quiver:
+  stack_trace:

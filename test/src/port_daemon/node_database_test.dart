@@ -19,14 +19,15 @@ void main() {
       test('should return the port for a registered node', () async {
         expect(await db.getPort('a'), Ports.error);
         var registration = await db.registerNode('a');
-        expect(await db.getPort('a'), registration.port);
+        expect(await db.getPort('a'), registration.ports.first);
       });
     });
 
     group('registerNode', () {
       test('should register an unregistered node', () async {
         var registration = await db.registerNode('a');
-        expect(registration.port, greaterThan(0));
+        expect(registration.ports,
+            unorderedMatches([greaterThan(0), greaterThan(0)]));
         expect(registration.error, isEmpty);
       });
 
@@ -35,8 +36,9 @@ void main() {
         expect(await db.getPort('a'), greaterThan(0));
 
         var registration = await db.registerNode('a');
-        expect(registration.port, Ports.error);
-        expect(registration.error, NODE_ALREADY_EXISTS);
+        expect(
+            registration.ports, unorderedMatches([Ports.error, Ports.error]));
+        expect(registration.error, ALREADY_EXISTS);
       });
     });
 
