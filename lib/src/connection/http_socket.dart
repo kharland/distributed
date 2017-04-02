@@ -42,5 +42,5 @@ class HttpSocket extends StreamView<String> implements Socket {
   }
 
   @override
-  String get remoteHost => _socket.remoteAddress.host;
+  String get remoteHost => 'localhost'; //_socket.remoteAddress.host;
 }

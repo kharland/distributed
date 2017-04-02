@@ -113,7 +113,7 @@ abstract class BuiltHostMachine
         Built<BuiltHostMachine, BuiltHostMachineBuilder>,
         public.HostMachine {
   static final localHost = new BuiltHostMachine((b) => b
-    ..address = '127.0.0.1'
+    ..address = 'localhost' //''127.0.0.1'
     ..portDaemonPort = 4369);
 
   static Serializer<BuiltHostMachine> get serializer =>

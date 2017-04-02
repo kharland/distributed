@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:distributed.objects/public.dart';
 import 'package:distributed/src/monitoring/logging.dart';
 import 'package:distributed/src/port_daemon/client.dart';
 import 'package:distributed/src/port_daemon/node_database.dart';
@@ -54,7 +55,8 @@ void main() {
       expect(await client.getNodeUrl('A'), '');
       var ports = await client.registerNode('A');
       expect(ports, registrationSuccessMatcher);
-      expect(await client.getNodeUrl('A'), 'ws://127.0.0.1:${ports.first}');
+      expect(await client.getNodeUrl('A'),
+          'ws://${HostMachine.localHost.address}:${ports.first}');
       await client.deregisterNode('A');
       expect(await client.getNodeUrl('A'), '');
     });

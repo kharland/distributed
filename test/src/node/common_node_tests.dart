@@ -13,8 +13,8 @@ void runNodeTests() {
   group('$Node', () {
     setUp(() async {
       daemon = await PortDaemon.spawn(new Logger.disabled());
-      ping = await Node.spawn('ping', logger: new Logger('ping'));
-      pong = await Node.spawn('pong', logger: new Logger('pong'));
+      ping = await Node.spawn('ping', logger: new Logger.disabled());
+      pong = await Node.spawn('pong', logger: new Logger.disabled());
     });
 
     tearDown(() async {
@@ -24,10 +24,8 @@ void runNodeTests() {
     });
 
     test('should register when a connection is made', () async {
-      var expectedPing = new Peer(ping.name,
-          new HostMachine('127.0.0.1', ping.hostMachine.portDaemonPort));
-      var expectedPong = new Peer(pong.name,
-          new HostMachine('127.0.0.1', pong.hostMachine.portDaemonPort));
+      var expectedPing = new Peer(ping.name, HostMachine.localHost);
+      var expectedPong = new Peer(pong.name, HostMachine.localHost);
       expect(pong.onConnect, emits(expectedPing));
       expect(ping.onConnect, emits(expectedPong));
       await ping.connect(pong.toPeer());

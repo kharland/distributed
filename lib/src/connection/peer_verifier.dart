@@ -87,8 +87,11 @@ Future<VerificationResult> _verifyIncomingConnection(
   } else {
     // Use the socket's external ip instead of the original, internal ip sent by
     // the peer.
-    var correctedSender = new Peer(sender.name,
-        new HostMachine(socket.remoteHost, sender.hostMachine.portDaemonPort));
+    var correctedSender = new Peer(
+        sender.name,
+        // TODO: use socket.remoteHost.
+        new HostMachine(
+            sender.hostMachine.address, sender.hostMachine.portDaemonPort));
     socket.add(Message.serialize(createIdMessage(receiver)));
     return new VerificationResult._('', correctedSender);
   }
