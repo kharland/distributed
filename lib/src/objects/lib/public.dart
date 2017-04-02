@@ -1,9 +1,9 @@
-/// Common object interfaces.
+/// Common object interfaces visible to client libraries.
 
 import 'package:distributed/src/node/node.dart';
 import 'package:distributed/src/port_daemon/port_daemon.dart';
 
-import 'objects.dart' as built;
+import 'package:distributed.objects/private.dart' as internal;
 
 abstract class Entity {}
 
@@ -13,7 +13,8 @@ abstract class Peer extends Entity {
   static final Peer Null = new Peer('', HostMachine.Null);
 
   factory Peer(String name, HostMachine hostMachine) =>
-      built.$peer(name, hostMachine);
+      // ignore: return_of_invalid_type, argument_type_not_assignable
+      internal.$peer(name, hostMachine);
 
   /// Short name for printing
   String get displayName;
@@ -24,8 +25,11 @@ abstract class Peer extends Entity {
   /// This [Peer]'s name.
   String get name;
 
-  static Peer deserialize(String peer) =>
-      built.deserialize(peer, built.BuiltPeer);
+  static String serialize(Peer unserialized) =>
+      internal.serialize(unserialized as internal.BuiltPeer);
+
+  static Peer deserialize(String serialized) =>
+      internal.deserialize(serialized, internal.BuiltPeer);
 }
 
 /// A machine where any number of [Node] instances may be running.
@@ -33,10 +37,11 @@ abstract class HostMachine extends Entity {
   static final HostMachine Null = new HostMachine('', -1);
 
   /// A common [HostMachine] representing the local host.
-  static final localHost = built.BuiltHostMachine.localHost;
+  static final localHost = internal.BuiltHostMachine.localHost;
 
   factory HostMachine(String address, int portDaemonPort) =>
-      built.$hostMachine(address, portDaemonPort);
+      // ignore: return_of_invalid_type
+      internal.$hostMachine(address, portDaemonPort);
 
   /// The address of this [HostMachine].
   String get address;
@@ -47,8 +52,11 @@ abstract class HostMachine extends Entity {
   /// The http url for connecting to this [HostMachine]'s [PortDaemon].
   String get portDaemonUrl;
 
-  static HostMachine deserialize(String hostMachine) =>
-      built.deserialize(hostMachine, built.BuiltHostMachine);
+  static String serialize(HostMachine unserialized) =>
+      internal.serialize(unserialized as internal.BuiltHostMachine);
+
+  static HostMachine deserialize(String serialized) =>
+      internal.deserialize(serialized, internal.BuiltHostMachine);
 }
 
 /// A data object sent from one [Node] to another.
@@ -56,7 +64,8 @@ abstract class Message extends Entity {
   static final Message Null = new Message('', '', Peer.Null);
 
   factory Message(String category, String contents, Peer sender) =>
-      built.$message(category, contents, sender);
+      // ignore: return_of_invalid_type, argument_type_not_assignable
+      internal.$message(category, contents, sender);
 
   /// The [BuiltPeer] that created this [BuiltMessage].
   Peer get sender;
@@ -67,18 +76,9 @@ abstract class Message extends Entity {
   /// Data contained in this message.
   String get contents;
 
-  static Message deserialize(String message) =>
-      built.deserialize(message, built.BuiltMessage);
-}
+  static String serialize(Message unserialized) =>
+      internal.serialize(unserialized as internal.BuiltMessage);
 
-String serialize(Entity entity) {
-  if (entity is Peer) {
-    return built.serialize(entity as built.BuiltPeer);
-  } else if (entity is HostMachine) {
-    return built.serialize(entity as built.BuiltHostMachine);
-  } else if (entity is Message) {
-    return built.serialize(entity as built.BuiltMessage);
-  } else {
-    throw new UnsupportedError(entity.toString());
-  }
+  static Message deserialize(String serialized) =>
+      internal.deserialize(serialized, internal.BuiltMessage);
 }

@@ -1,13 +1,13 @@
 import 'dart:async';
 
+import 'package:async/async.dart';
 import 'package:distributed/src/connection/connection_manager.dart';
 import 'package:distributed/src/monitoring/logging.dart';
-import 'package:distributed/src/objects/interfaces.dart';
 import 'package:distributed/src/port_daemon/client.dart';
+import 'package:distributed.objects/public.dart';
 import 'package:meta/meta.dart';
 
 import 'node.dart';
-import 'package:async/async.dart';
 
 /// Internal-only [Node] implementation.
 class CrossPlatformNode implements Node {

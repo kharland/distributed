@@ -8,15 +8,13 @@ part of distributed.objects;
 // **************************************************************************
 
 Serializers _$serializers = (new Serializers().toBuilder()
-      ..addBuilderFactory(
-          const FullType(
-              BuiltMap, const [const FullType(String), const FullType(int)]),
-          () => new MapBuilder<String, int>())
-      ..add(Registration.serializer)
+      ..add(BuiltHostMachine.serializer)
       ..add(BuiltMessage.serializer)
       ..add(BuiltPeer.serializer)
-      ..add(BuiltHostMachine.serializer)
-      ..add(SpawnRequest.serializer))
+      ..add(Registration.serializer)
+      ..addBuilderFactory(
+          const FullType(BuiltList, const [const FullType(int)]),
+          () => new ListBuilder<int>()))
     .build();
 Serializer<Registration> _$registrationSerializer =
     new _$RegistrationSerializer();
@@ -25,8 +23,6 @@ Serializer<BuiltMessage> _$builtMessageSerializer =
 Serializer<BuiltPeer> _$builtPeerSerializer = new _$BuiltPeerSerializer();
 Serializer<BuiltHostMachine> _$builtHostMachineSerializer =
     new _$BuiltHostMachineSerializer();
-Serializer<SpawnRequest> _$spawnRequestSerializer =
-    new _$SpawnRequestSerializer();
 
 class _$RegistrationSerializer implements StructuredSerializer<Registration> {
   @override
@@ -38,8 +34,10 @@ class _$RegistrationSerializer implements StructuredSerializer<Registration> {
   Iterable serialize(Serializers serializers, Registration object,
       {FullType specifiedType: FullType.unspecified}) {
     final result = <Object>[
-      'port',
-      serializers.serialize(object.port, specifiedType: const FullType(int)),
+      'ports',
+      serializers.serialize(object.ports,
+          specifiedType:
+              const FullType(BuiltList, const [const FullType(int)])),
       'error',
       serializers.serialize(object.error,
           specifiedType: const FullType(String)),
@@ -59,9 +57,11 @@ class _$RegistrationSerializer implements StructuredSerializer<Registration> {
       iterator.moveNext();
       final dynamic value = iterator.current;
       switch (key) {
-        case 'port':
-          result.port = serializers.deserialize(value,
-              specifiedType: const FullType(int)) as int;
+        case 'ports':
+          result.ports.replace(serializers.deserialize(value,
+                  specifiedType:
+                      const FullType(BuiltList, const [const FullType(int)]))
+              as BuiltList<int>);
           break;
         case 'error':
           result.error = serializers.deserialize(value,
@@ -110,8 +110,8 @@ class _$BuiltMessageSerializer implements StructuredSerializer<BuiltMessage> {
       final dynamic value = iterator.current;
       switch (key) {
         case 'sender':
-          result.sender = serializers.deserialize(value,
-              specifiedType: const FullType(BuiltPeer)) as BuiltPeer;
+          result.sender.replace(serializers.deserialize(value,
+              specifiedType: const FullType(BuiltPeer)) as BuiltPeer);
           break;
         case 'category':
           result.category = serializers.deserialize(value,
@@ -164,9 +164,9 @@ class _$BuiltPeerSerializer implements StructuredSerializer<BuiltPeer> {
               specifiedType: const FullType(String)) as String;
           break;
         case 'hostMachine':
-          result.hostMachine = serializers.deserialize(value,
+          result.hostMachine.replace(serializers.deserialize(value,
                   specifiedType: const FullType(BuiltHostMachine))
-              as BuiltHostMachine;
+              as BuiltHostMachine);
           break;
       }
     }
@@ -223,52 +223,6 @@ class _$BuiltHostMachineSerializer
   }
 }
 
-class _$SpawnRequestSerializer implements StructuredSerializer<SpawnRequest> {
-  @override
-  final Iterable<Type> types = const [SpawnRequest, _$SpawnRequest];
-  @override
-  final String wireName = 'SpawnRequest';
-
-  @override
-  Iterable serialize(Serializers serializers, SpawnRequest object,
-      {FullType specifiedType: FullType.unspecified}) {
-    final result = <Object>[
-      'nodeName',
-      serializers.serialize(object.nodeName,
-          specifiedType: const FullType(String)),
-      'uri',
-      serializers.serialize(object.uri, specifiedType: const FullType(String)),
-    ];
-
-    return result;
-  }
-
-  @override
-  SpawnRequest deserialize(Serializers serializers, Iterable serialized,
-      {FullType specifiedType: FullType.unspecified}) {
-    final result = new SpawnRequestBuilder();
-
-    final iterator = serialized.iterator;
-    while (iterator.moveNext()) {
-      final key = iterator.current as String;
-      iterator.moveNext();
-      final dynamic value = iterator.current;
-      switch (key) {
-        case 'nodeName':
-          result.nodeName = serializers.deserialize(value,
-              specifiedType: const FullType(String)) as String;
-          break;
-        case 'uri':
-          result.uri = serializers.deserialize(value,
-              specifiedType: const FullType(String)) as String;
-          break;
-      }
-    }
-
-    return result.build();
-  }
-}
-
 // **************************************************************************
 // Generator: BuiltValueGenerator
 // Target: abstract class Registration
@@ -276,15 +230,15 @@ class _$SpawnRequestSerializer implements StructuredSerializer<SpawnRequest> {
 
 class _$Registration extends Registration {
   @override
-  final int port;
+  final BuiltList<int> ports;
   @override
   final String error;
 
   factory _$Registration([void updates(RegistrationBuilder b)]) =>
-      (new RegistrationBuilder()..update(updates)).build() as _$Registration;
+      (new RegistrationBuilder()..update(updates)).build();
 
-  _$Registration._({this.port, this.error}) : super._() {
-    if (port == null) throw new ArgumentError.notNull('port');
+  _$Registration._({this.ports, this.error}) : super._() {
+    if (ports == null) throw new ArgumentError.notNull('ports');
     if (error == null) throw new ArgumentError.notNull('error');
   }
 
@@ -293,63 +247,47 @@ class _$Registration extends Registration {
       (toBuilder()..update(updates)).build();
 
   @override
-  _$RegistrationBuilder toBuilder() =>
-      new _$RegistrationBuilder()..replace(this);
+  RegistrationBuilder toBuilder() => new RegistrationBuilder()..replace(this);
 
   @override
   bool operator ==(dynamic other) {
     if (identical(other, this)) return true;
     if (other is! Registration) return false;
-    return port == other.port && error == other.error;
+    return ports == other.ports && error == other.error;
   }
 
   @override
   int get hashCode {
-    return $jf($jc($jc(0, port.hashCode), error.hashCode));
+    return $jf($jc($jc(0, ports.hashCode), error.hashCode));
   }
 
   @override
   String toString() {
-    return 'Registration {'
-        'port=${port.toString()},\n'
-        'error=${error.toString()},\n'
-        '}';
+    return (newBuiltValueToStringHelper('Registration')
+          ..add('ports', ports)
+          ..add('error', error))
+        .toString();
   }
 }
 
-class _$RegistrationBuilder extends RegistrationBuilder {
+class RegistrationBuilder
+    implements Builder<Registration, RegistrationBuilder> {
   _$Registration _$v;
 
-  @override
-  int get port {
-    _$this;
-    return super.port;
-  }
+  ListBuilder<int> _ports;
+  ListBuilder<int> get ports => _$this._ports ??= new ListBuilder<int>();
+  set ports(ListBuilder<int> ports) => _$this._ports = ports;
 
-  @override
-  set port(int port) {
-    _$this;
-    super.port = port;
-  }
+  String _error;
+  String get error => _$this._error;
+  set error(String error) => _$this._error = error;
 
-  @override
-  String get error {
-    _$this;
-    return super.error;
-  }
-
-  @override
-  set error(String error) {
-    _$this;
-    super.error = error;
-  }
-
-  _$RegistrationBuilder() : super._();
+  RegistrationBuilder();
 
   RegistrationBuilder get _$this {
     if (_$v != null) {
-      super.port = _$v.port;
-      super.error = _$v.error;
+      _ports = _$v.ports?.toBuilder();
+      _error = _$v.error;
       _$v = null;
     }
     return this;
@@ -368,7 +306,8 @@ class _$RegistrationBuilder extends RegistrationBuilder {
 
   @override
   _$Registration build() {
-    final result = _$v ?? new _$Registration._(port: port, error: error);
+    final result =
+        _$v ?? new _$Registration._(ports: ports?.build(), error: error);
     replace(result);
     return result;
   }
@@ -388,7 +327,7 @@ class _$BuiltMessage extends BuiltMessage {
   final String contents;
 
   factory _$BuiltMessage([void updates(BuiltMessageBuilder b)]) =>
-      (new BuiltMessageBuilder()..update(updates)).build() as _$BuiltMessage;
+      (new BuiltMessageBuilder()..update(updates)).build();
 
   _$BuiltMessage._({this.sender, this.category, this.contents}) : super._() {
     if (sender == null) throw new ArgumentError.notNull('sender');
@@ -401,8 +340,7 @@ class _$BuiltMessage extends BuiltMessage {
       (toBuilder()..update(updates)).build();
 
   @override
-  _$BuiltMessageBuilder toBuilder() =>
-      new _$BuiltMessageBuilder()..replace(this);
+  BuiltMessageBuilder toBuilder() => new BuiltMessageBuilder()..replace(this);
 
   @override
   bool operator ==(dynamic other) {
@@ -421,60 +359,37 @@ class _$BuiltMessage extends BuiltMessage {
 
   @override
   String toString() {
-    return 'BuiltMessage {'
-        'sender=${sender.toString()},\n'
-        'category=${category.toString()},\n'
-        'contents=${contents.toString()},\n'
-        '}';
+    return (newBuiltValueToStringHelper('BuiltMessage')
+          ..add('sender', sender)
+          ..add('category', category)
+          ..add('contents', contents))
+        .toString();
   }
 }
 
-class _$BuiltMessageBuilder extends BuiltMessageBuilder {
+class BuiltMessageBuilder
+    implements Builder<BuiltMessage, BuiltMessageBuilder> {
   _$BuiltMessage _$v;
 
-  @override
-  BuiltPeer get sender {
-    _$this;
-    return super.sender;
-  }
+  BuiltPeerBuilder _sender;
+  BuiltPeerBuilder get sender => _$this._sender ??= new BuiltPeerBuilder();
+  set sender(BuiltPeerBuilder sender) => _$this._sender = sender;
 
-  @override
-  set sender(BuiltPeer sender) {
-    _$this;
-    super.sender = sender;
-  }
+  String _category;
+  String get category => _$this._category;
+  set category(String category) => _$this._category = category;
 
-  @override
-  String get category {
-    _$this;
-    return super.category;
-  }
+  String _contents;
+  String get contents => _$this._contents;
+  set contents(String contents) => _$this._contents = contents;
 
-  @override
-  set category(String category) {
-    _$this;
-    super.category = category;
-  }
-
-  @override
-  String get contents {
-    _$this;
-    return super.contents;
-  }
-
-  @override
-  set contents(String contents) {
-    _$this;
-    super.contents = contents;
-  }
-
-  _$BuiltMessageBuilder() : super._();
+  BuiltMessageBuilder();
 
   BuiltMessageBuilder get _$this {
     if (_$v != null) {
-      super.sender = _$v.sender;
-      super.category = _$v.category;
-      super.contents = _$v.contents;
+      _sender = _$v.sender?.toBuilder();
+      _category = _$v.category;
+      _contents = _$v.contents;
       _$v = null;
     }
     return this;
@@ -495,7 +410,7 @@ class _$BuiltMessageBuilder extends BuiltMessageBuilder {
   _$BuiltMessage build() {
     final result = _$v ??
         new _$BuiltMessage._(
-            sender: sender, category: category, contents: contents);
+            sender: sender?.build(), category: category, contents: contents);
     replace(result);
     return result;
   }
@@ -513,7 +428,7 @@ class _$BuiltPeer extends BuiltPeer {
   final BuiltHostMachine hostMachine;
 
   factory _$BuiltPeer([void updates(BuiltPeerBuilder b)]) =>
-      (new BuiltPeerBuilder()..update(updates)).build() as _$BuiltPeer;
+      (new BuiltPeerBuilder()..update(updates)).build();
 
   _$BuiltPeer._({this.name, this.hostMachine}) : super._() {
     if (name == null) throw new ArgumentError.notNull('name');
@@ -525,7 +440,7 @@ class _$BuiltPeer extends BuiltPeer {
       (toBuilder()..update(updates)).build();
 
   @override
-  _$BuiltPeerBuilder toBuilder() => new _$BuiltPeerBuilder()..replace(this);
+  BuiltPeerBuilder toBuilder() => new BuiltPeerBuilder()..replace(this);
 
   @override
   bool operator ==(dynamic other) {
@@ -541,46 +456,32 @@ class _$BuiltPeer extends BuiltPeer {
 
   @override
   String toString() {
-    return 'BuiltPeer {'
-        'name=${name.toString()},\n'
-        'hostMachine=${hostMachine.toString()},\n'
-        '}';
+    return (newBuiltValueToStringHelper('BuiltPeer')
+          ..add('name', name)
+          ..add('hostMachine', hostMachine))
+        .toString();
   }
 }
 
-class _$BuiltPeerBuilder extends BuiltPeerBuilder {
+class BuiltPeerBuilder implements Builder<BuiltPeer, BuiltPeerBuilder> {
   _$BuiltPeer _$v;
 
-  @override
-  String get name {
-    _$this;
-    return super.name;
-  }
+  String _name;
+  String get name => _$this._name;
+  set name(String name) => _$this._name = name;
 
-  @override
-  set name(String name) {
-    _$this;
-    super.name = name;
-  }
+  BuiltHostMachineBuilder _hostMachine;
+  BuiltHostMachineBuilder get hostMachine =>
+      _$this._hostMachine ??= new BuiltHostMachineBuilder();
+  set hostMachine(BuiltHostMachineBuilder hostMachine) =>
+      _$this._hostMachine = hostMachine;
 
-  @override
-  BuiltHostMachine get hostMachine {
-    _$this;
-    return super.hostMachine;
-  }
-
-  @override
-  set hostMachine(BuiltHostMachine hostMachine) {
-    _$this;
-    super.hostMachine = hostMachine;
-  }
-
-  _$BuiltPeerBuilder() : super._();
+  BuiltPeerBuilder();
 
   BuiltPeerBuilder get _$this {
     if (_$v != null) {
-      super.name = _$v.name;
-      super.hostMachine = _$v.hostMachine;
+      _name = _$v.name;
+      _hostMachine = _$v.hostMachine?.toBuilder();
       _$v = null;
     }
     return this;
@@ -600,7 +501,7 @@ class _$BuiltPeerBuilder extends BuiltPeerBuilder {
   @override
   _$BuiltPeer build() {
     final result =
-        _$v ?? new _$BuiltPeer._(name: name, hostMachine: hostMachine);
+        _$v ?? new _$BuiltPeer._(name: name, hostMachine: hostMachine?.build());
     replace(result);
     return result;
   }
@@ -618,8 +519,7 @@ class _$BuiltHostMachine extends BuiltHostMachine {
   final int portDaemonPort;
 
   factory _$BuiltHostMachine([void updates(BuiltHostMachineBuilder b)]) =>
-      (new BuiltHostMachineBuilder()..update(updates)).build()
-          as _$BuiltHostMachine;
+      (new BuiltHostMachineBuilder()..update(updates)).build();
 
   _$BuiltHostMachine._({this.address, this.portDaemonPort}) : super._() {
     if (address == null) throw new ArgumentError.notNull('address');
@@ -632,8 +532,8 @@ class _$BuiltHostMachine extends BuiltHostMachine {
       (toBuilder()..update(updates)).build();
 
   @override
-  _$BuiltHostMachineBuilder toBuilder() =>
-      new _$BuiltHostMachineBuilder()..replace(this);
+  BuiltHostMachineBuilder toBuilder() =>
+      new BuiltHostMachineBuilder()..replace(this);
 
   @override
   bool operator ==(dynamic other) {
@@ -649,46 +549,32 @@ class _$BuiltHostMachine extends BuiltHostMachine {
 
   @override
   String toString() {
-    return 'BuiltHostMachine {'
-        'address=${address.toString()},\n'
-        'portDaemonPort=${portDaemonPort.toString()},\n'
-        '}';
+    return (newBuiltValueToStringHelper('BuiltHostMachine')
+          ..add('address', address)
+          ..add('portDaemonPort', portDaemonPort))
+        .toString();
   }
 }
 
-class _$BuiltHostMachineBuilder extends BuiltHostMachineBuilder {
+class BuiltHostMachineBuilder
+    implements Builder<BuiltHostMachine, BuiltHostMachineBuilder> {
   _$BuiltHostMachine _$v;
 
-  @override
-  String get address {
-    _$this;
-    return super.address;
-  }
+  String _address;
+  String get address => _$this._address;
+  set address(String address) => _$this._address = address;
 
-  @override
-  set address(String address) {
-    _$this;
-    super.address = address;
-  }
+  int _portDaemonPort;
+  int get portDaemonPort => _$this._portDaemonPort;
+  set portDaemonPort(int portDaemonPort) =>
+      _$this._portDaemonPort = portDaemonPort;
 
-  @override
-  int get portDaemonPort {
-    _$this;
-    return super.portDaemonPort;
-  }
-
-  @override
-  set portDaemonPort(int portDaemonPort) {
-    _$this;
-    super.portDaemonPort = portDaemonPort;
-  }
-
-  _$BuiltHostMachineBuilder() : super._();
+  BuiltHostMachineBuilder();
 
   BuiltHostMachineBuilder get _$this {
     if (_$v != null) {
-      super.address = _$v.address;
-      super.portDaemonPort = _$v.portDaemonPort;
+      _address = _$v.address;
+      _portDaemonPort = _$v.portDaemonPort;
       _$v = null;
     }
     return this;
@@ -710,111 +596,6 @@ class _$BuiltHostMachineBuilder extends BuiltHostMachineBuilder {
     final result = _$v ??
         new _$BuiltHostMachine._(
             address: address, portDaemonPort: portDaemonPort);
-    replace(result);
-    return result;
-  }
-}
-
-// **************************************************************************
-// Generator: BuiltValueGenerator
-// Target: abstract class SpawnRequest
-// **************************************************************************
-
-class _$SpawnRequest extends SpawnRequest {
-  @override
-  final String nodeName;
-  @override
-  final String uri;
-
-  factory _$SpawnRequest([void updates(SpawnRequestBuilder b)]) =>
-      (new SpawnRequestBuilder()..update(updates)).build() as _$SpawnRequest;
-
-  _$SpawnRequest._({this.nodeName, this.uri}) : super._() {
-    if (nodeName == null) throw new ArgumentError.notNull('nodeName');
-    if (uri == null) throw new ArgumentError.notNull('uri');
-  }
-
-  @override
-  SpawnRequest rebuild(void updates(SpawnRequestBuilder b)) =>
-      (toBuilder()..update(updates)).build();
-
-  @override
-  _$SpawnRequestBuilder toBuilder() =>
-      new _$SpawnRequestBuilder()..replace(this);
-
-  @override
-  bool operator ==(dynamic other) {
-    if (identical(other, this)) return true;
-    if (other is! SpawnRequest) return false;
-    return nodeName == other.nodeName && uri == other.uri;
-  }
-
-  @override
-  int get hashCode {
-    return $jf($jc($jc(0, nodeName.hashCode), uri.hashCode));
-  }
-
-  @override
-  String toString() {
-    return 'SpawnRequest {'
-        'nodeName=${nodeName.toString()},\n'
-        'uri=${uri.toString()},\n'
-        '}';
-  }
-}
-
-class _$SpawnRequestBuilder extends SpawnRequestBuilder {
-  _$SpawnRequest _$v;
-
-  @override
-  String get nodeName {
-    _$this;
-    return super.nodeName;
-  }
-
-  @override
-  set nodeName(String nodeName) {
-    _$this;
-    super.nodeName = nodeName;
-  }
-
-  @override
-  String get uri {
-    _$this;
-    return super.uri;
-  }
-
-  @override
-  set uri(String uri) {
-    _$this;
-    super.uri = uri;
-  }
-
-  _$SpawnRequestBuilder() : super._();
-
-  SpawnRequestBuilder get _$this {
-    if (_$v != null) {
-      super.nodeName = _$v.nodeName;
-      super.uri = _$v.uri;
-      _$v = null;
-    }
-    return this;
-  }
-
-  @override
-  void replace(SpawnRequest other) {
-    if (other == null) throw new ArgumentError.notNull('other');
-    _$v = other as _$SpawnRequest;
-  }
-
-  @override
-  void update(void updates(SpawnRequestBuilder b)) {
-    if (updates != null) updates(this);
-  }
-
-  @override
-  _$SpawnRequest build() {
-    final result = _$v ?? new _$SpawnRequest._(nodeName: nodeName, uri: uri);
     replace(result);
     return result;
   }

@@ -4,7 +4,7 @@ import 'package:async/async.dart';
 import 'package:distributed/src/connection/socket.dart';
 import 'package:distributed/src/monitoring/periodic_function.dart';
 import 'package:distributed/src/monitoring/signal_monitor.dart';
-import 'package:distributed/src/objects/interfaces.dart';
+import 'package:distributed.objects/public.dart';
 
 import 'message_router.dart';
 
@@ -19,7 +19,7 @@ class MessageChannel {
   final _doneCompleter = new Completer();
 
   PeriodicFunction _keepAliveSignal;
-  SignalMonitor _connectionMonitor;
+  SignalMonitor _connectionSignal;
 
   /// Creates a connection from [socket].
   ///
@@ -30,9 +30,9 @@ class MessageChannel {
         messageRouter, new SignalMonitor(messageRouter.systemStream));
   }
 
-  MessageChannel(this._messageRouter, this._connectionMonitor) {
+  MessageChannel(this._messageRouter, this._connectionSignal) {
     _keepAliveSignal = new PeriodicFunction(_pingRemote);
-    _connectionMonitor.gone.then((_) {
+    _connectionSignal.gone.then((_) {
       close();
     });
   }
@@ -48,14 +48,14 @@ class MessageChannel {
 
   /// Sends [message] over this [MessageChannel].
   void send(Message message) {
-    _messageRouter.sendToUser(serialize(message));
+    _messageRouter.sendToUser(Message.serialize(message));
   }
 
   /// Closes this [MessageChannel].
   void close() {
     _closeMemo.runOnce(() {
       _keepAliveSignal.stop();
-      _connectionMonitor.stop();
+      _connectionSignal.stop();
       _messageRouter.close();
       _doneCompleter.complete();
     });

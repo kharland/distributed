@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:distributed/src/monitoring/logging.dart';
 import 'package:distributed/src/port_daemon/client.dart';
+import 'package:distributed/src/port_daemon/node_database.dart';
 import 'package:distributed/src/port_daemon/port_daemon.dart';
-import 'package:distributed/src/port_daemon/ports.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -17,7 +17,6 @@ void main() {
 
   Future commonTearDown() async {
     await client.deregisterNode('A');
-    await client.deregisterNode('B');
     daemon.stop();
   }
 
@@ -32,6 +31,8 @@ void main() {
   });
 
   group('$PortDaemon', () {
+    final registrationSuccessMatcher =
+        unorderedMatches([greaterThan(0), greaterThan(0)]);
     setUp(() => commonSetUp());
 
     tearDown(() => commonTearDown());
@@ -39,27 +40,27 @@ void main() {
     group('registerNode', () {
       test('should register a node', () async {
         expect(await client.getNodeUrl('A'), isEmpty);
-        expect(await client.registerNode('A'), greaterThan(0));
+        expect(await client.registerNode('A'), registrationSuccessMatcher);
         expect(await client.getNodeUrl('A'), isNotEmpty);
       });
 
       test('should fail if a node with the same name is registered', () async {
-        expect(await client.registerNode('A'), greaterThan(0));
-        expect(await client.registerNode('A'), Ports.error);
+        expect(await client.registerNode('A'), registrationSuccessMatcher);
+        expect(await client.registerNode('A'), errorPortList);
       });
     });
 
     test("getNodeUrl should return a node's url", () async {
       expect(await client.getNodeUrl('A'), '');
-      var port = await client.registerNode('A');
-      expect(port, greaterThan(0));
-      expect(await client.getNodeUrl('A'), 'ws://localhost:$port');
+      var ports = await client.registerNode('A');
+      expect(ports, registrationSuccessMatcher);
+      expect(await client.getNodeUrl('A'), 'ws://127.0.0.1:${ports.first}');
       await client.deregisterNode('A');
       expect(await client.getNodeUrl('A'), '');
     });
 
     test('should be able to deregister a node', () async {
-      expect(await client.registerNode('A'), greaterThan(0));
+      expect(await client.registerNode('A'), registrationSuccessMatcher);
       expect(await client.getNodeUrl('A'), isNotEmpty);
       expect(await client.deregisterNode('A'), true);
       expect(await client.getNodeUrl('A'), isEmpty);
