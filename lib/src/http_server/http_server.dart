@@ -18,5 +18,6 @@ class HttpServerBuilder {
   }
 
   Future<HttpServer> bind(String address, int port) async =>
-      await HttpServer.bind(address, port)..listen(_firstHandler.handle);
+      await HttpServer.bind(address, port)
+        ..listen(_firstHandler.handle);
 }
