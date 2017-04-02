@@ -12,7 +12,7 @@ void runNodeTests() {
 
   group('$Node', () {
     setUp(() async {
-      daemon = await PortDaemon.spawn(new Logger('port_daemon'));
+      daemon = await PortDaemon.spawn(new Logger.disabled());
       ping = await Node.spawn('ping', logger: new Logger('ping'));
       pong = await Node.spawn('pong', logger: new Logger('pong'));
     });

@@ -145,7 +145,6 @@ Future/*<T>*/ timeoutFuture/*<T>*/(Future<T> future, {errorValue}) {
       throw new TimeoutException('');
     });
   }, onError: (_) {
-    print(_);
     if (!responseCompleter.isCompleted) {
       responseCompleter.complete(errorValue);
     }
@@ -155,12 +154,10 @@ Future/*<T>*/ timeoutFuture/*<T>*/(Future<T> future, {errorValue}) {
     future.then((response) {
       timeout.cancel();
       if (!responseCompleter.isCompleted) {
-        print(response);
         responseCompleter.complete(response);
       }
     });
   }, onError: (_) {
-    print(_);
     responseCompleter.complete(errorValue);
   });
 
