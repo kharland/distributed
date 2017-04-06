@@ -48,7 +48,6 @@ class TestHttpProvider implements HttpProvider {
   @override
   Future<TestSocket> connectSocket(String url) async {
     var remoteUri = Uri.parse(url);
-    // TODO: We shouldn't be limited to localhost.
     return _network.connectWithoutSrcPort(
         'localhost', remoteUri.host, remoteUri.port);
   }
