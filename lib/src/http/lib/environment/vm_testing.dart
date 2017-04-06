@@ -196,8 +196,6 @@ class TestSocket extends StreamView<String> with Closable implements Socket {
   }
 }
 
-// TODO: Make sure all messages are sent before calling [close] if the
-// implementor is a Sink.  Maybe new implementation `ClosableSink`
 class Closable {
   final _closedCompleter = new Completer<Null>();
 
