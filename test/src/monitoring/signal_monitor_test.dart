@@ -1,4 +1,4 @@
-import 'package:distributed/src/monitoring/signal_monitor.dart';
+import 'package:distributed.monitoring/signal_monitor.dart';
 import 'package:quiver/testing/async.dart';
 import 'package:stream_channel/stream_channel.dart';
 import 'package:test/test.dart';

@@ -1,5 +1,5 @@
-import 'package:distributed/src/http_server/http_server.dart';
-import 'package:distributed/src/http_server/request_handler.dart';
+import 'package:distributed/src/http_server_builder/http_server_builder.dart';
+import 'package:distributed/src/http_server_builder/request_handler.dart';
 import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
 

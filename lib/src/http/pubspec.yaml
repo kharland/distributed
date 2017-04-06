@@ -1,0 +1,9 @@
+name: distributed.http
+dependencies:
+  distributed.monitoring:
+    path: ../monitoring
+  async:
+  http:
+  logging:
+  meta:
+  stream_channel:

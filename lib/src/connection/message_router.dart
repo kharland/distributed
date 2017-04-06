@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:async/async.dart';
-import 'package:distributed/src/connection/socket.dart';
+import 'package:distributed.http/vm.dart';
 
 class MessageRouter {
   static const _userChannelId = 1;

@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:distributed/src/connection/connection_manager.dart';
-import 'package:distributed/src/monitoring/logging.dart';
+import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed/src/objects/interfaces.dart';
 import 'package:distributed/src/port_daemon/port_daemon_client.dart';
 import 'package:meta/meta.dart';
@@ -46,13 +46,15 @@ class CrossPlatformNode implements Node {
 
   @override
   Future<bool> connect(Peer peer) async {
-    final portDaemonClient = new PortDaemonClient(name, peer.hostMachine);
+    final portDaemonClient = new PortDaemonClient(
+        name, peer.hostMachine, new Logger('port_daemon_client'));
     final peerUrl = await portDaemonClient.lookup(peer.name);
 
     if (peerUrl.isEmpty) {
       _logger.error('Peer ${peer.name} not found.');
       return false;
     }
+    _logger.log("Connecting to $peerUrl");
     return _connectionManager.connect(peerUrl);
   }
 

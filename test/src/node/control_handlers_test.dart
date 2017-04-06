@@ -1,12 +1,13 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:distributed/src/http_server/request_handler.dart';
+import 'package:distributed.http/vm.dart';
+import 'package:distributed/src/http_server_builder/request_handler.dart';
 import 'package:distributed/src/node/node.dart';
 import 'package:distributed/src/node/remote_interaction/request_handlers.dart';
 import 'package:distributed/src/objects/interfaces.dart';
 import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
+import 'package:stack_trace/stack_trace.dart';
 
 void main() {
   group('$ConnectHandler', () {
@@ -35,16 +36,17 @@ void main() {
     });
 
     test('connect a node to a peer if it matches the request', () async {
-      commonSetUp();
-      final peer = new Peer('test', HostMachine.Null);
+      Chain.capture(() async {
+        commonSetUp();
+        final peer = new Peer('test', HostMachine.Null);
 
-      when(matcher.matches(request)).thenReturn(true);
-      when(request.transform(any))
-          .thenReturn(new Future.value(serialize(peer)).asStream());
-      when(node.connect(peer)).thenReturn(new Future.value(true));
+        when(matcher.matches(request)).thenReturn(true);
+        when(request.first).thenReturn(new Future.value(serialize(peer)));
+        when(node.connect(peer)).thenReturn(new Future.value(true));
 
-      await connectHandler.handle(request);
-      verify(node.connect(peer));
+        await connectHandler.handle(request);
+        verify(node.connect(peer));
+      });
     });
 
     // TODO: Test bad data in HttpRequest.

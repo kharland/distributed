@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:async/async.dart';
-import 'package:distributed/src/connection/socket.dart';
-import 'package:distributed/src/monitoring/periodic_function.dart';
-import 'package:distributed/src/monitoring/signal_monitor.dart';
+import 'package:distributed.monitoring/periodic_function.dart';
+import 'package:distributed.monitoring/signal_monitor.dart';
 import 'package:distributed/src/objects/interfaces.dart';
+import 'package:distributed.http/vm.dart';
 
 import 'message_router.dart';
 

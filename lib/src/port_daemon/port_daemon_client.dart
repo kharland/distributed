@@ -8,13 +8,17 @@ import 'package:distributed/src/port_daemon/ports.dart';
 
 /// An object for communicating with a [PortDaemon].
 abstract class PortDaemonClient {
-  factory PortDaemonClient(name, daemonHost) = HttpDaemonClient;
+  factory PortDaemonClient(String name, HostMachine daemonHost, Logger logger) =
+      HttpDaemonClient;
 
   /// The [HostMachine] where this client's [PortDaemon] is running.
   HostMachine get daemonHost;
 
-  /// Completes with true iff a daemon is running at [daemonHost].
-  Future<bool> get isDaemonRunning;
+  /// Pings the daemon.
+  ///
+  /// Returns a future that completes with true iff a the daemon sends back a
+  /// response.
+  Future<bool> pingDaemon();
 
   /// Returns a mapping of node names to their registered ports.
   ///

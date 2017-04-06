@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'dart:io';
+
+import 'package:distributed.http/vm.dart';
 
 /// Base class for an object that handles [HttpRequest]s.
 ///
