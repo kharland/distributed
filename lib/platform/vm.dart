@@ -1,7 +1,9 @@
 import 'dart:async';
-import 'dart:io';
 
+import 'package:distributed.http/vm.dart';
 import 'package:distributed/distributed.dart';
+import 'package:distributed.http/environment/vm_testing.dart' as http_testing;
+import 'package:distributed.http/environment/vm_prod.dart' as http_vm_prod;
 import 'package:distributed/src/configuration.dart';
 import 'package:distributed/src/connection/connection_manager.dart';
 import 'package:distributed/src/connection/peer_verifier.dart';
@@ -11,7 +13,12 @@ import 'package:distributed/src/port_daemon/port_daemon_client.dart';
 import 'package:distributed/src/port_daemon/ports.dart';
 import 'package:meta/meta.dart';
 
-void configureDistributed() {
+void configureDistributed({bool testing: false}) {
+  if (testing) {
+    http_testing.configureHttp();
+  } else {
+    http_vm_prod.configureHttp();
+  }
   setNodeProvider(new _VmNodeProvider());
 }
 
@@ -22,7 +29,8 @@ class _VmNodeProvider implements NodeProvider {
     Logger logger, {
     bool supportRemoteInteraction: false,
   }) async {
-    final daemonClient = new PortDaemonClient(name, HostMachine.localHost);
+    final daemonClient = new PortDaemonClient(
+        name, HostMachine.localHost, new Logger('port_daemon_client'));
     final node = await spawnNode(name, logger, daemonClient);
 
     HttpServer remoteInteractionServer;
@@ -31,7 +39,7 @@ class _VmNodeProvider implements NodeProvider {
     }
 
     node.onShutdown.then((_) {
-      remoteInteractionServer?.close(force: true);
+      remoteInteractionServer?.close();
       daemonClient.deregister();
     });
 
@@ -55,7 +63,7 @@ class _VmNodeProvider implements NodeProvider {
         connectionManager: await VmConnectionManager.bind(
           daemonClient.daemonHost.address,
           port,
-          peerVerifier: new PeerVerifier(asPeer),
+          peerVerifier: new PeerVerifier(asPeer, logger),
           logger: logger,
         ));
   }

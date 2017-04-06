@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:distributed/src/monitoring/file_system.dart';
+import 'package:distributed.monitoring/file_system.dart';
 import 'package:quiver/time.dart';
 import 'package:test/test.dart';
 

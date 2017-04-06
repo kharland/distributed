@@ -1,9 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 
 import 'package:distributed/distributed.dart';
-import 'package:distributed/src/http_server/request_handler.dart';
+import 'package:distributed/src/http_server_builder/request_handler.dart';
+import 'package:distributed.http/vm.dart';
 
 /* Default RouteHandler RequestMatchers */
 
@@ -24,7 +23,7 @@ class ConnectHandler extends RequestHandler {
   @override
   Future handle(HttpRequest request) async {
     if (!_matcher.matches(request)) return super.handle(request);
-    var peer = Peer.deserialize(await _readAsString(request));
+    var peer = Peer.deserialize(await request.first);
     if (!await _node.connect(peer)) {
       throw new Exception('Connection failed');
     }
@@ -47,15 +46,10 @@ class DisconnectHandler extends RequestHandler {
   @override
   Future handle(HttpRequest request) async {
     if (!_matcher.matches(request)) return super.handle(request);
-    var peer = Peer.deserialize(await _readAsString(request));
+    var peer = Peer.deserialize(await request.first);
     _node.disconnect(peer);
     await _node.onDisconnect.take(1).first;
   }
 
   DisconnectHandler(this._node, this._matcher);
 }
-
-// TODO: Catch deserialization error.
-Future<String> _readAsString(HttpRequest request) => request
-    .transform(new Utf8Decoder())
-    .fold('', (encoded, next) => '$encoded$next');

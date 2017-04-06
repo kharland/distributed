@@ -1,8 +1,9 @@
 import 'dart:async';
 
-import 'package:distributed/src/connection/socket.dart';
+import 'package:distributed.http/vm.dart';
 import 'package:stream_channel/stream_channel.dart';
 
+// TODO: delete.
 class SocketController {
   final Socket local;
   final Socket foreign;
@@ -42,4 +43,13 @@ class TestSocket extends StreamView<String> implements Socket {
   void close() {
     _sink.close();
   }
+
+  @override
+  String get localHost => null;
+
+  @override
+  int get port => null;
+
+  @override
+  String get remoteHost => null;
 }

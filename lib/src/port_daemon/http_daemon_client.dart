@@ -1,176 +1,143 @@
 import 'dart:async';
 
-import 'package:distributed/src/monitoring/periodic_function.dart';
+import 'package:distributed.http/vm.dart' as http;
+import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed/src/objects/interfaces.dart';
 import 'package:distributed/src/objects/objects.dart';
 import 'package:distributed/src/port_daemon/port_daemon_client.dart';
 import 'package:distributed/src/port_daemon/ports.dart';
-import 'package:seltzer/platform/vm.dart';
-import 'package:seltzer/seltzer.dart';
 
 /// A [PortDaemonClient] that communicates over HTTP.
 class HttpDaemonClient implements PortDaemonClient {
-  static const _seltzer = const VmSeltzerHttp();
-
-  final String name;
-
   @override
   final HostMachine daemonHost;
-  final _http = new HttpWithTimeout();
+  final String name;
+  final Logger _logger;
 
-  PeriodicFunction _keepAliveSignal;
-
-  HttpDaemonClient(this.name, this.daemonHost);
-
-  @override
-  Future<bool> get isDaemonRunning async => _pingDaemon(name);
+  HttpDaemonClient(this.name, this.daemonHost, this._logger);
 
   @override
   Future<Map<String, int>> getNodes() async {
-    await _expectDaemonIsRunning();
+    if (!await pingDaemon(name)) {
+      return {};
+    }
+
     try {
-      var response = await _http.send(_get('list/node'));
+      var response = await _post('list/node');
+      var responseContent = await response.first;
       PortAssignmentList assignments =
-          deserialize(await response.readAsString(), PortAssignmentList);
+          deserialize(responseContent, PortAssignmentList);
+
       return assignments.assignments.toMap();
-    } catch (e) {
+    } catch (e, s) {
+      _logger..error(e.toString())..error(s.toString());
       return {};
     }
   }
 
   @override
   Future<String> lookup(String name) async {
-    await _expectDaemonIsRunning();
+    if (!await pingDaemon(name)) {
+      return '';
+    }
+
     try {
-      var response = await _http.send(_get('node/$name'));
-      final port = int.parse(await response.readAsString());
+      var response = await _post('get/node', payload: name);
+      final port = int.parse(await response.first);
       return port == Ports.error ? '' : 'ws://${daemonHost.address}:$port';
-    } catch (e) {
+    } catch (e, s) {
+      _logger..error(e.toString())..error(s.toString());
       return '';
     }
   }
 
   @override
   Future<String> lookupServer(String nodeName) async {
-    await _expectDaemonIsRunning();
+    if (!await pingDaemon(name)) {
+      return '';
+    }
+
     try {
-      var response = await _http.send(_get('node/server/$nodeName'));
-      final port = int.parse(await response.readAsString());
+      var response = await _post('node/server/$nodeName');
+      final port = int.parse(await response.first);
       return port == Ports.error ? '' : 'http://${daemonHost.address}:$port';
-    } catch (e) {
+    } catch (e, s) {
+      _logger..error(e.toString())..error(s.toString());
       return '';
     }
   }
 
   @override
   Future<int> registerNode() async {
-    await _expectDaemonIsRunning();
+    if (!await pingDaemon(name)) {
+      return Ports.error;
+    }
+
     try {
-      var response = await _http.send(_post('node/$name'));
-      Registration result =
-          deserialize(await response.readAsString(), Registration);
-      if (result.port != Ports.error) {
-        _periodicallySendKeepAliveSignal();
-      }
+      var response = await _post('add/node', payload: name);
+      var data = await response.first;
+      Registration result = deserialize(data, Registration);
       return result.port;
-    } catch (e) {
+    } catch (e, s) {
+      _logger..error(e.toString())..error(s.toString());
       return Ports.error;
     }
   }
 
   @override
   Future<int> registerServer() async {
-    await _expectDaemonIsRunning();
+    if (!await pingDaemon(name)) {
+      return Ports.error;
+    }
+
     try {
-      var response = await _http.send(_post('node/server/$name'));
-      Registration result =
-          deserialize(await response.readAsString(), Registration);
-      if (result.port != Ports.error) {
-        _periodicallySendKeepAliveSignal();
-      }
+      var response = await _post('node/server', payload: name);
+      Registration result = deserialize(
+          await response.fold('', (prev, next) => "$prev$next"), Registration);
       return result.port;
-    } catch (e) {
+    } catch (e, s) {
+      _logger..error(e.toString())..error(s.toString());
       return Ports.error;
     }
   }
 
   @override
   Future<bool> deregister() async {
-    await _expectDaemonIsRunning();
+    if (!await pingDaemon(name)) {
+      return false;
+    }
+
     try {
-      _stopSendingKeepAliveSignal();
-      var response = await _http.send(_delete('node/$name'));
-      var error = await response.readAsString();
+      var response = await _post('remove/node', payload: name);
+      var error = await response.first;
       return error.isEmpty;
-    } catch (e) {
+    } catch (e, s) {
+      _logger..error(e.toString())..error(s.toString());
       return false;
     }
   }
 
-  Future<bool> _pingDaemon(String nodeName) async {
-    try {
-      await _http.send(_get('ping/$nodeName'));
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
+  @override
+  Future<bool> pingDaemon([String name]) async {
+    _logger.log('Pinging daemon...');
+    final _pingCompleter = new Completer<bool>();
 
-  void _periodicallySendKeepAliveSignal() {
-    _keepAliveSignal = new PeriodicFunction(() {
-      _pingDaemon(name);
+    runZoned(() async {
+      await (await _post('ping', payload: name)).first;
+      if (_pingCompleter.isCompleted) return;
+      _logger.log('Got ping from daemon');
+      _pingCompleter.complete(true);
+    }, onError: (e, s) {
+      _logger..error(e.toString()); //..error(s.toString());
+      if (_pingCompleter.isCompleted) return;
+      _pingCompleter.complete(false);
     });
+    return _pingCompleter.future;
   }
 
-  void _stopSendingKeepAliveSignal() {
-    _keepAliveSignal.stop();
-  }
-
-  Future _expectDaemonIsRunning() async {
-    if (!await isDaemonRunning) {
-      throw new Exception('Daemon not found at ${daemonHost.portDaemonUrl}');
-    }
-  }
-
-  SeltzerHttpRequest _get(String route) =>
-      _seltzer.get(_createRequestUrl(route));
-
-  SeltzerHttpRequest _delete(String route) =>
-      _seltzer.delete(_createRequestUrl(route));
-
-  SeltzerHttpRequest _post(String route) =>
-      _seltzer.post(_createRequestUrl(route));
+  Future<http.HttpResponse> _post(String route, {String payload}) =>
+      http.post(_createRequestUrl(route), payload: payload);
 
   String _createRequestUrl(String route) =>
       '${daemonHost.portDaemonUrl}/$route';
-}
-
-class HttpWithTimeout {
-  Future<SeltzerHttpResponse> send(SeltzerHttpRequest request) {
-    final responseCompleter = new Completer<SeltzerHttpResponse>();
-    Timer timeout;
-
-    runZoned(() {
-      timeout = new Timer(const Duration(seconds: 5), () {
-        throw new TimeoutException(request.toString());
-      });
-    }, onError: (e, s) {
-      if (!responseCompleter.isCompleted) {
-        responseCompleter.complete(null);
-      }
-    });
-
-    runZoned(() {
-      request.send().first.then((response) {
-        timeout.cancel();
-        if (!responseCompleter.isCompleted) {
-          responseCompleter.complete(response);
-        }
-      });
-    }, onError: (e, s) {
-      responseCompleter.complete(null);
-    });
-
-    return responseCompleter.future;
-  }
 }

@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'dart:io';
 
-import 'package:distributed/src/http_server/request_handler.dart';
+import 'package:distributed.http/vm.dart';
+import 'package:distributed/src/http_server_builder/request_handler.dart';
 
 class HttpServerBuilder {
   RequestHandler _firstHandler;
@@ -18,5 +18,6 @@ class HttpServerBuilder {
   }
 
   Future<HttpServer> bind(String address, int port) async =>
-      await HttpServer.bind(address, port)..listen(_firstHandler.handle);
+      await HttpServer.bind(address, port)
+        ..listen(_firstHandler.handle);
 }

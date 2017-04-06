@@ -1,3 +1,4 @@
+import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed/src/connection/socket_controller.dart';
 import 'package:distributed/src/connection/peer_verifier.dart';
 import 'package:distributed/src/objects/interfaces.dart';
@@ -7,6 +8,7 @@ import 'package:test/test.dart';
 void main() {
   final remotePeer = new Peer('remote', HostMachine.Null);
   final localPeer = new Peer('local', HostMachine.Null);
+  final logger = new Logger.disabled();
 
   group('verifyRemotePeer', () {
     SocketController controller;
@@ -20,7 +22,7 @@ void main() {
     });
 
     test('should verify the peer on the other end of a connection', () async {
-      verifyRemotePeer(controller.local, remotePeer, incoming: true)
+      verifyRemotePeer(controller.local, remotePeer, logger, incoming: true)
           .then((expectAsync1((VerificationResult verificationResult) {
         expect(verificationResult.error, isEmpty);
         expect(verificationResult.peer, remotePeer);
@@ -30,7 +32,7 @@ void main() {
 
     group('should return Peer.Null if', () {
       test('Invalid identification is recevied.', () {
-        verifyRemotePeer(controller.local, remotePeer, incoming: true)
+        verifyRemotePeer(controller.local, remotePeer, logger, incoming: true)
             .then((expectAsync1((VerificationResult verificationResult) {
           expect(verificationResult.error, VerificationError.INVALID_RESPONSE);
           expect(verificationResult.peer, Peer.Null);
@@ -44,7 +46,7 @@ void main() {
           'null',
           'void main() { print("Hello"); }',
         ].forEach((invalidData) {
-          verifyRemotePeer(controller.local, remotePeer, incoming: true)
+          verifyRemotePeer(controller.local, remotePeer, logger, incoming: true)
               .then((expectAsync1((VerificationResult verificationResult) {
             expect(verificationResult.error, VerificationError.INVALID_RESPONSE,
                 reason: invalidData);
@@ -56,7 +58,8 @@ void main() {
 
       test('socket does not have an open connection.', () {
         var closedController = new SocketController()..close();
-        verifyRemotePeer(closedController.local, remotePeer, incoming: true)
+        verifyRemotePeer(closedController.local, remotePeer, logger,
+                incoming: true)
             .then((expectAsync1((VerificationResult verificationResult) {
           expect(verificationResult.error, VerificationError.CONNECTION_CLOSED);
           expect(verificationResult.peer, Peer.Null);
@@ -65,7 +68,7 @@ void main() {
 
       test('the remote takes too long to respond.', () {
         new FakeAsync().run((fakeAsync) {
-          verifyRemotePeer(controller.local, remotePeer, incoming: true)
+          verifyRemotePeer(controller.local, remotePeer, logger, incoming: true)
               .then((expectAsync1((VerificationResult verificationResult) {
             expect(verificationResult.error, VerificationError.TIMEOUT);
             expect(verificationResult.peer, Peer.Null);
@@ -88,7 +91,7 @@ void main() {
     });
 
     test('should verify the peer on the other end of a connection', () async {
-      verifyRemotePeer(controller.local, localPeer, incoming: false)
+      verifyRemotePeer(controller.local, localPeer, logger, incoming: false)
           .then((expectAsync1((VerificationResult verificationResult) {
         expect(verificationResult.error, isEmpty);
         expect(verificationResult.peer, remotePeer);
@@ -99,7 +102,7 @@ void main() {
 
     group('should return Peer.Null if', () {
       test('Invalid identification is recevied.', () {
-        verifyRemotePeer(controller.local, localPeer, incoming: false)
+        verifyRemotePeer(controller.local, localPeer, logger, incoming: false)
             .then((expectAsync1((VerificationResult verificationResult) {
           expect(verificationResult.error, VerificationError.INVALID_RESPONSE);
           expect(verificationResult.peer, Peer.Null);
@@ -113,7 +116,7 @@ void main() {
           'null',
           'void main() { print("Hello"); }',
         ].forEach((invalidData) {
-          verifyRemotePeer(controller.local, localPeer, incoming: false)
+          verifyRemotePeer(controller.local, localPeer, logger, incoming: false)
               .then((expectAsync1((VerificationResult verificationResult) {
             expect(verificationResult.error, VerificationError.INVALID_RESPONSE,
                 reason: invalidData);
@@ -125,7 +128,8 @@ void main() {
 
       test('socket does not have an open connection.', () {
         var closedController = new SocketController()..close();
-        verifyRemotePeer(closedController.local, localPeer, incoming: false)
+        verifyRemotePeer(closedController.local, localPeer, logger,
+                incoming: false)
             .then((expectAsync1((VerificationResult verificationResult) {
           expect(verificationResult.error, VerificationError.CONNECTION_CLOSED);
           expect(verificationResult.peer, Peer.Null);
@@ -134,7 +138,7 @@ void main() {
 
       test('the remote closes the connection before verification completes',
           () {
-        verifyRemotePeer(controller.local, localPeer, incoming: false)
+        verifyRemotePeer(controller.local, localPeer, logger, incoming: false)
             .then((expectAsync1((VerificationResult verificationResult) {
           expect(verificationResult.error, VerificationError.CONNECTION_CLOSED);
           expect(verificationResult.peer, Peer.Null);
@@ -144,7 +148,7 @@ void main() {
 
       test('the remote takes too long to respond.', () {
         new FakeAsync().run((fakeAsync) {
-          verifyRemotePeer(controller.local, localPeer, incoming: false)
+          verifyRemotePeer(controller.local, localPeer, logger, incoming: false)
               .then((expectAsync1((VerificationResult verificationResult) {
             expect(verificationResult.error, VerificationError.TIMEOUT);
             expect(verificationResult.peer, Peer.Null);

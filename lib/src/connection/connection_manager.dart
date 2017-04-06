@@ -1,13 +1,11 @@
 import 'dart:async';
 
 import 'package:distributed/src/connection/message_channel.dart';
-import 'package:distributed/src/connection/socket.dart';
-import 'package:distributed/src/monitoring/logging.dart';
 import 'package:distributed/src/connection/peer_verifier.dart';
 import 'package:distributed/src/objects/interfaces.dart';
+import 'package:distributed.http/vm.dart';
+import 'package:distributed.monitoring/logging.dart';
 import 'package:meta/meta.dart';
-
-import 'socket_server.dart';
 
 /// An interface for managing a group of connections.
 ///
@@ -70,7 +68,7 @@ class VmConnectionManager implements ConnectionManager {
   }
 
   VmConnectionManager(this._peerVerifier, this._server, this._logger) {
-    _server.onSocket.forEach(_handleNewSocketConnection);
+    _server.forEach(_handleNewSocketConnection);
   }
 
   @override
@@ -87,7 +85,7 @@ class VmConnectionManager implements ConnectionManager {
 
   @override
   Future<bool> connect(String url) async {
-    final socket = Socket.connect(url);
+    final socket = await Socket.connect(url);
     final verification = await _peerVerifier.verifyOutgoing(socket);
     if (verification.error.isNotEmpty) {
       throw new Exception(verification.error);
@@ -125,6 +123,7 @@ class VmConnectionManager implements ConnectionManager {
 
   void _addConnection(Peer peer, Socket socket) {
     assert(!peers.contains(peer));
+    _logger.log("Adding connection to ${peer.displayName}");
     _peerToChannel[peer] = new MessageChannel.fromSocket(socket);
     _peerToChannel[peer]
       ..done.then((_) {
@@ -136,6 +135,7 @@ class VmConnectionManager implements ConnectionManager {
   }
 
   Future _handleNewSocketConnection(Socket socket) async {
+    print("Handling new socket");
     final verification = await _peerVerifier.verifyIncoming(socket);
     if (verification.error.isNotEmpty) {
       throw new Exception(verification.error);

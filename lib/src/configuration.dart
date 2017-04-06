@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:distributed/src/monitoring/logging.dart';
+import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed/src/node/node.dart';
 
 /// A provider of [Node] instances.

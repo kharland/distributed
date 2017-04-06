@@ -1,8 +1,8 @@
-import 'package:distributed/src/monitoring/logging.dart';
 import 'package:distributed/src/node/node.dart';
 import 'package:distributed/src/objects/interfaces.dart';
 import 'package:distributed/src/objects/objects.dart';
 import 'package:distributed/src/port_daemon/port_daemon.dart';
+import 'package:distributed.monitoring/logging.dart';
 import 'package:test/test.dart';
 
 void runNodeTests() {
@@ -12,9 +12,9 @@ void runNodeTests() {
 
   group('$Node', () {
     setUp(() async {
-      daemon = await PortDaemon.spawn(new Logger.disabled());
-      ping = await Node.spawn('ping', logger: new Logger.disabled());
-      pong = await Node.spawn('pong', logger: new Logger.disabled());
+      daemon = await PortDaemon.spawn(new Logger('port_daemon'));
+      ping = await Node.spawn('ping', logger: new Logger('ping'));
+      pong = await Node.spawn('pong', logger: new Logger('pong'));
     });
 
     tearDown(() async {
@@ -27,6 +27,7 @@ void runNodeTests() {
       expect(pong.onConnect, emits(ping.toPeer()));
       expect(ping.onConnect, emits(pong.toPeer()));
       await ping.connect(pong.toPeer());
+      expect(ping.peers, contains(pong.toPeer()));
     });
 
     test('should register when a disconnection occurs', () async {

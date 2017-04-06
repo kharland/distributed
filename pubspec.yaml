@@ -4,6 +4,10 @@ authors:
   - Kendal Harland <kjharland@google.com>
 homepage: https://github.com/kharland/distributed_dart
 dependencies:
+  distributed.http:
+    path: lib/src/http/
+  distributed.monitoring:
+    path: lib/src/monitoring
   async:
   build_runner:
   built_value:

@@ -1,29 +1,29 @@
 import 'dart:async';
 
-import 'package:distributed/src/monitoring/logging.dart';
+import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed/src/objects/interfaces.dart';
 import 'package:distributed/src/objects/objects.dart';
 import 'package:distributed/src/port_daemon/http_server.dart';
 import 'package:distributed/src/port_daemon/node_database.dart';
 import 'package:distributed/src/port_daemon/ports.dart';
-import 'package:distributed/src/port_daemon/web_server.dart';
 
 class PortDaemon {
   final NodeDatabase _nodeDatabase;
-  final WebServer _webServer;
+  final PortDaemonHttpServer _httpServer;
   final Logger _logger;
 
   static Future<PortDaemon> spawn(Logger logger) async {
-    var nodeDatabase = new NodeDatabase();
-    var webServer = await ExpressServer.start(
+    var db = new NodeDatabase();
+    var httpServer = await PortDaemonHttpServer.start(
       hostMachine: HostMachine.localHost,
-      nodeDatabase: nodeDatabase,
+      db: db,
       logger: logger,
     );
-    return new PortDaemon._(nodeDatabase, webServer, logger);
+    return new PortDaemon._(db, httpServer, logger);
   }
 
-  PortDaemon._(this._nodeDatabase, this._webServer, this._logger) {
+  PortDaemon._(this._nodeDatabase, this._httpServer, this._logger) {
+    _logger.log("Port daemon listening at ${_httpServer.url}");
     _nodeDatabase.onDeregistered.forEach((String name) {
       _logger.log('Deregistered $name');
     });
@@ -33,14 +33,14 @@ class PortDaemon {
   Set<String> get nodes => _nodeDatabase.nodes;
 
   /// The url for connecting to this daemon.
-  String get url => _webServer.url;
+  String get url => _httpServer.url;
 
   /// Signals to this daemon that [nodeName] is still available.
   void keepAlive(String nodeName) => _nodeDatabase.keepAlive(nodeName);
 
   /// Stops listening for new connections.
   void stop() {
-    _webServer.stop();
+    _httpServer.stop();
   }
 
   /// Assigns a port to a new [nodeName].
