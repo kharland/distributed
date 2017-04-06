@@ -15,8 +15,6 @@ abstract class NetworkAgent {
 }
 
 /// An agent that occupies a port and listens for socket connections.
-///
-/// When this agent accepts another,
 class ListeningAgent extends NetworkAgent {
   final _controller = new StreamController<Socket>();
 

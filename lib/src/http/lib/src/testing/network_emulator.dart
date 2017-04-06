@@ -28,14 +28,6 @@ class NetworkEmulator {
     return agent.sockets;
   }
 
-//  Socket listenOnce(String host, int port) {
-//    var address = _findAddressOrFail(host);
-//    var reservedAddress = new ReservedAddress(host, port, address);
-//    var agent = new ConnectingAgent(reservedAddress);
-//    address.attach(agent);
-//    return agent.socket;
-//  }
-
   Socket connectWithoutSrcPort(String srcHost, String destHost, int destPort) {
     var srcPort = _findAddressOrFail(srcHost).getFreePort();
     return connect(srcHost, srcPort, destHost, destPort);
@@ -57,7 +49,7 @@ class NetworkEmulator {
 
   /// Returns the [NetworkAddress] whose host is [host].
   ///
-  /// If no address is found an exception is raised.
+  /// If no address is found, a [SocketException] is raised.
   NetworkAddress _findAddressOrFail(String host) =>
       _addresses.firstWhere((a) => a.host == host,
           orElse: () => throw new SocketException('Address not found "$host"'));
