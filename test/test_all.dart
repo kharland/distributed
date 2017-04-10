@@ -8,7 +8,7 @@ import 'src/http/vm_testing/network_emulator_test.dart'
     as network_emulator_test;
 import 'src/http/vm_testing/test_http_provider_test.dart'
     as test_http_provider_test;
-import 'src/http_server/http_server_builder_test.dart'
+import 'src/http_server_builder/http_server_builder_test.dart'
     as http_server_builder_test;
 import 'src/monitoring/file_system_test.dart' as file_system_test;
 import 'src/monitoring/periodic_function_test.dart' as periodic_function_test;
