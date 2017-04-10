@@ -31,7 +31,7 @@ void main() {
   resource_test.main();
   file_system_test.main();
   peer_verification_test.main();
-  vm_node_test.run(); // Hanging after completion.
+//  vm_node_test.run(); // Hanging after completion.
   client_test.main();
   database_test.main();
   node_database_test.main(); // Hanging after completion
