@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:distributed.http/http.dart';
 import 'package:distributed.http/src/configuration.dart';
+import 'package:distributed.http/src/http_provider.dart';
 import 'package:distributed.http/src/testing/http_transformer.dart';
 import 'package:distributed.http/src/testing/local_address.dart';
 import 'package:distributed.http/src/testing/network_emulator.dart';
@@ -10,16 +12,17 @@ import 'package:meta/meta.dart';
 import 'package:stream_channel/stream_channel.dart';
 
 void configureHttp() {
-  initializeHttp(new TestHttpProvider(new Logger('http_provider.test')));
+  initializeHttp(
+      new TestHttpProvider(new Logger('http_provider.test'), 'localhost'));
 }
 
 class TestHttpProvider implements HttpProvider {
   final NetworkEmulator _network;
+  final String _localHost;
 
-  TestHttpProvider(Logger logger)
+  TestHttpProvider(Logger logger, this._localHost)
       : _network = new NetworkEmulator(<NetworkAddress>[
-          new NetworkAddress('localhost', logger),
-          new NetworkAddress('127.0.0.1', logger),
+          new NetworkAddress(_localHost, logger),
         ]);
 
   @override
@@ -47,17 +50,14 @@ class TestHttpProvider implements HttpProvider {
 
   @override
   Future<TestSocket> connectSocket(String url) async {
-    var remoteUri = Uri.parse(url);
-    return _network.connectWithoutSrcPort(
-        'localhost', remoteUri.host, remoteUri.port);
+    var uri = Uri.parse(url);
+    return _network.connectWithoutSrcPort(_localHost, uri.host, uri.port);
   }
 
   Future<TestHttpResponse> _send(String url, String method,
       {String payload}) async {
     var remoteUri = Uri.parse(url);
     var responseController = new StreamChannelController<String>();
-    assert(remoteUri.scheme == _Scheme.HTTP);
-
     var request = new TestHttpRequest(
         method: method,
         uri: remoteUri,
@@ -75,15 +75,16 @@ class TestHttpProvider implements HttpProvider {
   }
 }
 
-class TestHttpServer extends StreamView<HttpRequest>
+class TestHttpServer extends StreamView<ServerHttpRequest>
     with Closable
     implements HttpServer {
   final TestSocketServer _delegate;
 
-  TestHttpServer._(Stream<HttpRequest> stream, this._delegate) : super(stream);
+  TestHttpServer._(Stream<ServerHttpRequest> stream, this._delegate)
+      : super(stream);
 
   factory TestHttpServer(TestSocketServer delegate) {
-    var controller = new StreamController<HttpRequest>();
+    var controller = new StreamController<ServerHttpRequest>();
     delegate.forEach((Socket socket) {
       socket.transform(new HttpRequestTransformer()).forEach(controller.add);
     }).then((_) {
@@ -103,6 +104,9 @@ class TestHttpServer extends StreamView<HttpRequest>
     _delegate.close();
     super.close();
   }
+
+  @override
+  String get url => super.url;
 }
 
 class TestSocketServer extends StreamView<Socket>
@@ -125,7 +129,7 @@ class TestSocketServer extends StreamView<Socket>
   }
 }
 
-class TestHttpRequest extends StreamView<String> implements HttpRequest {
+class TestHttpRequest extends StreamView<String> implements ServerHttpRequest {
   @override
   final String method;
 
@@ -204,10 +208,4 @@ class Closable {
   void close() {
     _closedCompleter.complete();
   }
-}
-
-/// Uri schemes used by distributed.
-abstract class _Scheme {
-  static const HTTP = 'http';
-  static const WEBSOCKET = 'ws';
 }

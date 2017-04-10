@@ -8,6 +8,8 @@ dependencies:
     path: lib/src/http/
   distributed.monitoring:
     path: lib/src/monitoring
+  distributed.objects:
+    path: lib/src/objects
   async:
   build_runner:
   built_value:

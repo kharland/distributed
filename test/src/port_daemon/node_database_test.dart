@@ -1,58 +1,52 @@
 import 'package:distributed/src/port_daemon/database_errors.dart';
 import 'package:distributed/src/port_daemon/node_database.dart';
-import 'package:distributed/src/port_daemon/ports.dart';
+import 'package:distributed.objects/objects.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('$NodeDatabase', () {
     NodeDatabase db;
+    NodePorts nodePorts;
+    const nodeName = 'a';
 
     setUp(() {
       db = new NodeDatabase();
+      nodePorts = new NodePorts(1, 2, 3);
     });
 
-    group('getPort', () {
-      test('should return ${Ports.error} for an unregistered node', () async {
-        expect(await db.getPort('a'), Ports.error);
+    group('getPorts', () {
+      test('should return ${NodePorts.Null} for an unregistered node',
+          () async {
+        expect(await db.getPorts(nodeName), NodePorts.Null);
       });
 
-      test('should return the port for a registered node', () async {
-        expect(await db.getPort('a'), Ports.error);
-        var registration = await db.registerNode('a');
-        expect(await db.getPort('a'), registration.port);
+      test('should return the ports for a registered node', () async {
+        expect(await db.getPorts(nodeName), NodePorts.Null);
+        expect(await db.registerNode(nodeName, nodePorts), isEmpty);
+        expect(await db.getPorts(nodeName), nodePorts);
       });
     });
 
     group('registerNode', () {
       test('should register an unregistered node', () async {
-        var registration = await db.registerNode('a');
-        expect(registration.port, greaterThan(0));
-        expect(registration.error, isEmpty);
+        expect(await db.registerNode(nodeName, nodePorts), isEmpty);
+        expect(await db.getPorts(nodeName), nodePorts);
       });
 
       test('should fail to register an already registered node', () async {
-        await db.registerNode('a');
-        expect(await db.getPort('a'), greaterThan(0));
-
-        var registration = await db.registerNode('a');
-        expect(registration.port, Ports.error);
-        expect(registration.error, NODE_ALREADY_EXISTS);
+        expect(await db.registerNode(nodeName, nodePorts), isEmpty);
+        expect(await db.getPorts(nodeName), nodePorts);
+        expect(await db.registerNode(nodeName, nodePorts), isNotEmpty);
+        expect(db.registrants, hasLength(3));
       });
     });
 
     group('deregisterNode', () {
       test('should deregister a registered node', () async {
-        await db.registerNode('a');
-        expect(await db.getPort('a'), greaterThan(0));
-        var error = await db.deregisterNode('a');
-        expect(error, isEmpty);
-        expect(await db.getPort('a'), Ports.error);
-      });
-
-      test('should fail to deregister an unregistered node', () async {
-        expect(await db.getPort('a'), lessThan(0));
-        expect(await db.deregisterNode('a'), NODE_NOT_FOUND);
-        expect(await db.getPort('a'), lessThan(0));
+        expect(await db.registerNode(nodeName, nodePorts), isEmpty);
+        expect(await db.getPorts(nodeName), nodePorts);
+        await db.deregisterNode(nodeName);
+        expect(await db.getPorts(nodeName), NodePorts.Null);
       });
     });
   });

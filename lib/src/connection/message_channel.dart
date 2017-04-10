@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:async/async.dart';
+import 'package:distributed.http/vm.dart';
 import 'package:distributed.monitoring/periodic_function.dart';
 import 'package:distributed.monitoring/signal_monitor.dart';
-import 'package:distributed/src/objects/interfaces.dart';
-import 'package:distributed.http/vm.dart';
+import 'package:distributed.objects/objects.dart';
 
 import 'message_router.dart';
 
@@ -48,7 +48,7 @@ class MessageChannel {
 
   /// Sends [message] over this [MessageChannel].
   void send(Message message) {
-    _messageRouter.sendToUser(serialize(message));
+    _messageRouter.sendToUser(message.serialize());
   }
 
   /// Closes this [MessageChannel].

@@ -48,6 +48,9 @@ class MemoryDatabase<K, V> implements Database<K, V> {
   }
 
   @override
+  Future<V> get(K key) async => _records[key];
+
+  @override
   bool containsKey(K key) => _records.containsKey(key);
 
   @override
@@ -70,15 +73,12 @@ class MemoryDatabase<K, V> implements Database<K, V> {
   }
 
   @override
-  Future<V> get(K key) async => _records[key];
-
-  @override
   Future<V> remove(K key) async {
-    if (_records.containsKey(key)) {
-      var record = _records.remove(key);
-      return record;
+    if (await get(key) == null) {
+      throw new Exception("No record associated with $key");
+    } else {
+      return _records.remove(key);
     }
-    return null;
   }
 
   @override

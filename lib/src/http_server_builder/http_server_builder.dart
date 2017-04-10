@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:distributed.http/vm.dart';
 import 'package:distributed/src/http_server_builder/request_handler.dart';
+import 'package:distributed.http/vm.dart';
 
 class HttpServerBuilder {
   RequestHandler _firstHandler;

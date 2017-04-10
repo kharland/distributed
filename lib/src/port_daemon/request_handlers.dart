@@ -1,19 +1,18 @@
 import 'dart:async';
 
 import 'package:distributed/src/http_server_builder/request_handler.dart';
-import 'package:distributed.monitoring/logging.dart';
-import 'package:distributed/src/objects/objects.dart';
 import 'package:distributed/src/port_daemon/node_database.dart';
 import 'package:distributed/src/port_daemon/ports.dart';
 import 'package:distributed.http/vm.dart';
+import 'package:distributed.monitoring/logging.dart';
+import 'package:distributed.objects/objects.dart';
 
-// TODO: Refactor request framework to handle more than just POST requests.
+final matchAllMatcher = new RequestMatcher(r'/');
 final pingMatcher = new RequestMatcher(r'/ping');
 final listNodesMatcher = new RequestMatcher(r'/list/node');
 final lookupNodeHandler = new RequestMatcher(r'/get/node');
 final addNodeMatcher = new RequestMatcher(r'/add/node');
 final removeNodeMatcher = new RequestMatcher(r'/remove/node');
-final matchAllMatcher = new RequestMatcher(r'/');
 
 class LoggingHandler extends RequestHandler {
   final RequestMatcher _matcher;
@@ -22,7 +21,7 @@ class LoggingHandler extends RequestHandler {
   LoggingHandler(this._matcher, this._logger);
 
   @override
-  Future handle(HttpRequest request) async {
+  Future handle(ServerHttpRequest request) async {
     _logger.log('${request.method} ${request.uri.path}');
     super.handle(request);
   }
@@ -36,35 +35,11 @@ class PingHandler extends RequestHandler {
   PingHandler(this._matcher, this._logger, this._db);
 
   @override
-  Future handle(HttpRequest request) async {
+  Future handle(ServerHttpRequest request) async {
     if (!_matcher.matches(request)) return super.handle(request);
-    var data = await request.first;
-    _db.keepAlive(data);
+    await request.first;
     request.response
-      ..add('PING')
-      ..close();
-  }
-}
-
-class ListNodesHandler extends RequestHandler {
-  final RequestMatcher _matcher;
-
-  final Logger _logger;
-  final NodeDatabase _db;
-
-  ListNodesHandler(this._matcher, this._logger, this._db);
-
-  @override
-  Future handle(HttpRequest request) async {
-    if (!_matcher.matches(request)) return super.handle(request);
-    var nodes = _db.nodes;
-    var ports = await Future.wait(nodes.map(_db.getPort));
-    var assignments = <String, int>{};
-    for (int i = 0; i < nodes.length; i++) {
-      assignments[nodes.elementAt(i)] = ports[i];
-    }
-    request.response
-      ..add(serialize($portAssignmentList(assignments)))
+      ..add('')
       ..close();
   }
 }
@@ -78,13 +53,13 @@ class LookupNodeHandler extends RequestHandler {
   LookupNodeHandler(this._matcher, this._logger, this._db);
 
   @override
-  Future handle(HttpRequest request) async {
+  Future handle(ServerHttpRequest request) async {
     if (!_matcher.matches(request)) return super.handle(request);
     var name = await request.first;
     _logger.log('Looking up $name');
-    _db.getPort(name).then((int port) {
+    _db.getPorts(name).then((NodePorts ports) {
       request.response
-        ..add(port.toString())
+        ..add(ports.serialize())
         ..close();
     }).catchError((e, stacktrace) {
       _logger..error(e)..error(stacktrace);
@@ -101,19 +76,18 @@ class AddNodeHandler extends RequestHandler {
   AddNodeHandler(this._matcher, this._logger, this._db);
 
   @override
-  Future handle(HttpRequest request) async {
+  Future handle(ServerHttpRequest request) async {
     if (!_matcher.matches(request)) return super.handle(request);
-    var name = await request.first;
-    _db.registerNode(name).then((Registration registration) {
-      _logger.log('Registered $name to ${registration.port}');
-      request.response
-        ..add(serialize(registration))
-        ..close();
+    var nodeName = await request.first;
+    var nodePorts = NodePorts.deserialize(await request.last);
+    _db.registerNode(nodeName, nodePorts).then((error) {
+      _logger.log('Registered $nodeName');
+      request.response.add('');
     }).catchError((e, stacktrace) {
       _logger..error(e)..error(stacktrace);
-      request.response
-        ..add(serialize($registration(Ports.error, e.toString())))
-        ..close();
+      request.response.add(e.toString());
+    }).then((_) {
+      request.response.close();
     });
   }
 }
@@ -126,7 +100,7 @@ class RemoveNodeHandler extends RequestHandler {
   RemoveNodeHandler(this._matcher, this._logger, this._db);
 
   @override
-  Future handle(HttpRequest request) async {
+  Future handle(ServerHttpRequest request) async {
     if (!_matcher.matches(request)) return super.handle(request);
 
     var name = await request.first;

@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:distributed/src/connection/message_channel.dart';
 import 'package:distributed/src/connection/message_router.dart';
 import 'package:distributed.monitoring/signal_monitor.dart';
-import 'package:distributed/src/objects/interfaces.dart';
+import 'package:distributed.objects/objects.dart';
 import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
 
@@ -27,7 +27,7 @@ void main() {
       await commonSetup();
       final message = new Message('a', 'b', Peer.Null);
       messageChannel.send(message);
-      verify(messageRouter.sendToUser(serialize(message)));
+      verify(messageRouter.sendToUser(message.serialize()));
     });
 
     test('should close if the remote closes.', () async {

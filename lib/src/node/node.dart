@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed/src/configuration.dart';
-import 'package:distributed/src/objects/interfaces.dart';
+import 'package:distributed.monitoring/logging.dart';
+import 'package:distributed.objects/objects.dart';
 
 /// A node in a distributed system.
 abstract class Node {

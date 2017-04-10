@@ -1,7 +1,7 @@
-import 'package:distributed.monitoring/logging.dart';
-import 'package:distributed/src/connection/socket_controller.dart';
 import 'package:distributed/src/connection/peer_verifier.dart';
-import 'package:distributed/src/objects/interfaces.dart';
+import 'package:distributed/src/connection/socket_controller.dart';
+import 'package:distributed.monitoring/logging.dart';
+import 'package:distributed.objects/objects.dart';
 import 'package:quiver/testing/async.dart';
 import 'package:test/test.dart';
 
@@ -27,7 +27,7 @@ void main() {
         expect(verificationResult.error, isEmpty);
         expect(verificationResult.peer, remotePeer);
       })));
-      controller.foreign.add(serialize(createIdMessage(remotePeer)));
+      controller.foreign.add(createIdMessage(remotePeer).serialize());
     });
 
     group('should return Peer.Null if', () {
@@ -37,12 +37,12 @@ void main() {
           expect(verificationResult.error, VerificationError.INVALID_RESPONSE);
           expect(verificationResult.peer, Peer.Null);
         })));
-        controller.foreign.add(serialize(createIdMessage(Peer.Null)));
+        controller.foreign.add(createIdMessage(Peer.Null).serialize());
       });
 
       test('An object that is not a $Message is received', () {
         [
-          serialize(new Peer('foo', HostMachine.Null)),
+          new Peer('foo', HostMachine.Null).serialize(),
           'null',
           'void main() { print("Hello"); }',
         ].forEach((invalidData) {
@@ -97,7 +97,7 @@ void main() {
         expect(verificationResult.peer, remotePeer);
       })));
 
-      controller.foreign.add(serialize(createIdMessage(remotePeer)));
+      controller.foreign.add(createIdMessage(remotePeer).serialize());
     });
 
     group('should return Peer.Null if', () {
@@ -107,12 +107,12 @@ void main() {
           expect(verificationResult.error, VerificationError.INVALID_RESPONSE);
           expect(verificationResult.peer, Peer.Null);
         })));
-        controller.foreign.add(serialize(createIdMessage(Peer.Null)));
+        controller.foreign.add(createIdMessage(Peer.Null).serialize());
       });
 
       test('An object that is not a $Message is received', () {
         [
-          serialize(new Peer('foo', HostMachine.Null)),
+          new Peer('foo', HostMachine.Null).serialize(),
           'null',
           'void main() { print("Hello"); }',
         ].forEach((invalidData) {

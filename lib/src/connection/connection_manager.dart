@@ -1,8 +1,9 @@
 import 'dart:async';
 
+import 'package:distributed.objects/objects.dart';
 import 'package:distributed/src/connection/message_channel.dart';
 import 'package:distributed/src/connection/peer_verifier.dart';
-import 'package:distributed/src/objects/interfaces.dart';
+
 import 'package:distributed.http/vm.dart';
 import 'package:distributed.monitoring/logging.dart';
 import 'package:meta/meta.dart';
@@ -71,6 +72,8 @@ class VmConnectionManager implements ConnectionManager {
     _server.forEach(_handleNewSocketConnection);
   }
 
+  int get port => _server.port;
+
   @override
   List<Peer> get peers => new List.unmodifiable(_peerToChannel.keys);
 
@@ -85,6 +88,7 @@ class VmConnectionManager implements ConnectionManager {
 
   @override
   Future<bool> connect(String url) async {
+    _logger.log("Connecting to peer at $url");
     final socket = await Socket.connect(url);
     final verification = await _peerVerifier.verifyOutgoing(socket);
     if (verification.error.isNotEmpty) {

@@ -1,24 +1,24 @@
 import 'dart:async';
 
-import 'package:distributed.http/vm.dart';
 import 'package:distributed/src/http_server_builder/request_handler.dart';
 import 'package:distributed/src/node/node.dart';
 import 'package:distributed/src/node/remote_interaction/request_handlers.dart';
-import 'package:distributed/src/objects/interfaces.dart';
+import 'package:distributed.http/vm.dart';
+import 'package:distributed.objects/objects.dart';
 import 'package:mockito/mockito.dart';
-import 'package:test/test.dart';
 import 'package:stack_trace/stack_trace.dart';
+import 'package:test/test.dart';
 
 void main() {
   group('$ConnectHandler', () {
     ConnectHandler connectHandler;
     MockNode node;
-    MockHttpRequest request;
+    MockServerHttpRequest request;
     MockRequestMatcher matcher;
 
     void commonSetUp({String uriPath: '', String method: ''}) {
       node = new MockNode();
-      request = new MockHttpRequest();
+      request = new MockServerHttpRequest();
       matcher = new MockRequestMatcher();
       connectHandler = new ConnectHandler(node, matcher);
     }
@@ -41,7 +41,7 @@ void main() {
         final peer = new Peer('test', HostMachine.Null);
 
         when(matcher.matches(request)).thenReturn(true);
-        when(request.first).thenReturn(new Future.value(serialize(peer)));
+        when(request.first).thenReturn(new Future.value(peer.serialize()));
         when(node.connect(peer)).thenReturn(new Future.value(true));
 
         await connectHandler.handle(request);
@@ -55,7 +55,7 @@ void main() {
 
 class MockNode extends Mock implements Node {}
 
-class MockHttpRequest extends Mock implements HttpRequest {}
+class MockServerHttpRequest extends Mock implements ServerHttpRequest {}
 
 class MockRequestHandler extends Mock implements RequestHandler {}
 

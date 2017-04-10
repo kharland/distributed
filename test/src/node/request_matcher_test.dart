@@ -1,14 +1,14 @@
-import 'package:distributed.http/vm.dart';
 import 'package:distributed/src/http_server_builder/request_handler.dart';
+import 'package:distributed.http/vm.dart';
 import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('$RequestMatcher', () {
     test('should match a post request with the correct pattern', () {
-      var matchedRequest = new MockHttpRequest();
-      var badPathRequest = new MockHttpRequest();
-      var badMethodRequest = new MockHttpRequest();
+      var matchedRequest = new MockServerHttpRequest();
+      var badPathRequest = new MockServerHttpRequest();
+      var badMethodRequest = new MockServerHttpRequest();
 
       when(matchedRequest.method).thenReturn('POST');
       when(matchedRequest.uri).thenReturn(new MockUri('/a'));
@@ -25,7 +25,7 @@ void main() {
   });
 }
 
-class MockHttpRequest extends Mock implements HttpRequest {}
+class MockServerHttpRequest extends Mock implements ServerHttpRequest {}
 
 class MockUri extends Mock implements Uri {
   @override

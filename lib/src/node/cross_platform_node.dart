@@ -1,13 +1,15 @@
 import 'dart:async';
 
+import 'package:async/async.dart';
+import 'package:distributed.http/http.dart';
 import 'package:distributed/src/connection/connection_manager.dart';
+import 'package:distributed/src/port_daemon/client.dart';
 import 'package:distributed.monitoring/logging.dart';
-import 'package:distributed/src/objects/interfaces.dart';
-import 'package:distributed/src/port_daemon/port_daemon_client.dart';
+import 'package:distributed.objects/objects.dart';
+import 'package:distributed/src/port_daemon/port_daemon_routes.dart';
 import 'package:meta/meta.dart';
 
 import 'node.dart';
-import 'package:async/async.dart';
 
 /// Internal-only [Node] implementation.
 class CrossPlatformNode implements Node {
@@ -46,16 +48,20 @@ class CrossPlatformNode implements Node {
 
   @override
   Future<bool> connect(Peer peer) async {
-    final portDaemonClient = new PortDaemonClient(
-        name, peer.hostMachine, new Logger('port_daemon_client'));
-    final peerUrl = await portDaemonClient.lookup(peer.name);
+    // TODO move all of this to ConnectionManager.
+    final peerUrl = await getNodeConnectionUrl(
+      new HttpWithTimeout(new Http()),
+      new DaemonRoutes('http://localhost:4369'),
+      name,
+      _logger,
+    );
 
     if (peerUrl.isEmpty) {
       _logger.error('Peer ${peer.name} not found.');
       return false;
+    } else {
+      return _connectionManager.connect(peerUrl);
     }
-    _logger.log("Connecting to $peerUrl");
-    return _connectionManager.connect(peerUrl);
   }
 
   @override

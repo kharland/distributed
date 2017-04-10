@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:async/async.dart';
-import 'package:distributed/src/objects/interfaces.dart';
 import 'package:distributed.http/vm.dart';
 import 'package:distributed.monitoring/logging.dart';
+import 'package:distributed.objects/objects.dart';
 import 'package:meta/meta.dart';
 
 /// The amount of time to wait for a socket message before timing out.
@@ -95,7 +95,7 @@ Future<VerificationResult> _verifyIncomingConnection(
     logger.popPrefix();
     return new VerificationResult._error(VerificationError.INVALID_RESPONSE);
   } else {
-    socket.add(serialize(createIdMessage(receiver)));
+    socket.add(createIdMessage(receiver).serialize());
     logger.popPrefix();
     return new VerificationResult._('', sender);
   }
@@ -109,7 +109,7 @@ Future<VerificationResult> _verifyOutgoingConnection(
   logger.pushPrefix('verify-outgoing');
 
   try {
-    socket.add(serialize(createIdMessage(sender)));
+    socket.add(createIdMessage(sender).serialize());
   } on StateError catch (e, s) {
     logger..error(e.toString())..error(s.toString());
     return new VerificationResult._error(VerificationError.CONNECTION_CLOSED);
@@ -173,7 +173,7 @@ Future<_IdResult> _waitForPeerIdentification(Socket socket) async {
   runZoned(() async {
     responseFuture = new CancelableOperation.fromFuture(socket.first);
     var response =
-        await responseFuture.valueOrCancellation(serialize(Message.Null));
+        await responseFuture.valueOrCancellation(Message.Null.serialize());
     timeout.cancel();
     // resultCompleter might have already completed with a timeout error.
     if (resultCompleter.isCompleted) return;
