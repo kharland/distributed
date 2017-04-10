@@ -15,11 +15,7 @@ abstract class RequestHandler {
   ///
   /// The default behavior in this base class implementation is to forward the
   /// request to this handler's successor without taking any action.
-  Future handle(ServerHttpRequest request) async {
-    if (_successor != null) {
-      return _successor.handle(request);
-    }
-  }
+  Future handle(ServerHttpRequest request) => _successor?.handle(request);
 
   /// Sets the successor to this [RequestHandler].
   set successor(RequestHandler value) {

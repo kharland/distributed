@@ -7,7 +7,7 @@ class HttpServerBuilder {
   RequestHandler _firstHandler;
   RequestHandler _lastHandler;
 
-  void addHandler(RequestHandler handler) {
+  void add(RequestHandler handler) {
     if (_firstHandler == null) {
       _firstHandler = handler;
       _lastHandler = _firstHandler;
