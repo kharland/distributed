@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:distributed.objects/objects.internal.dart';
-import 'package:distributed/src/port_daemon/port_daemon_routes.dart';
+import 'package:distributed/src/port_daemon/routes.dart';
 import 'package:distributed/src/port_daemon/ports.dart';
 import 'package:distributed.http/http.dart';
 import 'package:distributed.monitoring/logging.dart';
