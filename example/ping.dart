@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:distributed.objects/objects.dart';
 import 'package:distributed/distributed.dart';
 import 'package:distributed/platform/vm.dart';
 

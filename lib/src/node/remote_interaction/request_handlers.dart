@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:distributed.http/http.dart';
 import 'package:distributed/distributed.dart';
 import 'package:distributed/src/http_server_builder/request_handler.dart';
 import 'package:distributed.http/vm.dart';
@@ -21,7 +22,7 @@ class ConnectHandler extends RequestHandler {
   /// If [request] does not contain a peer, an [ArgumentError] is thrown.  If
   /// the connection fails, an [Exception] is raised.
   @override
-  Future handle(HttpRequest request) async {
+  Future handle(ServerHttpRequest request) async {
     if (!_matcher.matches(request)) return super.handle(request);
     var peer = Peer.deserialize(await request.first);
     if (!await _node.connect(peer)) {
@@ -44,7 +45,7 @@ class DisconnectHandler extends RequestHandler {
   /// If [request] does not contain a peer, an [ArgumentError] is thrown.  If
   /// the disconnection fails, an [Exception] is raised.
   @override
-  Future handle(HttpRequest request) async {
+  Future handle(ServerHttpRequest request) async {
     if (!_matcher.matches(request)) return super.handle(request);
     var peer = Peer.deserialize(await request.first);
     _node.disconnect(peer);

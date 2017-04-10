@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io' as io;
 
+import 'package:distributed.http/http.dart';
 import 'package:distributed.http/src/configuration.dart';
+import 'package:distributed.http/src/http_provider.dart';
 import 'package:distributed.http/vm.dart';
 import 'package:http/http.dart' as httplib;
 
@@ -35,7 +37,8 @@ class ProdHttpProvider implements HttpProvider {
   Future<ProdSocket> connectSocket(String url) => ProdSocket.connect(url);
 }
 
-class ProdHttpServer extends StreamView<HttpRequest> implements HttpServer {
+class ProdHttpServer extends StreamView<ServerHttpRequest>
+    implements HttpServer {
   final io.HttpServer _delegate;
 
   ProdHttpServer(io.HttpServer delegate)
@@ -53,6 +56,9 @@ class ProdHttpServer extends StreamView<HttpRequest> implements HttpServer {
 
   @override
   int get port => _delegate.port;
+
+  @override
+  String get url => super.url;
 }
 
 /// A server that listens for Socket requests.
@@ -93,13 +99,11 @@ class ProdHttpResponder implements HttpResponder {
   }
 }
 
-class ProdHttpRequest extends StreamView<String> implements HttpRequest {
+class ProdHttpRequest extends StreamView<String> implements ServerHttpRequest {
   final io.HttpRequest _delegate;
-  final ProdHttpResponder _responder;
 
   ProdHttpRequest(io.HttpRequest delegate)
       : _delegate = delegate,
-        _responder = new ProdHttpResponder(delegate.response),
         super(delegate.transform(new Utf8Decoder()));
 
   @override
@@ -109,7 +113,7 @@ class ProdHttpRequest extends StreamView<String> implements HttpRequest {
   Uri get uri => _delegate.uri;
 
   @override
-  ProdHttpResponder get response => _responder;
+  HttpResponder get response => new ProdHttpResponder(_delegate.response);
 }
 
 class ProdHttpResponse extends StreamView<String> implements HttpResponse {

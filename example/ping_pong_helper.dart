@@ -1,3 +1,4 @@
+import 'package:distributed.objects/objects.dart';
 import 'package:distributed/distributed.dart';
 
 const pingPongDelay = const Duration(seconds: 1);

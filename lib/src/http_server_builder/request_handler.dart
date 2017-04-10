@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:distributed.http/http.dart';
 import 'package:distributed.http/vm.dart';
 
 /// Base class for an object that handles [HttpRequest]s.
@@ -14,7 +15,7 @@ abstract class RequestHandler {
   ///
   /// The default behavior in this base class implementation is to forward the
   /// request to this handler's successor without taking any action.
-  Future handle(HttpRequest request) async {
+  Future handle(ServerHttpRequest request) async {
     if (_successor != null) {
       return _successor.handle(request);
     }
@@ -32,7 +33,8 @@ class RequestMatcher {
   final RegExp _pattern;
 
   /// Returns true iff this [RequestMatcher] matches [request].
-  bool matches(HttpRequest request) =>
+  // TODO: handle more than just POST requests.
+  bool matches(ServerHttpRequest request) =>
       _pattern.hasMatch(request.uri.path) && request.method == 'POST';
 
   RequestMatcher(String pattern) : this._pattern = new RegExp(pattern);

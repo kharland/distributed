@@ -1,6 +1,5 @@
+import 'package:distributed.objects/objects.dart';
 import 'package:distributed/src/node/node.dart';
-import 'package:distributed/src/objects/interfaces.dart';
-import 'package:distributed/src/objects/objects.dart';
 import 'package:distributed/src/port_daemon/port_daemon.dart';
 import 'package:distributed.monitoring/logging.dart';
 import 'package:test/test.dart';
@@ -57,11 +56,11 @@ void runNodeTests() {
       await ping.connect(pong.toPeer());
 
       pong.receive('ping').listen(expectAsync1((Message message) {
-        expect(message, $message('ping', 'ping-message', ping.toPeer()));
+        expect(message, new Message('ping', 'ping-message', ping.toPeer()));
         pong.send(ping.toPeer(), 'pong', 'pong-message');
       }));
       ping.receive('pong').listen(expectAsync1((Message message) {
-        expect(message, $message('pong', 'pong-message', pong.toPeer()));
+        expect(message, new Message('pong', 'pong-message', pong.toPeer()));
       }));
       ping.send(pong.toPeer(), 'ping', 'ping-message');
     });

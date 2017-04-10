@@ -9,12 +9,12 @@ void main() {
     TestHttpProvider provider;
 
     setUp(() async {
-      provider = new TestHttpProvider(new Logger('$TestHttpProvider'));
+      provider = new TestHttpProvider(new Logger('http'), 'localhost');
     });
 
     test('post should support sending a POST request', () async {
       var server = await provider.bindHttpServer('localhost', 1);
-      server.take(1).first.then(expectAsync1((HttpRequest req) async {
+      server.take(1).first.then(expectAsync1((ServerHttpRequest req) async {
         expect(await req.first, 'hello');
         req.response.add('hi there!');
       }));

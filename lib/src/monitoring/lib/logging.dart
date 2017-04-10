@@ -15,10 +15,10 @@ abstract class Logger {
   factory Logger.disabled() = _NoOpLogger;
 
   /// Logs [message].
-  void log(String message);
+  void log(message);
 
-  /// Logs [message] as an error.
-  void error(String message);
+  /// Logs [error] as an error.
+  void error(error);
 
   void pushPrefix(String newPrefix) {
     _oldPrefix = prefix;
@@ -38,13 +38,13 @@ class _ShellLogger extends Logger {
   _ShellLogger(this.prefix) : super._(prefix);
 
   @override
-  void log(String message) {
+  void log(message) {
     stdout.writeln('[$prefix] $message');
   }
 
   @override
-  void error(String message) {
-    stderr.writeln('[$prefix] $message');
+  void error(error) {
+    stderr.writeln('[$prefix] $error');
   }
 
   @override
@@ -65,10 +65,10 @@ class _NoOpLogger extends Logger {
   String prefix;
 
   @override
-  void error(String message) {}
+  void error(error) {}
 
   @override
-  void log(String message) {}
+  void log(message) {}
 
   @override
   void popPrefix() {}
