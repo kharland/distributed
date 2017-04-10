@@ -5,7 +5,8 @@ import 'package:distributed/src/configuration.dart';
 import 'package:distributed/src/connection/connection_manager.dart';
 import 'package:distributed/src/connection/peer_verifier.dart';
 import 'package:distributed/src/node/cross_platform_node.dart';
-import 'package:distributed/src/node/remote_interaction/server.dart';
+import 'package:distributed/src/node/remote_control/control_server.dart';
+import 'package:distributed/src/node/remote_control/node_command.dart';
 import 'package:distributed/src/port_daemon/ports.dart';
 import 'package:distributed.http/environment/vm_prod.dart' as http_vm_prod;
 import 'package:distributed.http/environment/vm_testing.dart' as http_testing;
@@ -26,6 +27,8 @@ class _VmNodeProvider implements NodeProvider {
     Logger logger, {
     bool supportRemoteInteraction: false,
   }) async {
+    var subs = <StreamSubscription>[];
+
     final asPeer = new Peer(name, HostMachine.localHost);
 
     var connectionManager = await VmConnectionManager.bind(
@@ -35,17 +38,24 @@ class _VmNodeProvider implements NodeProvider {
       logger: logger,
     );
 
-    var node = new CrossPlatformNode.fromPeer(asPeer,
-        logger: logger, connectionManager: connectionManager);
+    var controlServer = await ControlServer.bind(
+      HostMachine.localHost.address,
+      await Ports.getUnusedPort(),
+    );
 
-    var remoteControlServer = await bindServer(
-        HostMachine.localHost.address, await Ports.getUnusedPort(), node);
+    var node = new CrossPlatformNode.fromPeer(
+      asPeer,
+      logger: logger,
+      connectionManager: connectionManager,
+    );
 
-    var nodePorts =
-        new NodePorts(remoteControlServer.port, connectionManager.port, -1);
+    subs.add(controlServer.commands.listen((NodeCommand cmd) {
+      cmd.execute(node);
+    }));
 
     node.onShutdown.then((_) {
-      remoteControlServer?.close();
+      controlServer?.close();
+      subs.forEach((s) => s.cancel());
     });
 
     return node;

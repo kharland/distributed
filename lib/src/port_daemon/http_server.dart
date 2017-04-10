@@ -18,11 +18,11 @@ class PortDaemonHttpServer {
   static Future<PortDaemonHttpServer> bind(String host, int port,
       {@required NodeDatabase db, @required Logger logger}) async {
     var server = await (new HttpServerBuilder()
-          ..addHandler(new LoggingHandler(matchAllMatcher, logger))
-          ..addHandler(new PingHandler(pingMatcher, logger, db))
-          ..addHandler(new AddNodeHandler(addNodeMatcher, logger, db))
-          ..addHandler(new RemoveNodeHandler(removeNodeMatcher, logger, db))
-          ..addHandler(new LookupNodeHandler(lookupNodeHandler, logger, db)))
+          ..add(new LoggingHandler(matchAllMatcher, logger))
+          ..add(new PingHandler(pingMatcher, logger, db))
+          ..add(new AddNodeHandler(addNodeMatcher, logger, db))
+          ..add(new RemoveNodeHandler(removeNodeMatcher, logger, db))
+          ..add(new LookupNodeHandler(lookupNodeHandler, logger, db)))
         .bind(host, port);
     return new PortDaemonHttpServer._(server);
   }

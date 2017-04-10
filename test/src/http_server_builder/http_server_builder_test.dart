@@ -11,9 +11,9 @@ void main() {
       var bazHandler = new MockRequestHandler();
 
       new HttpServerBuilder()
-        ..addHandler(fooHandler)
-        ..addHandler(barHandler)
-        ..addHandler(bazHandler);
+        ..add(fooHandler)
+        ..add(barHandler)
+        ..add(bazHandler);
 
       verify(fooHandler.successor = barHandler);
       verify(barHandler.successor = bazHandler);

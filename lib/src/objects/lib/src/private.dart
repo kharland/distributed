@@ -121,8 +121,8 @@ abstract class Registration extends Entity {
 
   NodePorts get ports;
 
-  static NodePorts deserialize(String NodePorts) =>
-      Entity.deserialize(NodePorts, BuiltNodePorts);
+  static NodePorts deserialize(String registration) =>
+      Entity.deserialize(registration, Registration);
 }
 
 //
