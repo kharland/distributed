@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:distributed/src/port_daemon/client.dart';
-import 'package:distributed/src/port_daemon/routes.dart';
+import 'package:distributed/src/port_daemon/client_routes.dart';
 import 'package:distributed.http/http.dart';
 import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
