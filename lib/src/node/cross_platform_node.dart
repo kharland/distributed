@@ -6,7 +6,7 @@ import 'package:distributed/src/connection/connection_manager.dart';
 import 'package:distributed/src/port_daemon/client.dart';
 import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed.objects/objects.dart';
-import 'package:distributed/src/port_daemon/routes.dart';
+import 'package:distributed/src/port_daemon/client_routes.dart';
 import 'package:meta/meta.dart';
 
 import 'node.dart';

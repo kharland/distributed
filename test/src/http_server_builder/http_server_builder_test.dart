@@ -1,5 +1,6 @@
 import 'package:distributed/src/http_server_builder/http_server_builder.dart';
-import 'package:distributed/src/http_server_builder/request_handler.dart';
+import 'package:distributed/src/http_server_builder/request_handler.dart'
+    hide any;
 import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
 

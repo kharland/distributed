@@ -13,17 +13,14 @@ void main() {
     final testPeer = new Peer('test', HostMachine.localHost);
     StreamController<NodeCommand> commandSink;
     MockServerHttpRequest mockRequest;
-    MockRequestMatcher mockMatcher;
 
     setUp(() {
       mockRequest = new MockServerHttpRequest();
       commandSink = new StreamController<NodeCommand>();
-      mockMatcher = new MockRequestMatcher();
-      when(mockMatcher.matches(any)).thenReturn(true);
     });
 
-    test('$ConnectHandler should produce a $ConnectCommand', () {
-      var mockConnectHandler = new ConnectHandler(mockMatcher, commandSink);
+    test('connectHandler should produce a $ConnectCommand', () {
+      var mockConnectHandler = createConnectHandler(commandSink);
       when(mockRequest.first)
           .thenReturn(new Future.value(testPeer.serialize()));
 
@@ -32,11 +29,11 @@ void main() {
         expect((cmd as ConnectCommand).peer, testPeer);
       }));
 
-      mockConnectHandler.handle(mockRequest);
+      mockConnectHandler(mockRequest, {});
     });
 
-    test('$DisconnectHandler should produce a $DisconnectCommand', () {
-      var mockConnectHandler = new DisconnectHandler(mockMatcher, commandSink);
+    test('disconnectHandler should produce a $DisconnectCommand', () {
+      var mockConnectHandler = createDisconnectHandler(commandSink);
       when(mockRequest.first)
           .thenReturn(new Future.value(testPeer.serialize()));
 
@@ -45,7 +42,7 @@ void main() {
         expect((cmd as DisconnectCommand).peer, testPeer);
       }));
 
-      mockConnectHandler.handle(mockRequest);
+      mockConnectHandler(mockRequest, {});
     });
   });
 }
@@ -53,5 +50,3 @@ void main() {
 class MockServerHttpRequest extends Mock implements ServerHttpRequest {}
 
 class MockRequestHandler extends Mock implements RequestHandler {}
-
-class MockRequestMatcher extends Mock implements RequestMatcher {}
