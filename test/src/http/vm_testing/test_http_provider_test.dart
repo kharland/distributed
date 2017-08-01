@@ -23,7 +23,7 @@ void main() {
       expect(httpRequest, emits('hi there!'));
     });
 
-    test('should connect a socket to a listener', () async {
+    test('should connect a socket.dart to a listener', () async {
       var socketServer = await provider.bindSocketServer('localhost', 1);
       var connectorSocket;
       socketServer.take(1).first.then(expectAsync1((Socket listenerSocket) {

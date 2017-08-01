@@ -49,13 +49,13 @@ abstract class Socket implements Stream<String>, Sink<String> {
   /// Initiates a [Socket] connection over [url].
   static Future<Socket> connect(String url) => http.connectSocket(url);
 
-  /// The local port this socket is using.
+  /// The local port this socket.dart is using.
   int get port;
 
-  /// The local host of this socket.
+  /// The local host of this socket.dart.
   String get localHost;
 
-  /// The host at the remote end of this socket.
+  /// The host at the remote end of this socket.dart.
   String get remoteHost;
 }
 

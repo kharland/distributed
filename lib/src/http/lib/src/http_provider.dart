@@ -31,13 +31,13 @@ abstract class HttpProvider implements Http {
   Future<HttpServer> bindHttpServer(String host, int port) =>
       http.bindHttpServer(host, port);
 
-  /// Binds a socket server to [host] on [port].
+  /// Binds a socket.dart server to [host] on [port].
   ///
   /// This throws an [UnsupportedError] in the browser.
   Future<SocketServer> bindSocketServer(String host, int port) =>
       http.bindSocketServer(host, port);
 
-  /// Binds a socket to [url].
+  /// Binds a socket.dart to [url].
   ///
   /// Returns a [Future] that completes with the [Socket].
   Future<Socket> connectSocket(String url) => http.connectSocket(url);

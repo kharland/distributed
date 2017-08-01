@@ -1,7 +1,5 @@
 name: distributed.objects
 dependencies:
-  distributed:
-    path: ../../../
   build_runner:
   built_value:
   built_value_generator:

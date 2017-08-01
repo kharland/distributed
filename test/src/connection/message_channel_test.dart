@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:distributed/src/connection/message_channel.dart';
+import 'package:distributed/src/connection/channel.dart';
 import 'package:distributed/src/connection/message_router.dart';
 import 'package:distributed.monitoring/signal_monitor.dart';
 import 'package:distributed.objects/objects.dart';

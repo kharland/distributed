@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:distributed.objects/objects.dart';
-import 'package:distributed/src/connection/message_channel.dart';
+import 'package:distributed/src/connection/channel.dart';
 import 'package:distributed/src/connection/peer_verifier.dart';
 
 import 'package:distributed.http/vm.dart';
@@ -139,7 +139,7 @@ class VmConnectionManager implements ConnectionManager {
   }
 
   Future _handleNewSocketConnection(Socket socket) async {
-    print("Handling new socket");
+    print("Handling new socket.dart");
     final verification = await _peerVerifier.verifyIncoming(socket);
     if (verification.error.isNotEmpty) {
       throw new Exception(verification.error);

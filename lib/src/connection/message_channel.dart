@@ -21,9 +21,9 @@ class MessageChannel {
   PeriodicFunction _keepAliveSignal;
   SignalMonitor _connectionMonitor;
 
-  /// Creates a connection from [socket].
+  /// Creates a connection from [socket.dart].
   ///
-  /// [socket] will be closed when the connection is closed.
+  /// [socket.dart] will be closed when the connection is closed.
   factory MessageChannel.fromSocket(Socket socket) {
     var messageRouter = new MessageRouter(socket);
     return new MessageChannel(

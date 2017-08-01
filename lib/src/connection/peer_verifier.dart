@@ -6,14 +6,14 @@ import 'package:distributed.monitoring/logging.dart';
 import 'package:distributed.objects/objects.dart';
 import 'package:meta/meta.dart';
 
-/// The amount of time to wait for a socket message before timing out.
+/// The amount of time to wait for a socket.dart message before timing out.
 @visibleForTesting
 const timeoutDuration = const Duration(seconds: 2);
 
 @visibleForTesting
 Message createIdMessage(Peer sender) => new Message('id', '', sender);
 
-/// Verifies socket connections on behalf of some specified [Peer].
+/// Verifies socket.dart connections on behalf of some specified [Peer].
 class PeerVerifier {
   final Peer _localPeer;
   final Logger _logger;
@@ -29,7 +29,7 @@ class PeerVerifier {
       verifyRemotePeer(socket, _localPeer, _logger, incoming: true);
 }
 
-/// Error messages for explaining socket verification failures.
+/// Error messages for explaining socket.dart verification failures.
 abstract class VerificationError {
   static const TIMEOUT = 'Response timed out';
   static const INVALID_RESPONSE = 'Received invalid response from remote';
@@ -49,9 +49,9 @@ class VerificationResult {
   VerificationResult._error(this.error) : this.peer = Peer.Null;
 }
 
-/// Verifies the remote [Peer] on the other end of [socket].
+/// Verifies the remote [Peer] on the other end of [socket.dart].
 ///
-/// Returns a [VerificationResult] containing the remote [Peer] on [socket]. If
+/// Returns a [VerificationResult] containing the remote [Peer] on [socket.dart]. If
 /// verification fails, the returned result will contain `Peer.Null` and an
 /// error message describing the failure.
 Future<VerificationResult> verifyRemotePeer(
@@ -60,7 +60,7 @@ Future<VerificationResult> verifyRemotePeer(
         ? _verifyIncomingConnection(socket, localPeer, logger)
         : _verifyOutgoingConnection(socket, localPeer, logger);
 
-/// Authenticates an incoming connection over [socket] received by [receiver].
+/// Authenticates an incoming connection over [socket.dart] received by [receiver].
 ///
 /// See [verifyRemotePeer] for details on the return value.
 Future<VerificationResult> _verifyIncomingConnection(
@@ -101,7 +101,7 @@ Future<VerificationResult> _verifyIncomingConnection(
   }
 }
 
-/// Authenticates an outgoing connection over [socket] sent by [sender].
+/// Authenticates an outgoing connection over [socket.dart] sent by [sender].
 ///
 /// See [verifyRemotePeer] for details on the return value.
 Future<VerificationResult> _verifyOutgoingConnection(
@@ -146,7 +146,7 @@ Future<VerificationResult> _verifyOutgoingConnection(
   }
 }
 
-/// Waits for the remote's id as the next message sent on [socket].
+/// Waits for the remote's id as the next message sent on [socket.dart].
 ///
 /// If an error occurs, returned [_IdResult] will contain the error and
 /// `Peer.Null`.  Otherwise the result will contain the remote [Peer] and no
@@ -169,7 +169,7 @@ Future<_IdResult> _waitForPeerIdentification(Socket socket) async {
     resultCompleter.complete(new _IdResult._error(e));
   });
 
-  // Zone to handle invalid data, closed socket, etc.
+  // Zone to handle invalid data, closed socket.dart, etc.
   runZoned(() async {
     responseFuture = new CancelableOperation.fromFuture(socket.first);
     var response =

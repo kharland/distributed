@@ -14,7 +14,7 @@ abstract class NetworkAgent {
   int get port => releaser.port;
 }
 
-/// An agent that occupies a port and listens for socket connections.
+/// An agent that occupies a port and listens for socket.dart connections.
 class ListeningAgent extends NetworkAgent {
   final _controller = new StreamController<Socket>();
 
@@ -28,7 +28,7 @@ class ListeningAgent extends NetworkAgent {
 
   /// Accepts a connection from [connectingAgent].
   ///
-  /// Returns socket for the creator of [connectingAgent]. The local socket for
+  /// Returns socket.dart for the creator of [connectingAgent]. The local socket.dart for
   /// the new connection is emitted on [sockets].
   Socket accept(ConnectingAgent connectingAgent) {
     var sockets = (new SocketConnector()

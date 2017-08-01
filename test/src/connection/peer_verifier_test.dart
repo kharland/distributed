@@ -56,7 +56,7 @@ void main() {
         });
       });
 
-      test('socket does not have an open connection.', () {
+      test('socket.dart does not have an open connection.', () {
         var closedController = new SocketController()..close();
         verifyRemotePeer(closedController.local, remotePeer, logger,
                 incoming: true)
@@ -126,7 +126,7 @@ void main() {
         });
       });
 
-      test('socket does not have an open connection.', () {
+      test('socket.dart does not have an open connection.', () {
         var closedController = new SocketController()..close();
         verifyRemotePeer(closedController.local, localPeer, logger,
                 incoming: false)

@@ -66,7 +66,7 @@ class TestHttpProvider implements HttpProvider {
             ? new Future<String>.value(payload).asStream()
             : new Stream<String>.empty());
 
-    // Open a socket to send the actual request, then immediately close it.
+    // Open a socket.dart to send the actual request, then immediately close it.
     await connectSocket(url)
       ..add(new HttpRequestSerializer().serialize(request))
       ..close();
