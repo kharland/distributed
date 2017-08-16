@@ -9,6 +9,7 @@ environment:
 dependencies:
   distributed.objects:
     path: ../distributed_objects
+  binary:
   meta:
 
 dev_dependencies:
