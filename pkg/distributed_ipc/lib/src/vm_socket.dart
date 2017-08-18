@@ -3,13 +3,12 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io' as io;
 
-import 'package:distributed.ipc/src/datagram_socket_config.dart';
+import 'package:distributed.ipc/ipc.dart';
 import 'package:distributed.ipc/src/protocol/lazy_packet_stream.dart';
 import 'package:distributed.ipc/src/protocol/message_receiver.dart';
 import 'package:distributed.ipc/src/protocol/packet.dart';
 import 'package:distributed.ipc/src/protocol/packet_codec.dart';
 import 'package:distributed.ipc/src/protocol/socket_state.dart';
-import 'package:distributed.ipc/src/protocol/transfer_mode.dart';
 import 'package:distributed.ipc/src/socket.dart';
 
 /// A [Socket] implementation backed by an [io.Socket].
@@ -24,6 +23,7 @@ class VmSocket extends GenericSocket<String> {
                 socket, const Utf8Encoder()));
 }
 
+/// A [Socket] implementation that communicates via datagrams.
 abstract class VmDatagramSocket implements Socket<String> {
   static const _codec = const PacketCodec();
 
@@ -34,15 +34,9 @@ abstract class VmDatagramSocket implements Socket<String> {
 
     switch (config.transferMode) {
       case TransferMode.lockstep:
-        final receiver = new LockStepReceiver();
-        final receiverController = new StreamController<String>(sync: true);
-        return new LockStepDatagramSocket(
-          socket,
-          receiver,
-          receiverController,
-        );
+        return new LockStepDatagramSocket(socket);
       case TransferMode.fast:
-        return null;
+        throw new UnimplementedError();
       default:
         throw new UnsupportedError('${config.transferMode}');
     }
@@ -63,15 +57,21 @@ class LockStepDatagramSocket extends StreamView<String>
     implements VmDatagramSocket {
   final Socket<Packet> _socket;
   final StreamController<String> _receiverController;
-  final MessageReceiver _receiver;
+  final LockStepReceiver _receiver = new LockStepReceiver();
   final Queue<String> _messageQueue = new Queue<String>();
 
-  LazyPacketQueue _currentBuffer;
+  LazyMessageConverter _messageConverter;
   SocketState _state = SocketState.awaitingConn;
 
-  LockStepDatagramSocket(
+  factory LockStepDatagramSocket(Socket<Packet> socket) {
+    return new LockStepDatagramSocket._(
+      socket,
+      new StreamController<String>(sync: true),
+    );
+  }
+
+  LockStepDatagramSocket._(
     this._socket,
-    this._receiver,
     StreamController<String> receiverController,
   )
       : _receiverController = receiverController,
@@ -92,7 +92,7 @@ class LockStepDatagramSocket extends StreamView<String>
 
   @override
   void addError(Object errorEvent, [StackTrace stackTrace]) {
-    // Assume error is small enough to fit in single datagram.
+    // Assume errorEvent is small enough to fit in single datagram.
     _assertNotState(SocketState.closed);
     _socket.addError(errorEvent, stackTrace);
   }
@@ -103,7 +103,7 @@ class LockStepDatagramSocket extends StreamView<String>
     _socket.close();
     _receiverController.close();
     _messageQueue.clear();
-    _currentBuffer = null;
+    _messageConverter = null;
     _state = SocketState.closed;
   }
 
@@ -158,10 +158,8 @@ class LockStepDatagramSocket extends StreamView<String>
 
   void _handleACK(ACKPacket packet) {
     _assertState(SocketState.awaitingAck);
-    _currentBuffer.next();
 
-    final nextPacket = _currentBuffer.peek();
-    if (nextPacket == null) {
+    if (_messageConverter.moveNext()) {
       _socket.add(const ENDPacket());
       if (_messageQueue.isEmpty) {
         _state = SocketState.idle;
@@ -169,12 +167,12 @@ class LockStepDatagramSocket extends StreamView<String>
         _sendNextMessage();
       }
     } else {
-      _socket.add(nextPacket);
+      _socket.add(_messageConverter.current);
     }
   }
 
   void _handleRES(RESPacket packet) {
-    _socket.add(_currentBuffer.peek());
+    _socket.add(_messageConverter.current);
   }
 
   void _handleCONN(CONNPacket packet) {
@@ -205,8 +203,9 @@ class LockStepDatagramSocket extends StreamView<String>
 
   /// Begins transferring the next message in [_messageQueue].
   void _sendNextMessage() {
-    _currentBuffer = new LazyPacketQueue(_messageQueue.removeFirst());
-    _socket.add(_currentBuffer.peek());
+    _messageConverter = new LazyMessageConverter(_messageQueue.removeFirst())
+      ..moveNext();
+    _socket.add(_messageConverter.current);
     _state = SocketState.awaitingAck;
   }
 }
@@ -214,28 +213,32 @@ class LockStepDatagramSocket extends StreamView<String>
 /// A [Socket] implementation that communicates using datagrams.
 class DatagramSocket extends GenericSocket<List<int>> {
   static Future<DatagramSocket> connect(
-      io.InternetAddress address, int port) async {
-    final udpSocket =
-        await io.RawDatagramSocket.bind(io.InternetAddress.ANY_IP_V4, 0);
+    io.InternetAddress address,
+    int port,
+  ) async {
+    final udpSocket = await io.RawDatagramSocket.bind(
+      io.InternetAddress.ANY_IP_V4,
+      0,
+    );
     return new DatagramSocket(
-      new _UdpSocketReader(udpSocket),
-      new _UdpSocketWriter(udpSocket, address, port),
+      new _DatagramSocketReader(udpSocket),
+      new _DatagramSocketWriter(udpSocket, address, port),
     );
   }
 
-  DatagramSocket(_UdpSocketReader reader, _UdpSocketWriter writer)
+  DatagramSocket(_DatagramSocketReader reader, _DatagramSocketWriter writer)
       : super(reader.stream, writer);
 }
 
 /// An [EventSink] that writes data to a [RawDatagramSocket].
 ///
 /// The writer can only write to a single address and port.
-class _UdpSocketWriter extends EventSink<List<int>> {
+class _DatagramSocketWriter extends EventSink<List<int>> {
   final io.RawDatagramSocket _socket;
   final io.InternetAddress _address;
   final int _port;
 
-  _UdpSocketWriter(this._socket, this._address, this._port);
+  _DatagramSocketWriter(this._socket, this._address, this._port);
 
   @override
   void add(List<int> event) {
@@ -256,11 +259,11 @@ class _UdpSocketWriter extends EventSink<List<int>> {
 /// Reads from a [RawDatagramSocket].
 ///
 /// Translated data are emitted as [String]s on [stream].
-class _UdpSocketReader {
+class _DatagramSocketReader {
   final io.RawDatagramSocket _socket;
   final _streamController = new StreamController<List<int>>();
 
-  _UdpSocketReader(this._socket) {
+  _DatagramSocketReader(this._socket) {
     _socket
       ..writeEventsEnabled = false
       ..forEach(_handleEvent);
@@ -280,7 +283,7 @@ class _UdpSocketReader {
       default:
         throw new UnsupportedError('$event');
     }
-    // RawSocketEvent.READ_CLOSED will never be recieved as remote peer cannot
+    // RawSocketEvent.READ_CLOSED will never be received; The remote peer cannot
     // close the socket.
   }
 }

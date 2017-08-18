@@ -45,5 +45,9 @@ void main() {
     });
   });
 
-  group(VmDatagramSocket, () {});
+  group(VmDatagramSocket, () {
+    group('lockstep', () {});
+
+    group('fast', () {});
+  });
 }
