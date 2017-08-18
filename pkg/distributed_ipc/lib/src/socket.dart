@@ -4,7 +4,14 @@ import 'dart:convert';
 import 'package:stream_channel/stream_channel.dart';
 
 /// A persistent network connection.
-abstract class Socket<T> implements EventSink<T>, Stream<T> {}
+abstract class Socket<T> implements EventSink<T>, Stream<T> {
+  /// Converts [socket] into a [Socket] of [U] using [codec].
+  static Socket<U> convert<T, U>(Socket<T> socket, Codec<U, T> codec) {
+    final stream = socket.map(codec.decode);
+    final sink = new EncodedSocketSink<T, U>(socket, codec.encoder);
+    return new GenericSocket<U>(stream, sink);
+  }
+}
 
 /// A [SocketSink] implementation that wraps another [EventSink].
 class DelegatingSocketSink<T> implements EventSink<T> {
