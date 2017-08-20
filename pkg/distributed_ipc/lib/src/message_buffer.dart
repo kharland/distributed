@@ -5,10 +5,12 @@ import 'package:distributed.ipc/src/utf8.dart';
 class MessageBuffer {
   final _fragments = <int>[];
 
+  /// Adds [packet] to this buffer.
   void add(MSGPacket packet) {
     _fragments.addAll(packet.message);
   }
 
+  /// Removes all packets from this buffer.
   void clear() {
     _fragments.clear();
   }

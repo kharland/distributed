@@ -26,14 +26,14 @@ void main() {
     });
   });
 
-  group(DatagramSocket, () {
-    DatagramSocket socket;
+  group(RawUdpSocket, () {
+    RawUdpSocket socket;
     DatagramSocketParrot parrot;
 
     setUp(() async {
       parrot =
           await DatagramSocketParrot.bind(io.InternetAddress.ANY_IP_V4, 9000);
-      socket = await DatagramSocket.connect(io.InternetAddress.ANY_IP_V4, 9000);
+      socket = await RawUdpSocket.connect(io.InternetAddress.ANY_IP_V4, 9000);
     });
 
     tearDown(() async {
@@ -45,7 +45,7 @@ void main() {
       expect(
           socket,
           emitsInOrder([
-            new DatagramConnectRequest(socket.localAddress, socket.localPort)
+            new GreetingDatagram(socket.localAddress, socket.localPort)
                 .toBytes(),
             'Hello world!'.codeUnits,
           ]));
@@ -55,7 +55,7 @@ void main() {
 
   group(DatagramServerSocket, () {
     DatagramServerSocket serverSocket;
-    DatagramSocket connector;
+    RawUdpSocket connector;
 
     setUp(() async {
       serverSocket =
@@ -67,17 +67,17 @@ void main() {
       connector.close();
     });
 
-    test('should emit a $DatagramSocket when a connection is attempted',
+    test('should emit a $RawUdpSocket when a connection is attempted',
         () async {
       connector =
-          await DatagramSocket.connect(io.InternetAddress.ANY_IP_V4, 9000);
+          await RawUdpSocket.connect(io.InternetAddress.ANY_IP_V4, 9000);
 
-      serverSocket.first.then(expectAsync1((DatagramSocket socket) {
+      serverSocket.first.then(expectAsync1((RawUdpSocket socket) {
         expect(socket.remoteAddress, connector.localAddress);
         expect(socket.remotePort, connector.localPort);
       }));
 
-      connector.add(new DatagramConnectRequest(
+      connector.add(new GreetingDatagram(
         connector.localAddress,
         connector.localPort,
       )
@@ -102,12 +102,12 @@ void main() {
         9000,
       );
 
-      final setUpFuture = server.first.then((DatagramSocket socket) {
+      final setUpFuture = server.first.then((RawUdpSocket socket) {
         receiver = new VmLockStepSocket.wrap(socket);
       });
 
       sender = new VmLockStepSocket.wrap(
-          await DatagramSocket.connect(io.InternetAddress.ANY_IP_V4, 9000));
+          await RawUdpSocket.connect(io.InternetAddress.ANY_IP_V4, 9000));
 
       return setUpFuture;
     });

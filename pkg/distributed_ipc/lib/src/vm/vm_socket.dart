@@ -4,13 +4,14 @@ import 'dart:io' as io;
 import 'package:binary/binary.dart';
 import 'package:collection/collection.dart';
 import 'package:distributed.ipc/ipc.dart';
+import 'package:distributed.ipc/platform/vm.dart';
 import 'package:distributed.ipc/src/socket.dart';
 import 'package:distributed.ipc/src/utf8.dart';
 import 'package:distributed.ipc/src/vm/vm_lockstep_socket.dart';
 import 'package:meta/meta.dart';
 
 /// A [Socket] implementation backed by an [io.Socket].
-class VmSocket extends GenericSocket<String> {
+class VmSocket extends PseudoSocket<String> {
   static Future<VmSocket> connect(io.InternetAddress address, int port) async =>
       new VmSocket(await io.Socket.connect(address, port));
 
@@ -19,16 +20,16 @@ class VmSocket extends GenericSocket<String> {
             new EncodedSocketSink<List<int>, String>(socket, utf8Encoder));
 }
 
-/// A [Socket] implementation that communicates via datagrams.
-abstract class VmDatagramSocket implements Socket<String> {
-  /// Creates a new [VmDatagramSocket] from [config].
-  static Future<VmDatagramSocket> connect(DatagramSocketConfig config) async {
-    final rawSocket = await DatagramSocket.connect(config.address, config.port);
+/// A [Socket] implementation that communicates using datagrams.
+abstract class UdpSocket implements Socket<String> {
+  /// Creates a new [UdpSocket] from [config].
+  static Future<UdpSocket> connect(UdpSocketConfig config) async {
+    final rawSocket = await RawUdpSocket.connect(config.address, config.port);
 
     switch (config.transferMode) {
-      case TransferMode.lockstep:
+      case TransferType.lockstep:
         return new VmLockStepSocket.wrap(rawSocket);
-      case TransferMode.fast:
+      case TransferType.fast:
         throw new UnimplementedError();
       default:
         throw new UnsupportedError('${config.transferMode}');
@@ -36,117 +37,121 @@ abstract class VmDatagramSocket implements Socket<String> {
   }
 }
 
-/// Emits a [Stream] of [VmDatagramSocket].
-class VmDatagramSocketServer extends StreamView<VmDatagramSocket>
-    implements Stream<VmDatagramSocket> {
-  /// Binds a new [VmDatagramSocketServer] to [address] and [port].
-  static Future<VmDatagramSocketServer> bind(
+/// Emits a [Stream] of [UdpSocket].
+class UdpSocketServer extends StreamView<UdpSocket>
+    implements Stream<UdpSocket> {
+  /// Binds a new [UdpSocketServer] to [address] and [port].
+  static Future<UdpSocketServer> bind(
     io.InternetAddress address,
     int port,
   ) {
     return null;
   }
 
-  VmDatagramSocketServer(Stream<VmDatagramSocket> stream) : super(stream);
+  UdpSocketServer(Stream<UdpSocket> stream) : super(stream);
 }
 
 /// A [Socket] implementation that communicates using datagrams.
 @visibleForTesting
-class DatagramSocket extends GenericSocket<List<int>> {
-  /// The local address of this [DatagramSocket].
+class RawUdpSocket extends PseudoSocket<List<int>> {
+  /// The local address of this [RawUdpSocket].
   final String localAddress;
 
-  /// The local port of this [DatagramSocket].
+  /// The local port of this [RawUdpSocket].
   final int localPort;
 
-  final _DatagramSocketWriter _writer;
+  final _UdpSocketWriter _writer;
 
-  static Future<DatagramSocket> connect(
+  /// Creates a [RawUdpSocket] connected to [address] and [port].
+  static Future<RawUdpSocket> connect(
     io.InternetAddress address,
     int port,
   ) async {
-    final udpSocket =
-        new _BroadcastDatagramSocket(await io.RawDatagramSocket.bind(
+    final udpSocket = new _BroadcastUdpSocket(await io.RawDatagramSocket.bind(
       io.InternetAddress.ANY_IP_V4,
       0,
     ));
-    return new DatagramSocket(
+    return new RawUdpSocket(
       udpSocket.localAddress,
       udpSocket.localPort,
-      new _DatagramSocketWriter(udpSocket, address, port),
-      new _DatagramSocketReader(udpSocket),
+      new _UdpSocketWriter(udpSocket, address, port),
+      new _UdpSocketReader(udpSocket),
     ).._connect();
   }
 
-  String get remoteAddress => _writer.address.address;
-
-  int get remotePort => _writer.port;
-
-  void _connect() {
-    add(new DatagramConnectRequest(localAddress, localPort).toBytes());
-  }
-
-  DatagramSocket(
+  RawUdpSocket(
     this.localAddress,
     this.localPort,
     this._writer,
-    _DatagramSocketReader reader,
+    _UdpSocketReader reader,
   )
       : super(reader.stream, _writer);
+
+  /// The address of the remote peer connected to this socket.
+  String get remoteAddress => _writer.address.address;
+
+  /// The port of the remote peer connected to this socket.
+  int get remotePort => _writer.port;
+
+  void _connect() {
+    add(new GreetingDatagram(localAddress, localPort).toBytes());
+  }
 }
 
-/// Emits a [Stream] of [DatagramSocket].
-class DatagramServerSocket extends StreamView<DatagramSocket>
-    implements Stream<DatagramSocket> {
-  static final _listEq = const ListEquality().equals;
-
-  final _BroadcastDatagramSocket _socket;
+/// Emits a [Stream] of [RawUdpSocket].
+class DatagramServerSocket extends StreamView<RawUdpSocket>
+    implements Stream<RawUdpSocket> {
+  final _BroadcastUdpSocket _socket;
 
   /// Binds a new [DatagramServerSocket] to [address] and [port].
   static Future<DatagramServerSocket> bind(
     io.InternetAddress address,
     int port,
   ) async {
-    final udpSocket =
-        new _BroadcastDatagramSocket(await io.RawDatagramSocket.bind(
+    final udpSocket = new _BroadcastUdpSocket(await io.RawDatagramSocket.bind(
       io.InternetAddress.ANY_IP_V4,
       port,
     ));
     return new DatagramServerSocket(udpSocket);
   }
 
-  static bool _isConnectRequest(List<int> bytes) => _listEq(
-      DatagramConnectRequest.HEADER,
-      bytes.take(DatagramConnectRequest.HEADER.length).toList());
+  /// Returns a stream of [RawUdpSocket] connections initiated on [serverSocket].
+  static Stream<RawUdpSocket> _socketStream(
+      _BroadcastUdpSocket serverSocket) async* {
+    final serverSocketReader = new _UdpSocketReader(serverSocket);
+    yield* serverSocketReader.stream
+        .where(GreetingDatagram.isGreeting)
+        .map((bytes) {
+      final request = new GreetingDatagram.fromBytes(bytes);
+      final reader = new _UdpSocketReader(serverSocket, closeOnClosed: false);
+      final writer = new _UdpSocketWriter(
+        serverSocket,
+        new io.InternetAddress(request.senderAddress),
+        request.senderPort,
+      );
 
-  static Stream<DatagramSocket> _socketStream(
-      _BroadcastDatagramSocket serverSocket) async* {
-    final serverSocketReader = new _DatagramSocketReader(serverSocket);
-    yield* serverSocketReader.stream.where(_isConnectRequest).map((bytes) {
-      var request = new DatagramConnectRequest.fromBytes(bytes);
-      return new DatagramSocket(
+      return new RawUdpSocket(
         serverSocket.localAddress,
         serverSocket.localPort,
-        new _DatagramSocketWriter(
-          serverSocket,
-          new io.InternetAddress(request.senderAddress),
-          request.senderPort,
-        ),
-        new _DatagramSocketReader(serverSocket, closeOnClosed: false),
+        writer,
+        reader,
       );
     });
   }
 
   DatagramServerSocket(this._socket) : super(_socketStream(_socket));
 
+  /// Permanently closes this socket.
   void close() {
     _socket.close();
   }
 }
 
-/// Used to initiate a request with a [DatagramSocket].
-class DatagramConnectRequest {
-  /// The leading sequence of bytes that identifies a [DatagramConnectRequest].
+/// An object used by a [RawUdpSocket] to exchange information with a remote peer.
+class GreetingDatagram {
+  static final _listEq = const ListEquality().equals;
+
+  /// The leading sequence of bytes that identifies a [GreetingDatagram].
   static const HEADER = const [0x0, 0x7, 0x7, 0x3, 0x4];
 
   /// The address of the peer that sent this request.
@@ -155,15 +160,20 @@ class DatagramConnectRequest {
   /// The port of the peer that sent this request.
   final int senderPort;
 
-  factory DatagramConnectRequest.fromBytes(List<int> bytes) {
+  /// Returns true iff [bytes] has the signature of a [GreetingDatagram].
+  static bool isGreeting(List<int> bytes) => _listEq(GreetingDatagram.HEADER,
+      bytes.take(GreetingDatagram.HEADER.length).toList());
+
+  /// Decodes a [GreetingDatagram] from [bytes].
+  factory GreetingDatagram.fromBytes(List<int> bytes) {
     final bytesNoHeader = bytes.skip(HEADER.length);
     final addressLength = bytesNoHeader.first;
     final port = pack(bytesNoHeader.skip(1).take(2).toList());
     final address = utf8Decode(bytesNoHeader.skip(3).take(addressLength));
-    return new DatagramConnectRequest(address, port);
+    return new GreetingDatagram(address, port);
   }
 
-  DatagramConnectRequest(this.senderAddress, this.senderPort);
+  GreetingDatagram(this.senderAddress, this.senderPort);
 
   /// Converts this request into a list of bytes.
   ///
@@ -185,35 +195,41 @@ class DatagramConnectRequest {
 }
 
 /// Wraps an [io.RawDatagramSocket] as a broadcast stream.
-class _BroadcastDatagramSocket extends StreamView<io.RawSocketEvent>
+class _BroadcastUdpSocket extends StreamView<io.RawSocketEvent>
     implements Stream<io.RawSocketEvent> {
   final io.RawDatagramSocket _socket;
+  io.Datagram _latestDatagram;
 
-  _BroadcastDatagramSocket._(
-      this._socket, Stream<io.RawSocketEvent> broadcastStream)
+  _BroadcastUdpSocket._(this._socket, Stream<io.RawSocketEvent> broadcastStream)
       : super(broadcastStream);
 
-  factory _BroadcastDatagramSocket(io.RawDatagramSocket socket) {
-    final _broadcaster =
+  factory _BroadcastUdpSocket(io.RawDatagramSocket socket) {
+    final _output =
         new StreamController<io.RawSocketEvent>.broadcast(sync: true);
-    socket.forEach(_broadcaster.add);
-    return new _BroadcastDatagramSocket._(socket, _broadcaster.stream);
+    socket.forEach(_output.add);
+    return new _BroadcastUdpSocket._(socket, _output.stream);
   }
 
   bool get writeEventsEnabled => _socket.writeEventsEnabled;
+
   set writeEventsEnabled(bool value) {
     _socket.writeEventsEnabled = value;
   }
 
+  /// The local address of this socket.
   String get localAddress => _socket.address.address;
 
+  /// The local port of this socket.
   int get localPort => _socket.port;
 
-  io.Datagram _currentDatagram;
+  /// Returns the most recent [io.Datagram] received by this socket.
+  ///
+  /// Unlike a normal [io.RawDatagramSocket], calling [receive] multiple times
+  /// will always return the most recent datagram.  Null is returned iff no
+  /// datagram has been received by this socket.
   io.Datagram receive() {
-    final dg = _socket.receive();
-    _currentDatagram = dg == null ? _currentDatagram : dg;
-    return _currentDatagram;
+    _latestDatagram = _socket.receive() ?? _latestDatagram;
+    return _latestDatagram;
   }
 
   void close() {
@@ -228,12 +244,12 @@ class _BroadcastDatagramSocket extends StreamView<io.RawSocketEvent>
 /// An [EventSink] that writes data to a [RawDatagramSocket].
 ///
 /// The writer can only write to a single address and port.
-class _DatagramSocketWriter extends EventSink<List<int>> {
-  final _BroadcastDatagramSocket _socket;
+class _UdpSocketWriter extends EventSink<List<int>> {
+  final _BroadcastUdpSocket _socket;
   final io.InternetAddress address;
   final int port;
 
-  _DatagramSocketWriter(this._socket, this.address, this.port);
+  _UdpSocketWriter(this._socket, this.address, this.port);
 
   @override
   void add(List<int> event) {
@@ -254,8 +270,8 @@ class _DatagramSocketWriter extends EventSink<List<int>> {
 /// Reads from a [RawDatagramSocket].
 ///
 /// Translated data are emitted as [String]s on [stream].
-class _DatagramSocketReader {
-  final _BroadcastDatagramSocket _socket;
+class _UdpSocketReader {
+  final _BroadcastUdpSocket _socket;
   final _output = new StreamController<List<int>>();
 
   /// Whether this reader should close [_socket] when a CLOSED event is
@@ -263,7 +279,7 @@ class _DatagramSocketReader {
   /// close the same socket.
   final bool closeOnClosed;
 
-  _DatagramSocketReader(this._socket, {this.closeOnClosed = true}) {
+  _UdpSocketReader(this._socket, {this.closeOnClosed = true}) {
     _socket
       ..writeEventsEnabled = false
       ..forEach(_handleEvent);

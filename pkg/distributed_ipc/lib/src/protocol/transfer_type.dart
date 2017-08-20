@@ -1,5 +1,5 @@
 /// Modes describing how data should be transferred between a datagram socket.
-enum TransferMode {
+enum TransferType {
   /// The sender and the receiver both send and receive packets.
   ///
   /// When sending a message, the sender sends a message part and waits for
