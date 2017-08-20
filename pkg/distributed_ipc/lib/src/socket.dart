@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:stream_channel/stream_channel.dart';
-
 /// A persistent network connection.
 abstract class Socket<T> implements EventSink<T>, Stream<T> {
   /// Converts [socket] into a [Socket] of [U] using [codec].
@@ -79,37 +77,5 @@ class GenericSocket<T> extends StreamView<T> implements Socket<T> {
   @override
   void close() {
     _sink.close();
-  }
-}
-
-/// A connected [Socket] pair.
-class ConnectedSockets<T> {
-  /// The local socket in this connection.
-  ///
-  /// The creator of these [ConnectedSockets] should use this [Socket].
-  final Socket<T> local;
-
-  /// The remote socket in this connection.
-  ///
-  /// The creator of these [ConnectedSockets] should use [local] to communicate
-  /// with this [Socket].
-  final Socket<T> foreign;
-
-  ConnectedSockets._(this.local, this.foreign);
-
-  factory ConnectedSockets() {
-    final endpoints = new StreamChannelController<T>();
-
-    final localSocket = new GenericSocket<T>(
-      endpoints.local.stream.asBroadcastStream(),
-      new DelegatingSocketSink<T>(endpoints.local.sink),
-    );
-
-    final foreignSocket = new GenericSocket<T>(
-      endpoints.foreign.stream.asBroadcastStream(),
-      new DelegatingSocketSink<T>(endpoints.foreign.sink),
-    );
-
-    return new ConnectedSockets._(localSocket, foreignSocket);
   }
 }
