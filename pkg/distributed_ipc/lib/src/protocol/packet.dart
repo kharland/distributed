@@ -1,5 +1,3 @@
-import 'package:binary/binary.dart';
-
 class PacketType {
   final int value;
   final String description;
@@ -8,16 +6,16 @@ class PacketType {
   static const RES = const PacketType._(0x2, 'Resend last message');
   static const MSG = const PacketType._(0x3, 'Message part');
   static const END = const PacketType._(0x4, 'End of message parts');
-  static const DROP = const PacketType._(0x5, 'Drop connection');
-  static const CONN = const PacketType._(0x6, 'Open connection');
+  static const DIS = const PacketType._(0x5, 'Drop connection');
+  static const CON = const PacketType._(0x6, 'Open connection');
 
   static final _valueToType = <int, PacketType>{
     ACK.value: ACK,
     RES.value: RES,
     MSG.value: MSG,
     END.value: END,
-    DROP.value: DROP,
-    CONN.value: CONN,
+    DIS.value: DIS,
+    CON.value: CON,
   };
 
   /// Returns a [Packet] whose value is [value].
@@ -26,29 +24,32 @@ class PacketType {
     return _valueToType[value];
   }
 
+  @override
+  String toString() => '$value';
+
   const PacketType._(this.value, this.description);
 }
 
 abstract class Packet {
   final PacketType type;
 
-  /// Decodes [bytes] into a [Packet].
+  /// Decodes a [Packet] from [bytes].
   static Packet decode(List<int> bytes) {
     final type = PacketType.fromValue(bytes.first);
 
     switch (type) {
       case PacketType.ACK:
         return decodeACK(bytes);
-      case PacketType.RES:
-        return decodeRES(bytes);
-      case PacketType.END:
-        return decodeEND(bytes);
-      case PacketType.DROP:
-        return decodeDROP(bytes);
       case PacketType.MSG:
         return decodeMSG(bytes);
-      case PacketType.CONN:
+      case PacketType.END:
+        return decodeEND(bytes);
+      case PacketType.RES:
+        return decodeRES(bytes);
+      case PacketType.CON:
         return decodeCONN(bytes);
+      case PacketType.DIS:
+        return decodeDROP(bytes);
       default:
         return const InvalidPacket();
     }
@@ -63,17 +64,16 @@ abstract class Packet {
   static Packet decodeEND(List<int> _) => const ENDPacket();
 
   static Packet decodeMSG(List<int> bytes) {
-    final messageSize = pack(bytes.skip(1).take(2));
-    final message = bytes.skip(3).take(messageSize);
-    return new MSGPacket(messageSize, message);
+    final message = bytes.skip(1).toList();
+    return new MSGPacket(message);
   }
 
   static Packet decodeRES(List<int> bytes) => const RESPacket();
 
-  const Packet._(this.type);
-
   /// Converts this [Packet] into a list of bytes.
   List<int> toBytes() => new List.unmodifiable([type.value]);
+
+  const Packet._(this.type);
 }
 
 class InvalidPacket extends Packet {
@@ -85,7 +85,7 @@ class ACKPacket extends Packet {
 }
 
 class CONNPacket extends Packet {
-  const CONNPacket() : super._(PacketType.CONN);
+  const CONNPacket() : super._(PacketType.CON);
 }
 
 class RESPacket extends Packet {
@@ -97,26 +97,22 @@ class ENDPacket extends Packet {
 }
 
 class DROPPacket extends Packet {
-  const DROPPacket() : super._(PacketType.DROP);
+  const DROPPacket() : super._(PacketType.DIS);
 }
 
 class MSGPacket extends Packet {
-  /// The byte-length of [message].
-  ///
-  /// The value is in the range [0, 32768 (2^15)].
-  final int messageSize;
-
   /// The content of this packet.
   ///
   /// For now we only support utf-8 encoding.
   final List<int> message;
 
-  @override
-  List<int> toBytes() => new List.unmodifiable([
-        type,
-        messageSize & 0xF0,
-        messageSize & 0x0F,
-      ]..addAll(message));
+  /// The byte-length of [message].
+  ///
+  /// The value is in the range [0, 32768 (2^15)].
+  int get messageSize => message.length;
 
-  const MSGPacket(this.messageSize, this.message) : super._(PacketType.MSG);
+  @override
+  List<int> toBytes() => new List.unmodifiable([type.value]..addAll(message));
+
+  const MSGPacket(this.message) : super._(PacketType.MSG);
 }

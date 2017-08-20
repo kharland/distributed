@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:distributed.ipc/ipc.dart';
 import 'package:distributed.ipc/src/config.dart';
-import 'package:distributed.ipc/src/vm_socket.dart';
+import 'package:distributed.ipc/src/vm/vm_socket.dart';
 
 class VmSocketProvider implements SocketProvider {
   @override

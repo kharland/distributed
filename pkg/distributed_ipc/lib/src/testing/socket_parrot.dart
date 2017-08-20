@@ -1,16 +1,16 @@
 import 'dart:async';
 import 'dart:io';
 
-/// Echoes all data sent over a [RawDatagramSocket] back to the sender.
-class RawSocketParrot {
+/// Echoes all datagrams back to the sender.
+class DatagramSocketParrot {
   final RawDatagramSocket _socket;
 
-  /// Creates a [RawSocketParrot] listening at [address] and [port].
-  static Future<RawSocketParrot> bind(
+  /// Creates a [DatagramSocketParrot] listening at [address] and [port].
+  static Future<DatagramSocketParrot> bind(
           InternetAddress address, int port) async =>
-      new RawSocketParrot(await RawDatagramSocket.bind(address, port));
+      new DatagramSocketParrot(await RawDatagramSocket.bind(address, port));
 
-  RawSocketParrot(this._socket) {
+  DatagramSocketParrot(this._socket) {
     _socket
       ..writeEventsEnabled = false
       ..forEach((RawSocketEvent event) {
@@ -37,19 +37,21 @@ class RawSocketParrot {
 class SocketParrot {
   final ServerSocket _serverSocket;
   final _sockets = <Socket>[];
+  StreamSubscription sub;
 
-  /// Creates a [RawSocketParrot] listening at [address] and [port].
+  /// Creates a [DatagramSocketParrot] listening at [address] and [port].
   static Future<SocketParrot> bind(InternetAddress address, int port) async =>
       new SocketParrot(await ServerSocket.bind(address, port));
 
   SocketParrot(this._serverSocket) {
-    _serverSocket.listen((Socket socket) {
+    sub = _serverSocket.listen((Socket socket) {
       _sockets.add(socket);
       socket.forEach(socket.add);
     });
   }
 
   void close() {
+    sub.cancel();
     _serverSocket.close();
     _sockets.forEach((s) => s.close());
   }
