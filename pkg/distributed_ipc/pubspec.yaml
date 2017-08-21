@@ -7,8 +7,6 @@ environment:
   sdk: '>=1.20.1 <2.0.0'
 
 dependencies:
-  distributed.objects:
-    path: ../distributed_objects
   binary:
   meta:
 

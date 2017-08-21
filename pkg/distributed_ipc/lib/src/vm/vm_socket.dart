@@ -21,6 +21,15 @@ class VmSocket extends PseudoSocket<String> {
 }
 
 /// A [Socket] implementation that communicates using datagrams.
+///
+/// Messages sent on the socket are split into chunks called [Packet]s.  The
+/// size of the packet can be specified in the given [UdpSocketConfig].  This
+/// splitting is done to support sending message that are usually considered too
+/// large to fit within a datagram.
+///
+/// If a message is added to the socket while a previous message is still
+/// in-flight, the new message is added to a queue and sent after all previously
+/// enqueued messages.
 abstract class UdpSocket implements Socket<String> {
   /// Creates a new [UdpSocket] from [config].
   static Future<UdpSocket> connect(UdpSocketConfig config) async {
@@ -75,7 +84,7 @@ class RawUdpSocket extends PseudoSocket<List<int>> {
       udpSocket.localAddress,
       udpSocket.localPort,
       new _UdpSocketWriter(udpSocket, address, port),
-      new _UdpSocketReader(udpSocket),
+      new _UdpSocketReader(udpSocket).stream,
     ).._connect();
   }
 
@@ -83,9 +92,9 @@ class RawUdpSocket extends PseudoSocket<List<int>> {
     this.localAddress,
     this.localPort,
     this._writer,
-    _UdpSocketReader reader,
+    Stream<List<int>> byteStream,
   )
-      : super(reader.stream, _writer);
+      : super(byteStream, _writer);
 
   /// The address of the remote peer connected to this socket.
   String get remoteAddress => _writer.address.address;
@@ -134,7 +143,7 @@ class DatagramServerSocket extends StreamView<RawUdpSocket>
         serverSocket.localAddress,
         serverSocket.localPort,
         writer,
-        reader,
+        reader.stream,
       );
     });
   }
@@ -257,7 +266,7 @@ class _UdpSocketWriter extends EventSink<List<int>> {
   }
 
   @override
-  void addError(Object errorEvent, [StackTrace stackTrace]) {
+  void addError(_, [StackTrace __]) {
     throw new UnsupportedError('addError');
   }
 

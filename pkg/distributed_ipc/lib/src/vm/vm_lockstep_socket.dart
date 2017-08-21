@@ -11,19 +11,15 @@ import 'package:distributed.ipc/src/vm/vm_socket.dart';
 
 /// A [RawUdpSocket] that sends messages using a lock-step algorithm.
 ///
-/// Messages sent on the socket are split into chunks called [Packet]s.  Each
-/// packet is sent one at a time, and the next packet is not sent until the
-/// remote peer responds with acknowledgement of the previous packet.  If a
-/// packet is dropped, the remote times out and responds with a resend request.
-/// Delivery is guaranteed in this way.
-///
-/// If a message is added to the socket while a previous message is still being
-/// sent, the new message is added to a queue and sent when all previously
-/// enqueued messages have been sent.
+/// The lock-step algorithm provides reliable data-transfer on the socket.  If
+/// part of a message fails to deliver, the remote can specify that the most
+/// recent packet be re-sent before continuing.
 ///
 /// If a connection is dropped in the middle of sending a message, that message
-/// and all other messages queued for sending to that remote peer are dropped
-/// from the socket.
+/// and all other messages queued for sending are discarded.
+// TODO: Handle timeout and RES request when packets aren't delivered.
+// TODO: Handle timeout and error when packet's can't be sent.
+
 class VmLockStepSocket extends StreamView<String> implements UdpSocket {
   static const _codec = const PacketCodec();
 
@@ -109,6 +105,7 @@ class VmLockStepSocket extends StreamView<String> implements UdpSocket {
     _buffer.clear();
   }
 
+  /// Responds to acknowledgment that a packet was received.
   void _handleACK(ACKPacket packet) {
     _assertState([SocketState.sending, SocketState.pending]);
 
@@ -126,11 +123,13 @@ class VmLockStepSocket extends StreamView<String> implements UdpSocket {
     }
   }
 
+  /// Resends the most recent packet.
   void _handleRES(RESPacket packet) {
     _assertState([SocketState.sending, SocketState.pending]);
     _send(_mostRecentPacket);
   }
 
+  /// Closes this socket.
   void _handleDROP(DROPPacket packet) {
     close();
   }
@@ -142,8 +141,7 @@ class VmLockStepSocket extends StreamView<String> implements UdpSocket {
     }
   }
 
-  /// Asserts that [_state] is not contained in [expectation] if it is an
-  /// [Iterable] or that [_state] is not [expectation] if it is a [SocketState].
+  /// Asserts that [_state] is not contained in [expectation].
   void _assertNotState(List<SocketState> expectation) {
     if (expectation.contains(_state)) {
       _socket.addError(new StateError('' /* FIXME */));
