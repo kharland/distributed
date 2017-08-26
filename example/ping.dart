@@ -19,11 +19,11 @@ Future main() async {
   node.receive('pong').listen((Message message) {
     int count = int.parse(message.contents);
     new Future.delayed(pingPongDelay, () {
-      node.send(pong, 'ping', '${++count}');
+      node.add(pong, 'ping', '${++count}');
     });
   });
 
   node.onConnect.listen((Peer peer) {
-    node.send(pong, 'ping', '1');
+    node.add(pong, 'ping', '1');
   });
 }

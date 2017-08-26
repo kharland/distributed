@@ -26,7 +26,7 @@ void main() {
     test('add should send a message', () async {
       await commonSetup();
       final message = new Message('a', 'b', Peer.Null);
-      messageChannel.send(message);
+      messageChannel.add(message);
       verify(messageRouter.sendToUser(message.serialize()));
     });
 

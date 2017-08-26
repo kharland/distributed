@@ -9,7 +9,7 @@ import 'package:distributed.objects/objects.dart';
 import 'package:distributed/src/port_daemon/client_routes.dart';
 import 'package:meta/meta.dart';
 
-import 'node.dart';
+import 'package:distributed.node/node.dart';
 
 /// Internal-only [Node] implementation.
 class CrossPlatformNode implements Node {
@@ -71,7 +71,7 @@ class CrossPlatformNode implements Node {
 
   @override
   void send(Peer peer, String action, String data) {
-    _connectionManager.send(peer, new Message(action, data, toPeer()));
+    _connectionManager.add(peer, new Message(action, data, toPeer()));
   }
 
   @override

@@ -1,25 +1,25 @@
-class PacketType {
+import 'package:collection/collection.dart';
+import 'package:meta/meta.dart';
+
+@immutable
+class PacketTypes {
   final int value;
   final String description;
 
-  static const ACK = const PacketType._(0x1, 'Acknowledgement');
-  static const RES = const PacketType._(0x2, 'Resend last message');
-  static const MSG = const PacketType._(0x3, 'Message part');
-  static const END = const PacketType._(0x4, 'End of message parts');
-  static const DIS = const PacketType._(0x5, 'Drop connection');
-  static const CON = const PacketType._(0x6, 'Open connection');
+  static const ACK = const PacketTypes._(0x1, 'Acknowledgement');
+  static const RES = const PacketTypes._(0x2, 'Resend last message');
+  static const DATA = const PacketTypes._(0x3, 'Data part');
+  static const END = const PacketTypes._(0x4, 'End of message parts');
 
-  static final _valueToType = <int, PacketType>{
+  static final _valueToType = <int, PacketTypes>{
     ACK.value: ACK,
     RES.value: RES,
-    MSG.value: MSG,
+    DATA.value: DATA,
     END.value: END,
-    DIS.value: DIS,
-    CON.value: CON,
   };
 
   /// Returns a [Packet] whose value is [value].
-  static PacketType fromValue(int value) {
+  static PacketTypes fromValue(int value) {
     assert(_valueToType.containsKey(value), 'Invalid value $value');
     return _valueToType[value];
   }
@@ -27,92 +27,106 @@ class PacketType {
   @override
   String toString() => '$value';
 
-  const PacketType._(this.value, this.description);
+  @literal
+  const PacketTypes._(this.value, this.description);
 }
 
-abstract class Packet {
-  final PacketType type;
+class Packet {
+  static const _equality = const PacketEquality();
 
-  /// Decodes a [Packet] from [bytes].
-  static Packet decode(List<int> bytes) {
-    final type = PacketType.fromValue(bytes.first);
+  static Packet ack(String address, int port) =>
+      new Packet(PacketTypes.ACK, address, port);
 
-    switch (type) {
-      case PacketType.ACK:
-        return decodeACK(bytes);
-      case PacketType.MSG:
-        return decodeMSG(bytes);
-      case PacketType.END:
-        return decodeEND(bytes);
-      case PacketType.RES:
-        return decodeRES(bytes);
-      case PacketType.CON:
-        return decodeCONN(bytes);
-      case PacketType.DIS:
-        return decodeDROP(bytes);
-      default:
-        return const InvalidPacket();
+  static Packet res(String address, int port) =>
+      new Packet(PacketTypes.RES, address, port);
+
+  static Packet end(String address, int port) =>
+      new Packet(PacketTypes.END, address, port);
+
+  final PacketTypes type;
+  final String address;
+  final int port;
+
+  @override
+  int get hashCode => _equality.hash(this);
+
+  @override
+  String toString() => '$runtimeType ${{
+        'type': type,
+        'address': address,
+        'port': port,
+      }}';
+
+  @override
+  bool operator ==(other) => _equality.equals(this, other);
+
+  const Packet(this.type, this.address, this.port);
+}
+
+/// A [Packet] that carries a payload.
+class DataPacket extends Packet {
+  /// This packet's position within a sequence of packets.
+  ///
+  /// If this packet is not part of a sequence, this value is always 1.
+  final int position;
+
+  /// The contents of this packet.
+  ///
+  /// For now we only support utf-8 encoding.
+  final List<int> payload;
+
+  @override
+  String toString() => '$runtimeType ${{
+    'type': type,
+    'address': address,
+    'port': port,
+    'position': position,
+    'payload': payload,
+  }}';
+
+  const DataPacket(String address, int port, this.payload, this.position)
+      : super(PacketTypes.DATA, address, port);
+}
+
+@immutable
+class PacketTypeException implements Exception {
+  final int typeByte;
+
+  @literal
+  const PacketTypeException(this.typeByte);
+
+  @override
+  String toString() => 'Unexpected packet type ${typeByte.toRadixString(16)}';
+}
+
+/// An equality relation on [Packet] objects.
+@immutable
+class PacketEquality implements Equality<Packet> {
+  static final _listEq = const ListEquality().equals;
+
+  @literal
+  const PacketEquality();
+
+  @override
+  bool equals(Packet e1, Packet e2) {
+    if (e1 is DataPacket && e2 is! DataPacket ||
+        e1 is! DataPacket && e2 is DataPacket) {
+      return false;
+    } else if (e1 is DataPacket && e2 is DataPacket) {
+      return _basePropertiesEqual(e1, e2) &&
+          e1.position == e2.position &&
+          _listEq(e1.payload, e2.payload);
+    } else {
+      return _basePropertiesEqual(e1, e2);
     }
   }
 
-  static Packet decodeACK(List<int> _) => const ACKPacket();
-
-  static Packet decodeCONN(List<int> _) => const CONNPacket();
-
-  static Packet decodeDROP(List<int> _) => const DROPPacket();
-
-  static Packet decodeEND(List<int> _) => const ENDPacket();
-
-  static Packet decodeMSG(List<int> bytes) {
-    final message = bytes.skip(1).toList();
-    return new MSGPacket(message);
-  }
-
-  static Packet decodeRES(List<int> bytes) => const RESPacket();
-
-  /// Converts this [Packet] into a list of bytes.
-  List<int> toBytes() => new List.unmodifiable([type.value]);
-
-  const Packet._(this.type);
-}
-
-class InvalidPacket extends Packet {
-  const InvalidPacket() : super._(null);
-}
-
-class ACKPacket extends Packet {
-  const ACKPacket() : super._(PacketType.ACK);
-}
-
-class CONNPacket extends Packet {
-  const CONNPacket() : super._(PacketType.CON);
-}
-
-class RESPacket extends Packet {
-  const RESPacket() : super._(PacketType.RES);
-}
-
-class ENDPacket extends Packet {
-  const ENDPacket() : super._(PacketType.END);
-}
-
-class DROPPacket extends Packet {
-  const DROPPacket() : super._(PacketType.DIS);
-}
-
-class MSGPacket extends Packet {
-  /// The content of this packet.
-  ///
-  /// For now we only support utf-8 encoding.
-  final List<int> message;
-
-  /// The byte-length of [message].
-  ///
-  /// The value is in the range [0, 32768 (2^15)].
-  int get messageSize => message.length;
+  bool _basePropertiesEqual(Packet e1, Packet e2) =>
+      e1.type == e2.type && e1.address == e2.address && e1.port == e2.port;
 
   @override
-  List<int> toBytes() => new List.unmodifiable([type.value]..addAll(message));
+  int hash(Packet p) => p.toString().hashCode;
 
-  const MSGPacket(this.message) : super._(PacketType.MSG);
+  @override
+  bool isValidKey(Object o) => o is Packet;
 }

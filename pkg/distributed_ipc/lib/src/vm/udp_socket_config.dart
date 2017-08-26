@@ -1,5 +1,3 @@
-import 'dart:io' as io;
-
 import 'package:distributed.ipc/src/protocol/transfer_type.dart';
 import 'package:meta/meta.dart';
 
@@ -8,10 +6,10 @@ class UdpSocketConfig {
   /// The algorithm to use when sending data over the socket.
   final TransferType transferMode;
 
-  /// The address to connect to.
-  final io.InternetAddress address;
+  /// The local address to bind to.
+  final String address;
 
-  /// The port to connect to.
+  /// The local port to bind to.
   final int port;
 
   @literal

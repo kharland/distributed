@@ -2,14 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 /// A connection between to processes.
-abstract class Socket<T> implements EventSink<T>, Stream<T> {
-  /// Converts [socket] into a [Socket] of [U] using [codec].
-  static Socket<U> convert<T, U>(Socket<T> socket, Codec<U, T> codec) {
-    final stream = socket.map(codec.decode);
-    final sink = new EncodedSocketSink<T, U>(socket, codec.encoder);
-    return new PseudoSocket<U>(stream, sink);
-  }
-}
+abstract class Socket<T> implements EventSink<T>, Stream<T> {}
 
 /// A [SocketSink] that converts a [T] data to send over a [SocketSink] of [S].
 class EncodedSocketSink<S, T> implements EventSink<T> {

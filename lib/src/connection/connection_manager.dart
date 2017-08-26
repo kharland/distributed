@@ -121,7 +121,7 @@ class VmConnectionManager implements ConnectionManager {
   @override
   void send(Peer peer, Message message) {
     assert(peers.contains(peer));
-    _peerToChannel[peer].send(message);
+    _peerToChannel[peer].add(message);
     _logger.log("Sent ${message.contents} to ${peer.displayName}");
   }
 

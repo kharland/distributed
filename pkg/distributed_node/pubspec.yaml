@@ -1,5 +1,5 @@
-name: distributed.ipc
-description: Interprocess communication for nodes
+name: distributed.node
+description: The user-level interface for distributed.
 version: 0.0.1
 author: Kendal Harland <kendaljharland@gmail.com>
 
@@ -7,9 +7,10 @@ environment:
   sdk: '>=1.20.1 <2.0.0'
 
 dependencies:
+  distributed.ipc:
+    path: ../distributed_ipc
   binary:
   meta:
 
 dev_dependencies:
   test: ^0.12.0
-  mockito:

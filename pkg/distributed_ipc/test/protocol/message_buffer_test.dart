@@ -1,4 +1,4 @@
-import 'package:distributed.ipc/src/protocol/lazy_message_converter.dart';
+import 'package:distributed.ipc/src/vm/lazy_message_converter.dart';
 import 'package:distributed.ipc/src/message_buffer.dart';
 import 'package:test/test.dart';
 

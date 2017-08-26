@@ -57,12 +57,12 @@ void runNodeTests() {
 
       pong.receive('ping').listen(expectAsync1((Message message) {
         expect(message, new Message('ping', 'ping-message', ping.toPeer()));
-        pong.send(ping.toPeer(), 'pong', 'pong-message');
+        pong.add(ping.toPeer(), 'pong', 'pong-message');
       }));
       ping.receive('pong').listen(expectAsync1((Message message) {
         expect(message, new Message('pong', 'pong-message', pong.toPeer()));
       }));
-      ping.send(pong.toPeer(), 'ping', 'ping-message');
+      ping.add(pong.toPeer(), 'ping', 'ping-message');
     });
 
     test('should register when a node has disconnected', () async {

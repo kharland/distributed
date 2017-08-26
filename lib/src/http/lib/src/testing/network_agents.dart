@@ -33,7 +33,7 @@ class ListeningAgent extends NetworkAgent {
   Socket accept(ConnectingAgent connectingAgent) {
     var sockets = (new SocketConnector()
           ..receiverAddress = releaser
-          ..senderAddress = connectingAgent.releaser)
+          ..address = connectingAgent.releaser)
         .connect();
     _controller.add(sockets.receiver);
     return sockets.sender;
