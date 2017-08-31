@@ -1,6 +1,3 @@
-import 'dart:async';
-import 'dart:io' as io;
-
 import 'package:distributed.ipc/src/protocol/packet.dart';
 import 'package:distributed.ipc/src/protocol/packet_channel.dart';
 import 'package:distributed.ipc/src/protocol/packet_codec.dart';
@@ -19,19 +16,21 @@ void main() {
     const partnerPort = 1;
 
     FastPacketChannel channel;
-    TestUdpSink<List<int>> testSink;
+    TestSink<List<int>> testSink;
 
     setUp(() {
-      testSink = new TestUdpSink<List<int>>();
+      testSink = new TestSink<List<int>>();
     });
 
-    void commonSetUp({Iterable<Packet> incomingPackets = const []}) {
-      channel = new FastPacketChannel(partnerAddress, partnerPort, testSink);
-      incomingPackets.forEach(channel.receive);
-    }
+    setUp(() {
+      channel = new FastPacketChannel(
+        partnerAddress,
+        partnerPort,
+        testSink,
+      );
+    });
 
     test('send should send all packets', () {
-      commonSetUp();
       channel.send(packets);
       expect(testSink.data, []..addAll(packets.map(packetCodec.encode)));
     });
@@ -44,8 +43,11 @@ void main() {
           ..add(new Packet(PacketType.END, p.address, p.port));
       });
 
-      commonSetUp(incomingPackets: packets);
-      expect(channel.packets, emitsInOrder(expectedPackets));
+      final receivedPackets = <Packet>[];
+      channel.addPacketHandler(receivedPackets.add);
+      packets.map(packetCodec.encode).forEach(channel.receive);
+
+      expect(receivedPackets, expectedPackets);
     });
   });
 }

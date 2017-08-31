@@ -1,51 +1,55 @@
 import 'dart:async';
 
 import 'package:distributed.ipc/platform/vm.dart';
+import 'package:distributed.ipc/src/encoding.dart';
 import 'package:distributed.ipc/src/protocol/packet.dart';
 import 'package:distributed.ipc/src/protocol/packet_codec.dart';
-import 'package:distributed.ipc/src/vm/vm_socket.dart';
+
+typedef PacketHandler = void Function(Packet);
 
 /// An I/O channel for transferring [Packets] between processes.
 abstract class PacketChannel {
   static const DefaultCodec = const Utf8PacketCodec();
 
   /// Creates a [PacketChannel] that uses the specified [transferType].
-  factory PacketChannel.fromTransferType(
-    TransferType transferType,
-    PacketChannelConfig config,
-    UdpSink<List<int>> sink,
-  ) {
-    switch (transferType) {
+  factory PacketChannel.fromConfig(PacketChannelConfig config) {
+    switch (config.transferType) {
       case TransferType.FAST:
         throw new UnimplementedError();
       default:
-        throw new ArgumentError(transferType);
+        throw new ArgumentError(config.transferType);
     }
   }
 
-  /// The stream of packets received on this channel.
-  ///
-  /// A contiguous sequence of packets begins with the first packet in the
-  /// sequence, and ends with an [ENDPacket].
-  Stream<Packet> get packets;
+  /// The address of this channel's remote peer.
+  String get remoteAddress;
+
+  /// The port of this channel's remote peer.
+  int get remotePort;
 
   /// Sends [packets] on this channel.
   void send(Iterable<Packet> packets);
 
-  /// Recieves [packet] on this channel.
-  void receive(Packet packet);
+  /// Receives an encoded packet on this channel.
+  void receive(Iterable<int> encodedPacket);
 
-  /// Closes this channel.
-  void close();
+  /// Adds [handler] as a handler to call when a packet is recieved.
+  void addPacketHandler(PacketHandler handler);
 }
 
 /// Specifies the settings necessary to create a [PacketChannel].
 class PacketChannelConfig {
-  final PacketCodec codec;
+  final TransferType transferType;
+  final EncodingType encodingType;
   final String address;
   final int port;
 
-  PacketChannelConfig(this.codec, this.address, this.port);
+  PacketChannelConfig(
+    this.address,
+    this.port, {
+    this.transferType: TransferType.FAST,
+    this.encodingType: EncodingType.UTF8,
+  });
 }
 
 /// A [PacketChannel] that does not wait for acknowledgement of packets.
@@ -58,46 +62,52 @@ class PacketChannelConfig {
 /// The remote is not expected to send end packets.  They are assumed after each
 /// [Packet].
 class FastPacketChannel implements PacketChannel {
-  final UdpSink<List<int>> _sink;
-  final String _address;
-  final PacketCodec _codec;
-  final int _port;
-  final _packetsController = new StreamController<Packet>(sync: true);
+  /// Handlers for incoming packets.
+  final _packetHandlers = <PacketHandler>[];
 
-  FastPacketChannel.fromConfig(
-      PacketChannelConfig config, UdpSink<List<int>> sink)
-      : this(config.address, config.port, sink, config.codec);
+  /// Sink for outgoing data.
+  final Sink<List<int>> _sink;
+
+  @override
+  final String remoteAddress;
+
+  @override
+  final int remotePort;
+
+  final PacketCodec _codec;
+
+  FastPacketChannel.fromConfig(PacketChannelConfig config, Sink<List<int>> sink)
+      : this(
+          config.address,
+          config.port,
+          sink,
+          new PacketCodec.fromEncoding(config.encodingType),
+        );
 
   FastPacketChannel(
-    this._address,
-    this._port,
+    this.remoteAddress,
+    this.remotePort,
     this._sink, [
     this._codec = PacketChannel.DefaultCodec,
   ]);
 
   @override
-  Stream<Packet> get packets => _packetsController.stream;
+  void send(Iterable<Packet> packets) {
+    packets.map(_codec.encode).forEach(_sink.add);
+  }
 
   @override
-  void send(Iterable<Packet> packets) {
-    packets.forEach((packet) {
-      _sink.add(_codec.encode(packet), _address, _port);
+  void receive(Iterable<int> encodedPacket) {
+    final packet = _codec.decode(encodedPacket);
+    _packetHandlers.forEach((handler) {
+      handler(packet);
+      // Receive implicit END packet.
+      handler(Packet.end(packet.address, packet.port));
     });
   }
 
   @override
-  void close() {
-    _packetsController.close();
+  void addPacketHandler(PacketHandler handler) {
+    _packetHandlers.add(handler);
   }
-
-  @override
-  void receive(Packet packet) {
-    _packetsController
-      ..add(packet)
-      ..add(new Packet(PacketType.END, packet.address, packet.port));
-  }
-
-  // bool _isFromPartner(io.Datagram dg) =>
-  //     dg.address.address == _address && dg.port == _port;
-
 }

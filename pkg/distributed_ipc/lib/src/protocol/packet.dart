@@ -9,12 +9,14 @@ class PacketType extends Enum {
   static const DATA = const PacketType._(0x3, 'Data part');
   static const END = const PacketType._(0x4, 'End of message parts');
   static const GREET = const PacketType._(0x5, 'Connection request');
+  static const ERROR = const PacketType._(100, 'Error');
 
   static final _valueToType = <int, PacketType>{
     ACK.value: ACK,
     RES.value: RES,
     DATA.value: DATA,
     END.value: END,
+    ERROR.value: ERROR,
   };
 
   /// Returns a [Packet] whose value is [value].
@@ -107,6 +109,17 @@ class GreetPacket extends Packet {
       : super(PacketType.GREET, address, port);
 }
 
+/// A [Packet] used to initiate communication between two nodes.
+@immutable
+class ErrorPacket extends Packet {
+  /// This packet's error message.
+  final String message;
+
+  @literal
+  ErrorPacket(String address, int port, this.message)
+      : super(PacketType.ERROR, address, port);
+}
+
 /// An equality relation on [Packet] objects.
 @immutable
 class PacketEquality implements Equality<Packet> {
@@ -116,6 +129,7 @@ class PacketEquality implements Equality<Packet> {
   const PacketEquality();
 
   // FIXME: compare GREET packet.
+  // FIXME: compare ERROR packet.
   @override
   bool equals(Packet e1, Packet e2) {
     if (e1 is DataPacket && e2 is! DataPacket ||

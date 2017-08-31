@@ -4,79 +4,47 @@ import 'package:distributed.ipc/platform/vm.dart';
 import 'package:distributed.ipc/src/encoding.dart';
 import 'package:distributed.ipc/src/protocol/packet.dart';
 import 'package:distributed.ipc/src/protocol/packet_channel.dart';
-import 'package:distributed.ipc/src/protocol/packet_codec.dart';
-import 'package:distributed.ipc/src/protocol/typed_datagram.dart';
-import 'package:distributed.ipc/src/protocol/typed_datagram_adapter.dart';
 
-// FIXME: support encryption type.
+typedef PacketChannelHandler = void Function(PacketChannel);
+
 abstract class ConnectionHost {
-  /// Used to encode GREET packets.
-  static const _greetCodec = const Utf8PacketCodec();
+  final PacketChannelHandler _onChannel;
+  final Sink<GreetPacket> _greetSink;
+  final String _address;
+  final int _port;
 
-  final TypedDatagramAdapter _typedDatagramAdapter;
+  ConnectionHost(this._address, this._port, this._onChannel, this._greetSink);
 
-  ConnectionHost(this._typedDatagramAdapter);
-
-  /// Creates a new [PacketChannel] connected to [address] and [port].
-  ///
-  /// [encodingType] is the [EncodingType] to use on the channel.
-  /// [transferType] is the [TransferType] to use on t
-  Future<PacketChannel> open(
-    String address,
-    int port, {
-    EncodingType encodingType,
-    TransferType transferType,
-  }) async {
+  /// Creates a new [PacketChannel] from [config].
+  void open(PacketChannelConfig config) {
     // Create packet channel at remote host by sending GREET packet with channel
     // information.
-    final greeting = new GreetPacket(
-      address,
-      port,
-      encodingType: encodingType.value,
-      transferType: transferType.value,
-    );
-
-    _typedDatagramAdapter.add(new TypedDatagram(
-      _greetCodec.encode(greeting),
-      address,
-      port,
-      DatagramType.GREET,
+    _greetSink.add(new GreetPacket(
+      config.address,
+      config.port,
+      encodingType: config.encodingType.value,
+      transferType: config.transferType.value,
     ));
 
-    final channelCodec = new PacketCodec.fromEncoding(encodingType);
-    final channel = new PacketChannel.fromTransferType(
-      transferType,
-      new PacketChannelConfig(channelCodec, address, port),
-    );
-
-    // Filter datagrams sent from the new channel's remote partner.
-    _typedDatagramAdapter.addDatagramHandler((TypedDatagram datagram) {
-      if (datagram.address == address && datagram.port == port) {
-        channel.receive(channelCodec.decode(datagram.data));
-      }
-    });
-
-    return channel;
+    _onChannel(new PacketChannel.fromConfig(config));
   }
 
-  /// Attempts to open a new [PacketChannel] configured from [greeting].
-  void _handleGreeting(GreetPacket greeting) {
+  /// Opens a new [PacketChannel] configured from [greeting].
+  ///
+  /// Returns with the response [Packet] that should be sent to the remote.
+  Packet receive(GreetPacket greeting) {
     try {
-      final codec = new PacketCodec.fromEncoding(
-          new EncodingType.fromValue(greeting.encodingType));
-      final transferType = new TransferType.fromValue(greeting.transferType);
+      final config = new PacketChannelConfig(
+        greeting.address,
+        greeting.port,
+        transferType: new TransferType.fromValue(greeting.transferType),
+        encodingType: new EncodingType.fromValue(greeting.encodingType),
+      );
 
-      //TODO: Send acceptance of greeting to remote.
-
-      final channel = new PacketChannel.fromTransferType(
-          transferType,
-          new PacketChannelConfig(
-            codec,
-            greeting.address,
-            greeting.port,
-          ));
+      _onChannel(new PacketChannel.fromConfig(config));
+      return new Packet(PacketType.ACK, _address, _port);
     } catch (error) {
-      // FIXME log exception
+      return new ErrorPacket(_address, _port, '$error');
     }
   }
 }
