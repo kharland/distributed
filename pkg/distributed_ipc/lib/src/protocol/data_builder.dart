@@ -1,28 +1,22 @@
 import 'package:distributed.ipc/src/protocol/packet.dart';
-import 'package:distributed.ipc/src/utf8.dart';
+import 'package:distributed.ipc/src/encoding.dart';
 
-/// Encapsulates assembling and disassembling messages before
-/// sending them through a udp socket.
+/// Assembles and disassembles messages so they may be sent over a UDP socket.
 abstract class DataBuilder<T> {
-  /// Splits [data] into a series of [Packet] small enough to send in
-  /// a datagram.
+  /// Splits [data] into [DataPacket]s small enough to send in a datagram.
   List<DataPacket> deconstruct(T data);
 
-  /// Reconstructs a [T] from a complete set of data [pieces].
-  T construct(List<DataPacket> pieces);
+  /// Reconstructs a [T] from its complete set of [packets].
+  T construct(List<DataPacket> packets);
 }
 
 /// A [DataBuilder] that assembles and disassembles strings.
+/// FIXME: Chunk size is locked at 8.  Make variable.
 class StringDataBuilder implements DataBuilder<String> {
   final String address;
   final int port;
 
-  /// The number of data bytes to include in each [packet].
-  ///
-  /// FIXME: Chunk size is locked at 8.  Make variable.
-  final int _chunkByteCount;
-
-  StringDataBuilder(this.address, this.port, [this._chunkByteCount = 8]);
+  StringDataBuilder(this.address, this.port);
 
   @override
   String construct(List<DataPacket> pieces) {
@@ -44,43 +38,3 @@ class StringDataBuilder implements DataBuilder<String> {
     return packets;
   }
 }
-
-//
-///// Iterates over byte-chunks of a string of some specified size.
-//class _ByteChunkIterator implements Iterator<List<int>> {
-//  final List<int> _bytes;
-//  final int bytesPerChunk;
-//
-//  List<int> _chunk;
-//  int _chunkStart = 0;
-//
-//  _ByteChunkIterator(this.bytesPerChunk, this._bytes);
-//
-//  @override
-//  List<int> get current => _chunk;
-//
-//  @override
-//  bool moveNext() {
-//    if (_chunkEnd >= _bytes.length) {
-//      if (_chunkStart == 0) {
-//        // Haven't read first chunk yet.
-//        _chunk = new List.unmodifiable(_bytes);
-//        _chunkStart = _chunkEnd;
-//        return true;
-//      } else {
-//        // Already finished iterating.
-//        _chunk = null;
-//        return false;
-//      }
-//    } else if (_chunkStart == 0 && _chunk == null) {
-//      _chunk = new List.unmodifiable(_bytes.sublist(_chunkStart, _chunkEnd));
-//      return true;
-//    } else {
-//      _chunkStart = _chunkEnd;
-//      _chunk = new List.unmodifiable(_bytes.sublist(_chunkStart, _chunkEnd));
-//      return true;
-//    }
-//  }
-//
-//  int get _chunkEnd => min(_chunkStart + bytesPerChunk, _bytes.length);
-//}

@@ -10,59 +10,59 @@ import 'package:test/test.dart';
 
 void main() {
   group(FastPacketChannel, () {
+    const packetCount = 3;
+    final packets = new List<Packet>.unmodifiable(new List.generate(
+      packetCount,
+      (i) => new DataPacket('127.0.0.1', 2, [i], 1),
+    ));
     const packetCodec = const Utf8PacketCodec();
     const partnerAddress = '127.0.0.1';
     const partnerPort = 1;
 
-    MockUdpAdapter mockAdapter;
+    List<List<int>> writtenBytes;
     FastPacketChannel channel;
 
-    void commonSetUp({Iterable<io.Datagram> receiveDatagrams = const []}) {
-      mockAdapter = new MockUdpAdapter();
-      when(mockAdapter.datagrams)
-          .thenReturn(new Stream.fromIterable(receiveDatagrams));
+    setUp(() {
+      writtenBytes = [];
+    });
 
-      channel = new FastPacketChannel(mockAdapter, partnerAddress, 1);
+    void commonSetUp({Iterable<List<int>> incomingBytes = const []}) {
+      channel = new FastPacketChannel(
+        partnerAddress,
+        1,
+        new Stream.fromIterable(incomingBytes),
+        (List<int> data, __, ___) {
+          writtenBytes.add(data);
+        },
+      );
     }
 
     test('send should send all packets', () {
       commonSetUp();
-      final packets = new List.generate(
-        3,
-        (i) => new DataPacket('127.0.0.1', 2, [i], 1),
-      );
 
       channel.send(packets);
-      verifyInOrder(packets.map((packet) {
-        return mockAdapter.add(
-            packetCodec.encode(packet), partnerAddress, partnerPort);
-      }).toList());
+      expect(writtenBytes, []..addAll(packets.map(packetCodec.encode)));
     });
 
     test('packets should emit each packet followed by an end packet', () {
-      final packets = <Packet>[];
       final datagrams = new List.generate(
         3,
         (i) => new io.Datagram(
-              [i],
+              packetCodec.encode(packets[i]),
               new io.InternetAddress(partnerAddress),
               partnerPort,
             ),
       );
 
-      datagrams.forEach((dg) {
-        packets
-          ..add(new DataPacket(
-            dg.address.address,
-            dg.port,
-            dg.data,
-            partnerPort,
-          ))
-          ..add(Packet.end(dg.address.address, dg.port));
+      final expectedPackets = <Packet>[];
+      packets.forEach((p) {
+        expectedPackets
+          ..add(p)
+          ..add(new Packet(PacketTypes.END, p.address, p.port));
       });
 
-      commonSetUp(receiveDatagrams: datagrams);
-      expect(channel.packets, emitsInOrder(packets));
+      commonSetUp(incomingBytes: datagrams.map((dg) => dg.data));
+      expect(channel.packets, emitsInOrder(expectedPackets));
     });
   });
 }

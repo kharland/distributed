@@ -4,10 +4,9 @@ import 'dart:io' as io;
 
 import 'package:distributed.ipc/ipc.dart';
 import 'package:distributed.ipc/platform/vm.dart';
+import 'package:distributed.ipc/src/encoding.dart';
 import 'package:distributed.ipc/src/protocol/packet.dart';
-import 'package:distributed.ipc/src/protocol/packet_codec.dart';
 import 'package:distributed.ipc/src/socket.dart';
-import 'package:distributed.ipc/src/utf8.dart';
 
 /// A [Socket] implementation backed by an [io.Socket].
 class VmSocket extends PseudoSocket<String> {
@@ -30,17 +29,15 @@ class VmSocket extends PseudoSocket<String> {
 /// in-flight, the new message is added to a queue and sent after all previously
 /// enqueued messages.
 abstract class UdpSocket<T> implements UdpSink<T>, Stream<T> {
-  static const _codec = const PacketCodec();
-
   /// Creates a new [UdpSocket] from [config].
   static Future<UdpSocket> bind(UdpSocketConfig config) async {
-    final rawSocket = null;
-    final socket = convert<io.Datagram, Packet>(rawSocket, _codec);
+    final adapter = new UdpAdapter(await io.RawDatagramSocket.bind(
+      config.address,
+      config.port,
+    ));
 
     switch (config.transferMode) {
-      case TransferType.lockstep:
-        throw new UnimplementedError();
-      case TransferType.fast:
+      case TransferType.FAST:
         throw new UnimplementedError();
       default:
         throw new UnsupportedError('${config.transferMode}');
@@ -55,6 +52,7 @@ abstract class UdpSocket<T> implements UdpSink<T>, Stream<T> {
   }
 }
 
+/// A sink interface for [UdpSocket]-like objects.
 abstract class UdpSink<T> {
   /// Sends [data] to [address] and [port].
   void add(T data, String address, int port);
@@ -81,6 +79,7 @@ class EncodedUdpSocketSink<S, T> implements UdpSink<T> {
   }
 }
 
+/// A [UdpSocket] created by stitching together a [Stream] and [UdpSocketSink].
 class PseudoUdpSocket<T> extends StreamView<T> implements UdpSocket<T> {
   final UdpSink<T> _sink;
 
@@ -96,57 +95,6 @@ class PseudoUdpSocket<T> extends StreamView<T> implements UdpSocket<T> {
     _sink.close();
   }
 }
-
-//class _UdpSocketImpl extends StreamView<String> implements UdpSocket<String> {
-//  final PacketCourier _courier;
-//
-//  _UdpSocketImpl(this._courier) : super(_courier.data);
-//
-//  @override
-//  void add(String data, String address, int port) {
-//    _courier.add(data, address, port);
-//  }
-//
-//  @override
-//  void close() {
-//    _courier.dispose();
-//  }
-//}
-//
-///// A [Socket] implementation that communicates using datagrams.
-//@visibleForTesting
-//class RawUdpSocket extends StreamView<List<int>>
-//    implements UdpSocket<List<int>> {
-//  final UdpAdapter _adapter;
-//  final _output = new StreamController<io.Datagram>(sync: true);
-//
-//  /// Creates a [RawUdpSocket] connected to [address] and [port].
-//  static Future<RawUdpSocket> bind(String address, int port) async {
-//    final rawSock = await io.RawDatagramSocket.bind(address, port);
-//    final udpSocket = new UdpAdapter(rawSock);
-//    return new RawUdpSocket(udpSocket);
-//  }
-//
-//  RawUdpSocket(this._adapter) : super(_adapter.datagrams);
-//
-//  /// The local address of this [RawUdpSocket].
-//  String get localAddress => _adapter.localAddress;
-//
-//  /// The local port of this [RawUdpSocket].
-//  int get localPort => _adapter.localPort;
-//
-//  Stream<io.Datagram> get stream => _output.stream;
-//
-//  @override
-//  void add(List<int> data, String address, int port) {
-//    _adapter.add(data, address, port);
-//  }
-//
-//  @override
-//  void close() {
-//    _adapter.close();
-//  }
-//}
 
 /// Wraps an [io.RawDatagramSocket].
 ///
@@ -187,8 +135,7 @@ class UdpAdapter {
         _socket.close();
         break;
       case io.RawSocketEvent.READ:
-        final datagram = _socket.receive();
-        _output.add(datagram);
+        _output.add(_socket.receive());
         break;
       default:
         throw new UnsupportedError('$event');

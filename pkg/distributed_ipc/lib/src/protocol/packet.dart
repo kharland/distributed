@@ -1,15 +1,14 @@
 import 'package:collection/collection.dart';
+import 'package:distributed.ipc/src/enum.dart';
 import 'package:meta/meta.dart';
 
 @immutable
-class PacketTypes {
-  final int value;
-  final String description;
-
+class PacketTypes extends Enum {
   static const ACK = const PacketTypes._(0x1, 'Acknowledgement');
   static const RES = const PacketTypes._(0x2, 'Resend last message');
   static const DATA = const PacketTypes._(0x3, 'Data part');
   static const END = const PacketTypes._(0x4, 'End of message parts');
+  static const GREET = const PacketTypes._(0x5, 'Connection request');
 
   static final _valueToType = <int, PacketTypes>{
     ACK.value: ACK,
@@ -20,15 +19,15 @@ class PacketTypes {
 
   /// Returns a [Packet] whose value is [value].
   static PacketTypes fromValue(int value) {
-    assert(_valueToType.containsKey(value), 'Invalid value $value');
+    if (!_valueToType.containsKey(value)) {
+      throw new ArgumentError('Invalid packet value $value');
+    }
     return _valueToType[value];
   }
 
-  @override
-  String toString() => '$value';
-
   @literal
-  const PacketTypes._(this.value, this.description);
+  const PacketTypes._(int value, String description)
+      : super(description, value);
 }
 
 class Packet {
@@ -64,6 +63,7 @@ class Packet {
 }
 
 /// A [Packet] that carries a payload.
+@literal
 class DataPacket extends Packet {
   /// This packet's position within a sequence of packets.
   ///
@@ -84,19 +84,28 @@ class DataPacket extends Packet {
     'payload': payload,
   }}';
 
+  @literal
   const DataPacket(String address, int port, this.payload, this.position)
       : super(PacketTypes.DATA, address, port);
 }
 
+/// A [Packet] used to initiate communication between two nodes.
 @immutable
-class PacketTypeException implements Exception {
-  final int typeByte;
+class GreetingPacket extends Packet {
+  /// This packet's encoding type.
+  final int encodingType;
+
+  /// A value describing the transfer algorithm to use.
+  final int transferType;
 
   @literal
-  const PacketTypeException(this.typeByte);
-
-  @override
-  String toString() => 'Unexpected packet type ${typeByte.toRadixString(16)}';
+  GreetingPacket(
+    String address,
+    int port, {
+    @required this.encodingType,
+    @required this.transferType,
+  })
+      : super(PacketTypes.GREET, address, port);
 }
 
 /// An equality relation on [Packet] objects.

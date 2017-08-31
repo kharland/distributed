@@ -1,7 +1,6 @@
 import 'dart:io' as io;
 
 import 'package:distributed.ipc/src/testing/socket_parrot.dart';
-import 'package:distributed.ipc/src/vm/vm_lockstep_socket.dart';
 import 'package:distributed.ipc/src/vm/vm_socket.dart';
 import 'package:test/test.dart';
 

@@ -1,5 +1,5 @@
+import 'package:distributed.ipc/src/encoding.dart';
 import 'package:distributed.ipc/src/protocol/packet.dart';
-import 'package:distributed.ipc/src/utf8.dart';
 
 /// Buffers [DataPacket] to be combined into a single [String] message.
 class MessageBuffer {

@@ -1,12 +1,21 @@
 import 'dart:convert';
 
+import 'package:distributed.ipc/src/encoding.dart';
 import 'package:distributed.ipc/src/protocol/packet.dart';
-import 'package:distributed.ipc/src/utf8.dart';
 import 'package:meta/meta.dart';
 
 /// A code for encoding and decoding [Packet]s.
 @immutable
 abstract class PacketCodec extends Codec<Packet, List<int>> {
+  factory PacketCodec.fromEncoding(EncodingType encodingType) {
+    switch (encodingType) {
+      case EncodingType.UTF8:
+        return const Utf8PacketCodec();
+      default:
+        throw new UnimplementedError();
+    }
+  }
+
   @override
   final Converter<List<int>, Packet> decoder;
 
@@ -55,6 +64,9 @@ class Utf8PacketDecoder extends Converter<List<int>, Packet> {
 
     String nextToken() {
       final tokenEnd = string.indexOf(_d, tokenStart);
+      if (tokenEnd < 0) {
+        throw new InvalidPacketDataException(string);
+      }
       final token = string.substring(tokenStart, tokenEnd);
       tokenStart = tokenEnd + 1;
       return token;
@@ -66,9 +78,10 @@ class Utf8PacketDecoder extends Converter<List<int>, Packet> {
 
     if (type == PacketTypes.DATA) {
       final position = int.parse(nextToken());
-      final payloadByteString = nextToken();
-      final payload = payloadByteString
-          .substring(1, payloadByteString.length - 1)
+      final payloadBytesList = nextToken();
+      final payload = payloadBytesList
+          // drop L and R square brackets of list
+          .substring(1, payloadBytesList.length - 1)
           .split(',')
           .map(int.parse)
           .toList();
@@ -82,3 +95,19 @@ class Utf8PacketDecoder extends Converter<List<int>, Packet> {
 
 /// Field delimiter for all converters.
 const _d = ':';
+
+@immutable
+class PacketCodeException implements Exception {
+  final String _message;
+
+  @literal
+  const PacketCodeException(this._message);
+
+  @override
+  String toString() => '$runtimeType: $_message';
+}
+
+class InvalidPacketDataException extends PacketCodeException {
+  @literal
+  const InvalidPacketDataException(String encodedPacket) : super(encodedPacket);
+}
