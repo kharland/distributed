@@ -11,7 +11,7 @@ void main() {
 
     group('encode', () {
       test('should encode a non-data packet', () {
-        final packet = const Packet(PacketTypes.ACK, address, port);
+        final packet = const Packet(PacketType.ACK, address, port);
         expect(codec.encode(packet), utf8Encode('1:$address:$port:'));
       });
 
@@ -23,7 +23,7 @@ void main() {
 
     group('decode', () {
       test('should decode a non-data packet', () {
-        final packet = const Packet(PacketTypes.ACK, address, port);
+        final packet = const Packet(PacketType.ACK, address, port);
         expect(codec.decode(codec.encode(packet)), packet);
       });
 

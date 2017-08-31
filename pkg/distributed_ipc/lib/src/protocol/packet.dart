@@ -3,14 +3,14 @@ import 'package:distributed.ipc/src/enum.dart';
 import 'package:meta/meta.dart';
 
 @immutable
-class PacketTypes extends Enum {
-  static const ACK = const PacketTypes._(0x1, 'Acknowledgement');
-  static const RES = const PacketTypes._(0x2, 'Resend last message');
-  static const DATA = const PacketTypes._(0x3, 'Data part');
-  static const END = const PacketTypes._(0x4, 'End of message parts');
-  static const GREET = const PacketTypes._(0x5, 'Connection request');
+class PacketType extends Enum {
+  static const ACK = const PacketType._(0x1, 'Acknowledgement');
+  static const RES = const PacketType._(0x2, 'Resend last message');
+  static const DATA = const PacketType._(0x3, 'Data part');
+  static const END = const PacketType._(0x4, 'End of message parts');
+  static const GREET = const PacketType._(0x5, 'Connection request');
 
-  static final _valueToType = <int, PacketTypes>{
+  static final _valueToType = <int, PacketType>{
     ACK.value: ACK,
     RES.value: RES,
     DATA.value: DATA,
@@ -18,7 +18,7 @@ class PacketTypes extends Enum {
   };
 
   /// Returns a [Packet] whose value is [value].
-  static PacketTypes fromValue(int value) {
+  static PacketType fromValue(int value) {
     if (!_valueToType.containsKey(value)) {
       throw new ArgumentError('Invalid packet value $value');
     }
@@ -26,23 +26,22 @@ class PacketTypes extends Enum {
   }
 
   @literal
-  const PacketTypes._(int value, String description)
-      : super(description, value);
+  const PacketType._(int value, String description) : super(description, value);
 }
 
 class Packet {
   static const _equality = const PacketEquality();
 
   static Packet ack(String address, int port) =>
-      new Packet(PacketTypes.ACK, address, port);
+      new Packet(PacketType.ACK, address, port);
 
   static Packet res(String address, int port) =>
-      new Packet(PacketTypes.RES, address, port);
+      new Packet(PacketType.RES, address, port);
 
   static Packet end(String address, int port) =>
-      new Packet(PacketTypes.END, address, port);
+      new Packet(PacketType.END, address, port);
 
-  final PacketTypes type;
+  final PacketType type;
   final String address;
   final int port;
 
@@ -86,12 +85,12 @@ class DataPacket extends Packet {
 
   @literal
   const DataPacket(String address, int port, this.payload, this.position)
-      : super(PacketTypes.DATA, address, port);
+      : super(PacketType.DATA, address, port);
 }
 
 /// A [Packet] used to initiate communication between two nodes.
 @immutable
-class GreetingPacket extends Packet {
+class GreetPacket extends Packet {
   /// This packet's encoding type.
   final int encodingType;
 
@@ -99,13 +98,13 @@ class GreetingPacket extends Packet {
   final int transferType;
 
   @literal
-  GreetingPacket(
+  GreetPacket(
     String address,
     int port, {
     @required this.encodingType,
     @required this.transferType,
   })
-      : super(PacketTypes.GREET, address, port);
+      : super(PacketType.GREET, address, port);
 }
 
 /// An equality relation on [Packet] objects.
@@ -116,6 +115,7 @@ class PacketEquality implements Equality<Packet> {
   @literal
   const PacketEquality();
 
+  // FIXME: compare GREET packet.
   @override
   bool equals(Packet e1, Packet e2) {
     if (e1 is DataPacket && e2 is! DataPacket ||

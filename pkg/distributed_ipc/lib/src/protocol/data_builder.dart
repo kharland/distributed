@@ -20,7 +20,7 @@ class StringDataBuilder implements DataBuilder<String> {
 
   @override
   String construct(List<DataPacket> pieces) {
-    assert(pieces.every((p) => p.type == PacketTypes.DATA));
+    assert(pieces.every((p) => p.type == PacketType.DATA));
 
     pieces.sort((a, b) => a.position.compareTo(b.position));
     return utf8Decode(pieces.map((p) => p.payload).expand((bytes) => bytes));

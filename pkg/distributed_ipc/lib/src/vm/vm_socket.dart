@@ -7,6 +7,7 @@ import 'package:distributed.ipc/platform/vm.dart';
 import 'package:distributed.ipc/src/encoding.dart';
 import 'package:distributed.ipc/src/protocol/packet.dart';
 import 'package:distributed.ipc/src/socket.dart';
+import 'package:meta/meta.dart';
 
 /// A [Socket] implementation backed by an [io.Socket].
 class VmSocket extends PseudoSocket<String> {
@@ -30,18 +31,21 @@ class VmSocket extends PseudoSocket<String> {
 /// enqueued messages.
 abstract class UdpSocket<T> implements UdpSink<T>, Stream<T> {
   /// Creates a new [UdpSocket] from [config].
-  static Future<UdpSocket> bind(UdpSocketConfig config) async {
-    final adapter = new UdpAdapter(await io.RawDatagramSocket.bind(
-      config.address,
-      config.port,
-    ));
-
-    switch (config.transferMode) {
+  static Future<UdpSocket<String>> bind(UdpSocketConfig config) async {
+    switch (config.transferType) {
       case TransferType.FAST:
         throw new UnimplementedError();
       default:
-        throw new UnsupportedError('${config.transferMode}');
+        throw new UnsupportedError('${config.transferType}');
     }
+
+    final datagramAdapter = new UdpAdapter(
+      await io.RawDatagramSocket.bind(
+        config.address,
+        config.port,
+      ),
+      onDatagram: (io.Datagram dg) => throw new UnimplementedError(),
+    );
   }
 
   /// Converts [socket] into a [Socket] of [U] using [codec].
@@ -96,6 +100,8 @@ class PseudoUdpSocket<T> extends StreamView<T> implements UdpSocket<T> {
   }
 }
 
+typedef void IoDatagramHandler(io.Datagram dg);
+
 /// Wraps an [io.RawDatagramSocket].
 ///
 /// Also provides a broadcast stream of the Datagrams received on the
@@ -103,8 +109,10 @@ class PseudoUdpSocket<T> extends StreamView<T> implements UdpSocket<T> {
 class UdpAdapter {
   final io.RawDatagramSocket _socket;
   final _output = new StreamController<io.Datagram>(sync: true);
+  IoDatagramHandler _onDatagram;
 
-  UdpAdapter(this._socket) {
+  UdpAdapter(this._socket, {@required IoDatagramHandler onDatagram})
+      : _onDatagram = onDatagram {
     _socket
       ..writeEventsEnabled = false
       ..map(_handleEvent);
@@ -124,18 +132,13 @@ class UdpAdapter {
     _socket.send(event, new io.InternetAddress(address), port);
   }
 
-  /// Disables this adapter.
-  void close() {
-    _socket.close();
-  }
-
   void _handleEvent(io.RawSocketEvent event) {
     switch (event) {
       case io.RawSocketEvent.CLOSED:
         _socket.close();
         break;
       case io.RawSocketEvent.READ:
-        _output.add(_socket.receive());
+        _onDatagram(_socket.receive());
         break;
       default:
         throw new UnsupportedError('$event');

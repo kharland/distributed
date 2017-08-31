@@ -9,6 +9,7 @@ environment:
 dependencies:
   binary:
   meta:
+  quiver:
 
 dev_dependencies:
   test: ^0.12.0

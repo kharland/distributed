@@ -72,11 +72,11 @@ class Utf8PacketDecoder extends Converter<List<int>, Packet> {
       return token;
     }
 
-    final type = PacketTypes.fromValue(int.parse(nextToken(), radix: 16));
+    final type = PacketType.fromValue(int.parse(nextToken(), radix: 16));
     final address = nextToken();
     final port = int.parse(nextToken());
 
-    if (type == PacketTypes.DATA) {
+    if (type == PacketType.DATA) {
       final position = int.parse(nextToken());
       final payloadBytesList = nextToken();
       final payload = payloadBytesList

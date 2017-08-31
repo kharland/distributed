@@ -4,7 +4,7 @@ import 'package:meta/meta.dart';
 /// Configuration options for a [UdpSocket].
 class UdpSocketConfig {
   /// The algorithm to use when sending data over the socket.
-  final TransferType transferMode;
+  final TransferType transferType;
 
   /// The local address to bind to.
   final String address;
@@ -14,7 +14,7 @@ class UdpSocketConfig {
 
   @literal
   const UdpSocketConfig({
-    @required this.transferMode,
+    @required this.transferType,
     @required this.address,
     @required this.port,
   });
