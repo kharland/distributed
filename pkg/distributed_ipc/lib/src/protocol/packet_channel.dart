@@ -2,7 +2,8 @@ import 'package:distributed.ipc/platform/vm.dart';
 import 'package:distributed.ipc/src/encoding.dart';
 import 'package:distributed.ipc/src/protocol/packet.dart';
 import 'package:distributed.ipc/src/protocol/packet_codec.dart';
-import 'package:distributed.ipc/src/typedefs.dart';
+import 'package:distributed.ipc/src/event_source.dart';
+import 'package:distributed.ipc/src/typedefs/consumer.dart';
 import 'package:meta/meta.dart';
 
 /// An I/O channel for transferring [Packets] between processes.
@@ -10,9 +11,7 @@ import 'package:meta/meta.dart';
 /// A [PacketChannel] consumes [Iterable]s of [Packet]s from the local client
 /// and sends them over the network.  It consumes encoded [Packet] data from the
 /// network and broadcasts the decoded [Packet]s locally.
-abstract class PacketChannel implements EventBus<Packet> {
-  static const DefaultCodec = const Utf8PacketCodec();
-
+abstract class PacketChannel implements EventSource<Packet> {
   /// Creates a [PacketChannel].
   ///
   /// [config] is the [PacketChannelConfig] to create the channel from.
@@ -69,7 +68,7 @@ class PacketChannelConfig {
 ///
 /// The remote is not expected to send end packets.  They are assumed after each
 /// [Packet].
-class FastPacketChannel extends EventBus<Packet> implements PacketChannel {
+class FastPacketChannel extends EventSource<Packet> implements PacketChannel {
   /// Sink for outgoing data.
   final Consumer<List<int>> _write;
 
@@ -94,7 +93,7 @@ class FastPacketChannel extends EventBus<Packet> implements PacketChannel {
     this.remoteAddress,
     this.remotePort,
     this._write, [
-    this._codec = PacketChannel.DefaultCodec,
+    this._codec = const Utf8PacketCodec(),
   ]);
 
   @override

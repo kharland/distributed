@@ -1,19 +1,19 @@
-import 'package:distributed.ipc/src/typedefs.dart';
+import 'package:distributed.ipc/src/typedefs/consumer.dart';
 import 'package:meta/meta.dart';
 
 /// A connection between two [Nodes].
 abstract class NodeConnection {
-  /// This connection's remote address.
-  String get remoteAddress;
-
-  /// This connection's remote port.
-  int get remotePort;
-
   /// This connection's local address.
   String get localAddress;
 
   /// This connection's local port.
   int get localPort;
+
+  /// This connection's remote address.
+  String get remoteAddress;
+
+  /// This connection's remote port.
+  int get remotePort;
 
   /// Sends [message] over this connection.
   void add(String message);
@@ -22,6 +22,7 @@ abstract class NodeConnection {
   void onMessage(Consumer<String> callback);
 }
 
+/// Descibres how a [NodeConnection] should be created.
 @immutable
 class NodeConnectionConfig {
   final String localAddress;

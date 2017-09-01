@@ -4,7 +4,7 @@ import 'dart:io' as io;
 import 'package:distributed.ipc/src/encoding.dart';
 import 'package:distributed.ipc/src/protocol/packet.dart';
 import 'package:distributed.ipc/src/socket.dart';
-import 'package:distributed.ipc/src/typedefs.dart';
+import 'package:distributed.ipc/src/event_source.dart';
 
 /// A [Socket] implementation backed by an [io.Socket].
 class VmSocket extends PseudoSocket<String> {
@@ -26,7 +26,7 @@ class VmSocket extends PseudoSocket<String> {
 /// If a message is added to the socket while a previous message is still
 /// in-flight, the new message is added to a queue and sent after all previously
 /// enqueued messages.
-abstract class UdpSocket<T> implements UdpSink<T>, EventBus<T> {
+abstract class UdpSocket<T> implements UdpSink<T>, EventSource<T> {
   /// Creates a new [UdpSocket] from [config].
   static Future<UdpSocket<List<int>>> bind(String address, int port) async {
     final rawSocket = await io.RawDatagramSocket.bind(address, port);
@@ -45,7 +45,7 @@ abstract class UdpSink<T> {
 }
 
 /// A [UdpSocket] created by stitching together a [Stream] and [UdpSocketSink].
-class _AdapterUdpSocket extends EventBus<List<int>>
+class _AdapterUdpSocket extends EventSource<List<int>>
     implements UdpSocket<List<int>> {
   final _UdpAdapter _adapter;
 
@@ -70,7 +70,7 @@ class _AdapterUdpSocket extends EventBus<List<int>>
 ///
 /// Also provides a broadcast stream of the Datagrams received on the
 /// socket via [datagrams].
-class _UdpAdapter extends EventBus<io.Datagram> {
+class _UdpAdapter extends EventSource<io.Datagram> {
   final io.RawDatagramSocket _socket;
 
   _UdpAdapter(this._socket) {

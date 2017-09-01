@@ -2,9 +2,9 @@ import 'package:distributed.ipc/platform/vm.dart';
 import 'package:distributed.ipc/src/encoding.dart';
 import 'package:distributed.ipc/src/protocol/packet.dart';
 import 'package:distributed.ipc/src/protocol/packet_channel.dart';
-import 'package:distributed.ipc/src/typedefs.dart';
+import 'package:distributed.ipc/src/event_source.dart';
 
-abstract class ChannelHost extends EventBus<PacketChannel> {
+abstract class ChannelHost extends EventSource<PacketChannel> {
   final Sink<GreetPacket> _greetSink;
   final String _address;
   final int _port;

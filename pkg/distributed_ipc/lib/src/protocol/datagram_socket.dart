@@ -1,10 +1,10 @@
 import 'package:distributed.ipc/src/protocol/typed_datagram.dart';
 import 'package:distributed.ipc/src/protocol/typed_datagram_codec.dart';
-import 'package:distributed.ipc/src/typedefs.dart';
+import 'package:distributed.ipc/src/event_source.dart';
 import 'package:distributed.ipc/src/vm/vm_socket.dart';
 
-/// Wraps a UDP socket as a [Sink] and [EventBus] of [Datagram].
-class DatagramSocket extends EventBus<Datagram> implements Sink<Datagram> {
+/// Wraps a UDP socket as a [Sink] and [EventSource] of [Datagram].
+class DatagramSocket extends EventSource<Datagram> implements Sink<Datagram> {
   static const _codec = const DatagramCodec();
   final UdpSocket<List<int>> _socket;
 

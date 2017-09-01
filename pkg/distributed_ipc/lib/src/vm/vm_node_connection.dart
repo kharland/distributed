@@ -4,10 +4,10 @@ import 'package:distributed.ipc/src/protocol/datagram_socket.dart';
 import 'package:distributed.ipc/src/protocol/packet.dart';
 import 'package:distributed.ipc/src/protocol/packet_channel.dart';
 import 'package:distributed.ipc/src/protocol/typed_datagram.dart';
-import 'package:distributed.ipc/src/typedefs.dart';
+import 'package:distributed.ipc/src/event_source.dart';
 
 /// A [NodeConnection] used a by a node running on the Dart vm.
-abstract class VmNodeConnection implements NodeConnection, EventBus<String> {
+abstract class VmNodeConnection implements NodeConnection, EventSource<String> {
   /// Creates a new [NodeConnection] that uses the UDP protocol.
   static NodeConnection openUdp(
     DatagramSocket socket,
@@ -19,10 +19,10 @@ abstract class VmNodeConnection implements NodeConnection, EventBus<String> {
     DataPacket createDataPacket(List<int> data, int position) =>
         new DataPacket(config.localAddress, config.localPort, data, position);
 
-    TypedDatagram createTypedDatagram(List<int> data) =>
-        new TypedDatagram(data, config.localAddress, config.localPort);
+    Datagram createDatagram(List<int> data) =>
+        new Datagram(data, config.localAddress, config.localPort);
 
-    socket.onEvent((TypedDatagram dg) {
+    socket.onEvent((Datagram dg) {
       if (dg.type != DatagramType.GREET &&
           dg.address == config.remoteAddress &&
           dg.port == config.remotePort) {
@@ -32,7 +32,7 @@ abstract class VmNodeConnection implements NodeConnection, EventBus<String> {
 
     channel = new PacketChannel.fromConfig(
       new PacketChannelConfig(config.remoteAddress, config.remotePort),
-      writeData: (List<int> data) => socket.add(createTypedDatagram(data)),
+      writeData: (List<int> data) => socket.add(createDatagram(data)),
     );
 
     // Buffer incoming packets before emitting a received message.
@@ -51,7 +51,7 @@ abstract class VmNodeConnection implements NodeConnection, EventBus<String> {
   }
 }
 
-class _VmNodeConnectionImpl extends EventBus<String>
+class _VmNodeConnectionImpl extends EventSource<String>
     implements VmNodeConnection {
   final NodeConnectionConfig _config;
   final _messageHandlers = <Consumer<String>>[];

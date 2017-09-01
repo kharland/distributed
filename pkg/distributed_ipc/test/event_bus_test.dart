@@ -1,15 +1,15 @@
-import 'package:distributed.ipc/src/typedefs.dart';
+import 'package:distributed.ipc/src/event_source.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group(EventBus, () {
-    EventBus<int> bus;
+  group(EventSource, () {
+    EventSource<int> bus;
 
     setUp(() {
-      bus = new EventBus<int>();
+      bus = new EventSource<int>();
     });
 
-    test('should call each callback when emitting an event', () {
+    test('should notify each consumer when emitting an event', () {
       bus.onEvent(expectAsync1((data) {
         expect(data, 1);
       }, count: 3));
