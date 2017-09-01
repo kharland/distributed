@@ -43,7 +43,7 @@ void main() {
       });
 
       final receivedPackets = <Packet>[];
-      channel.onPacket(receivedPackets.add);
+      channel.onEvent(receivedPackets.add);
       packets.map(packetCodec.encode).forEach(channel.receive);
 
       expect(receivedPackets, expectedPackets);

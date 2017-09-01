@@ -5,8 +5,8 @@ import 'package:distributed.ipc/src/protocol/packet_channel.dart';
 import 'package:distributed.ipc/src/protocol/typed_datagram.dart';
 import 'package:distributed.ipc/src/protocol/typed_datagram_adapter.dart';
 import 'package:distributed.ipc/src/typedefs.dart';
-import 'package:meta/meta.dart';
 
+/// A [NodeConnection] used a by a node running on the Dart vm.
 abstract class VmNodeConnection implements NodeConnection {
   /// Creates a new [NodeConnection] that uses the UDP protocol.
   static NodeConnection openUdp(
@@ -39,7 +39,7 @@ abstract class VmNodeConnection implements NodeConnection {
     final dataBuilder = new StringDataBuilder(createDataPacket);
     final packetBuffer = <Packet>[];
 
-    channel.onPacket((Packet packet) {
+    channel.onEvent((Packet packet) {
       if (packet.type == PacketType.END) {
         connection.receive(dataBuilder.construct(packetBuffer));
       } else {
@@ -87,21 +87,4 @@ class _ControlledConnection extends _VmNodeConnectionImpl {
       handler(message);
     });
   }
-}
-
-@immutable
-class NodeConnectionConfig {
-  final String localAddress;
-  final int localPort;
-
-  final String remoteAddress;
-  final int remotePort;
-
-  @literal
-  const NodeConnectionConfig({
-    @required this.localAddress,
-    @required this.localPort,
-    @required this.remoteAddress,
-    @required this.remotePort,
-  });
 }

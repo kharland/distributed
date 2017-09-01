@@ -10,7 +10,7 @@ import 'package:meta/meta.dart';
 /// A [PacketChannel] consumes [Iterable]s of [Packet]s from the local client
 /// and sends them over the network.  It consumes encoded [Packet] data from the
 /// network and broadcasts the decoded [Packet]s locally.
-abstract class PacketChannel {
+abstract class PacketChannel implements EventBus<Packet> {
   static const DefaultCodec = const Utf8PacketCodec();
 
   /// Creates a [PacketChannel].
@@ -43,9 +43,6 @@ abstract class PacketChannel {
 
   /// Receives the [encodedPacket] sent from [remoteAddress] and [remotePort].
   void receive(Iterable<int> encodedPacket);
-
-  /// Registers [handler] to be called when a packet is received.
-  void onPacket(Consumer<Packet> handler);
 }
 
 /// Specifies the settings necessary to create a [PacketChannel].
@@ -74,7 +71,7 @@ class PacketChannelConfig {
 /// [Packet].
 class FastPacketChannel implements PacketChannel {
   /// Handlers for incoming packets.
-  final _packetHandlers = <Consumer<Packet>>[];
+  final _eventBusController = new EventBusController<Packet>();
 
   /// Sink for outgoing data.
   final Consumer<List<int>> _write;
@@ -116,15 +113,14 @@ class FastPacketChannel implements PacketChannel {
   @override
   void receive(Iterable<int> encodedPacket) {
     final packet = _codec.decode(encodedPacket);
-    _packetHandlers.forEach((handler) {
-      handler(packet);
-      // Receive implicit END packet.
-      handler(Packet.end(packet.address, packet.port));
-    });
+    _eventBusController.addAllEvents([
+      packet,
+      Packet.end(packet.address, packet.port),
+    ]);
   }
 
   @override
-  void onPacket(Consumer<Packet> handler) {
-    _packetHandlers.add(handler);
+  void onEvent(Consumer<Packet> consumer) {
+    _eventBusController.onEvent(consumer);
   }
 }

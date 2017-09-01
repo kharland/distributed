@@ -1,17 +1,17 @@
 import 'dart:async';
 
-import 'package:distributed.ipc/platform/vm.dart';
+import 'package:distributed.ipc/src/node_connection.dart';
 import 'package:distributed.ipc/src/socket.dart';
 
-SocketProvider provider;
+ConnectionProvider connectionProvider;
 
-void setSocketProvider(SocketProvider value) {
-  assert(provider == null, 'SocketProvider is already initialized');
-  provider = value;
+void setConnectionProvider(ConnectionProvider value) {
+  assert(connectionProvider == null, '$ConnectionProvider already initialized');
+  connectionProvider = value;
 }
 
-abstract class SocketProvider {
-  Future<Socket> tcp(address, int port);
+abstract class ConnectionProvider {
+  Future<Socket> tcp(NodeConnectionConfig config);
 
-  Future<Socket> udp(UdpSocketConfig config);
+  Future<Socket> udp(NodeConnectionConfig config);
 }

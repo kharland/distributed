@@ -1,4 +1,5 @@
 import 'package:distributed.ipc/src/typedefs.dart';
+import 'package:meta/meta.dart';
 
 /// A connection between two [Nodes].
 abstract class NodeConnection {
@@ -19,4 +20,21 @@ abstract class NodeConnection {
 
   /// Registers [callback] to be called when this connection receives a message.
   void onMessage(Consumer<String> callback);
+}
+
+@immutable
+class NodeConnectionConfig {
+  final String localAddress;
+  final int localPort;
+
+  final String remoteAddress;
+  final int remotePort;
+
+  @literal
+  const NodeConnectionConfig({
+    @required this.localAddress,
+    @required this.localPort,
+    @required this.remoteAddress,
+    @required this.remotePort,
+  });
 }

@@ -2,7 +2,6 @@ import 'package:distributed.ipc/src/protocol/typed_datagram.dart';
 import 'package:distributed.ipc/src/protocol/typed_datagram_codec.dart';
 import 'package:distributed.ipc/src/typedefs.dart';
 import 'package:distributed.ipc/src/vm/vm_socket.dart';
-import 'package:meta/meta.dart';
 
 /// Wraps a UDP socket as a
 class DatagramSocket implements Sink<TypedDatagram> {
