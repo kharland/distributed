@@ -7,28 +7,28 @@ import 'package:meta/meta.dart';
 /// Field delimiter for all converters.
 const _d = ':';
 
-/// A code for encoding and decoding [TypedDatagram]s.
+/// A code for encoding and decoding [Datagram]s.
 @immutable
-class TypedDatagramCodec extends Codec<TypedDatagram, List<int>> {
-  static const _decoder = const TypedDatagramDecoder();
-  static const _encoder = const TypedDatagramEncoder();
+class DatagramCodec extends Codec<Datagram, List<int>> {
+  static const _decoder = const DatagramDecoder();
+  static const _encoder = const DatagramEncoder();
 
   @override
-  Converter<List<int>, TypedDatagram> get decoder => _decoder;
+  Converter<List<int>, Datagram> get decoder => _decoder;
 
   @override
-  Converter<TypedDatagram, List<int>> get encoder => _encoder;
+  Converter<Datagram, List<int>> get encoder => _encoder;
 
   @literal
-  const TypedDatagramCodec();
+  const DatagramCodec();
 }
 
 @immutable
-class TypedDatagramEncoder extends Converter<TypedDatagram, List<int>> {
-  const TypedDatagramEncoder();
+class DatagramEncoder extends Converter<Datagram, List<int>> {
+  const DatagramEncoder();
 
   @override
-  List<int> convert(TypedDatagram dg) {
+  List<int> convert(Datagram dg) {
     return utf8Encode(<String>[
       '${dg.type}',
       '${dg.address}',
@@ -39,46 +39,61 @@ class TypedDatagramEncoder extends Converter<TypedDatagram, List<int>> {
 }
 
 @immutable
-class TypedDatagramDecoder extends Converter<List<int>, TypedDatagram> {
-  const TypedDatagramDecoder();
+class DatagramDecoder extends Converter<List<int>, Datagram> {
+  const DatagramDecoder();
 
   @override
-  TypedDatagram convert(List<int> bytes) {
+  Datagram convert(List<int> bytes) {
     final tokens = utf8Decode(bytes).split(_d);
     const TYPE = 0;
     const ADDRESS = 1;
     const PORT = 2;
     const DATA = 3;
 
-    final data = tokens[DATA]
-        // Remove '[' and ']'
-        .substring(1, tokens[DATA].length - 1)
-        .split(',')
-        .map(int.parse)
-        .toList();
+    try {
+      final data = tokens[DATA]
+          // Remove '[' and ']'
+          .substring(1, tokens[DATA].length - 1)
+          .split(',')
+          .map(int.parse)
+          .toList();
 
-    return new TypedDatagram(
-      data,
-      tokens[ADDRESS],
-      int.parse(tokens[PORT]),
-      int.parse(tokens[TYPE]),
-    );
+      final type = int.parse(tokens[TYPE]);
+      if (!DatagramType.isValid(type)) {
+        throw new DatagramTypeException(type);
+      }
+
+      return new Datagram(
+        data,
+        tokens[ADDRESS],
+        int.parse(tokens[PORT]),
+        int.parse(tokens[TYPE]),
+      );
+    } catch (error) {
+      throw new DatagramDecodeException('$error');
+    }
   }
 }
 
 @immutable
-class TypedDatagramCodeException implements Exception {
+class DatagramCodecException implements Exception {
   final String _message;
 
   @literal
-  const TypedDatagramCodeException(this._message);
+  const DatagramCodecException(this._message);
 
   @override
   String toString() => '$runtimeType: $_message';
 }
 
-class InvalidTypedDatagramDataException extends TypedDatagramCodeException {
+@immutable
+class DatagramDecodeException extends DatagramCodecException {
   @literal
-  const InvalidTypedDatagramDataException(String encodedTypedDatagram)
-      : super(encodedTypedDatagram);
+  const DatagramDecodeException(String encodedDatagram)
+      : super(encodedDatagram);
+}
+
+@immutable
+class DatagramTypeException extends DatagramCodecException {
+  DatagramTypeException(int value) : super(value.toRadixString(16));
 }

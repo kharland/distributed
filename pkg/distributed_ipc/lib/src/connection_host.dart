@@ -2,16 +2,14 @@ import 'package:distributed.ipc/platform/vm.dart';
 import 'package:distributed.ipc/src/encoding.dart';
 import 'package:distributed.ipc/src/protocol/packet.dart';
 import 'package:distributed.ipc/src/protocol/packet_channel.dart';
+import 'package:distributed.ipc/src/typedefs.dart';
 
-typedef PacketChannelHandler = void Function(PacketChannel);
-
-abstract class ConnectionHost {
-  final PacketChannelHandler _onChannel;
+abstract class ChannelHost extends EventBus<PacketChannel> {
   final Sink<GreetPacket> _greetSink;
   final String _address;
   final int _port;
 
-  ConnectionHost(this._address, this._port, this._onChannel, this._greetSink);
+  ChannelHost(this._address, this._port, this._greetSink);
 
   /// Creates a new [PacketChannel] from [config].
   void open(PacketChannelConfig config) {
@@ -24,7 +22,7 @@ abstract class ConnectionHost {
       transferType: config.transferType.value,
     ));
 
-    _onChannel(new PacketChannel.fromConfig(config));
+    emit(new PacketChannel.fromConfig(config));
   }
 
   /// Opens a new [PacketChannel] configured from [greeting].
@@ -39,7 +37,7 @@ abstract class ConnectionHost {
         encodingType: new EncodingType.fromValue(greeting.encodingType),
       );
 
-      _onChannel(new PacketChannel.fromConfig(config));
+      emit(new PacketChannel.fromConfig(config));
       return new Packet(PacketType.ACK, _address, _port);
     } catch (error) {
       return new ErrorPacket(_address, _port, '$error');

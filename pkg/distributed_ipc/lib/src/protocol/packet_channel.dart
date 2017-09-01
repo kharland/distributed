@@ -69,10 +69,7 @@ class PacketChannelConfig {
 ///
 /// The remote is not expected to send end packets.  They are assumed after each
 /// [Packet].
-class FastPacketChannel implements PacketChannel {
-  /// Handlers for incoming packets.
-  final _eventBusController = new EventBusController<Packet>();
-
+class FastPacketChannel extends EventBus<Packet> implements PacketChannel {
   /// Sink for outgoing data.
   final Consumer<List<int>> _write;
 
@@ -113,14 +110,9 @@ class FastPacketChannel implements PacketChannel {
   @override
   void receive(Iterable<int> encodedPacket) {
     final packet = _codec.decode(encodedPacket);
-    _eventBusController.addAllEvents([
+    emitAll([
       packet,
       Packet.end(packet.address, packet.port),
     ]);
-  }
-
-  @override
-  void onEvent(Consumer<Packet> consumer) {
-    _eventBusController.onEvent(consumer);
   }
 }

@@ -1,13 +1,13 @@
 import 'package:distributed.ipc/src/node_connection.dart';
 import 'package:distributed.ipc/src/protocol/data_builder.dart';
+import 'package:distributed.ipc/src/protocol/datagram_socket.dart';
 import 'package:distributed.ipc/src/protocol/packet.dart';
 import 'package:distributed.ipc/src/protocol/packet_channel.dart';
 import 'package:distributed.ipc/src/protocol/typed_datagram.dart';
-import 'package:distributed.ipc/src/protocol/typed_datagram_adapter.dart';
 import 'package:distributed.ipc/src/typedefs.dart';
 
 /// A [NodeConnection] used a by a node running on the Dart vm.
-abstract class VmNodeConnection implements NodeConnection {
+abstract class VmNodeConnection implements NodeConnection, EventBus<String> {
   /// Creates a new [NodeConnection] that uses the UDP protocol.
   static NodeConnection openUdp(
     DatagramSocket socket,
@@ -22,7 +22,7 @@ abstract class VmNodeConnection implements NodeConnection {
     TypedDatagram createTypedDatagram(List<int> data) =>
         new TypedDatagram(data, config.localAddress, config.localPort);
 
-    socket.onDatagram((TypedDatagram dg) {
+    socket.onEvent((TypedDatagram dg) {
       if (dg.type != DatagramType.GREET &&
           dg.address == config.remoteAddress &&
           dg.port == config.remotePort) {
@@ -51,7 +51,8 @@ abstract class VmNodeConnection implements NodeConnection {
   }
 }
 
-class _VmNodeConnectionImpl implements VmNodeConnection {
+class _VmNodeConnectionImpl extends EventBus<String>
+    implements VmNodeConnection {
   final NodeConnectionConfig _config;
   final _messageHandlers = <Consumer<String>>[];
 
@@ -71,11 +72,6 @@ class _VmNodeConnectionImpl implements VmNodeConnection {
 
   @override
   void add(String message) {}
-
-  @override
-  void onMessage(Consumer<String> handler) {
-    _messageHandlers.add(handler);
-  }
 }
 
 /// A [VmNodeConnection] whose incoming messages are manually emitted.

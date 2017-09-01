@@ -1,12 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io' as io;
 
-import 'package:distributed.ipc/platform/vm.dart';
 import 'package:distributed.ipc/src/encoding.dart';
 import 'package:distributed.ipc/src/protocol/packet.dart';
 import 'package:distributed.ipc/src/socket.dart';
-import 'package:meta/meta.dart';
+import 'package:distributed.ipc/src/typedefs.dart';
 
 /// A [Socket] implementation backed by an [io.Socket].
 class VmSocket extends PseudoSocket<String> {
@@ -28,30 +26,12 @@ class VmSocket extends PseudoSocket<String> {
 /// If a message is added to the socket while a previous message is still
 /// in-flight, the new message is added to a queue and sent after all previously
 /// enqueued messages.
-abstract class UdpSocket<T> implements UdpSink<T>, Stream<T> {
+abstract class UdpSocket<T> implements UdpSink<T>, EventBus<T> {
   /// Creates a new [UdpSocket] from [config].
-  static Future<UdpSocket<List<int>>> bind(UdpSocketConfig config) async {
-    switch (config.transferType) {
-      case TransferType.FAST:
-        throw new UnimplementedError();
-      default:
-        throw new UnsupportedError('${config.transferType}');
-    }
-
-    final datagramAdapter = new UdpAdapter(
-      await io.RawDatagramSocket.bind(
-        config.address,
-        config.port,
-      ),
-      onDatagram: (io.Datagram dg) => throw new UnimplementedError(),
-    );
-  }
-
-  /// Converts [socket] into a [Socket] of [U] using [codec].
-  static UdpSocket<U> convert<T, U>(UdpSocket<T> socket, Codec<U, T> codec) {
-    final stream = socket.map(codec.decode);
-    final sink = new EncodedUdpSocketSink<T, U>(socket, codec.encoder);
-    return new PseudoUdpSocket<U>(stream, sink);
+  static Future<UdpSocket<List<int>>> bind(String address, int port) async {
+    final rawSocket = await io.RawDatagramSocket.bind(address, port);
+    final adapter = new _UdpAdapter(rawSocket);
+    return new _AdapterUdpSocket(adapter);
   }
 }
 
@@ -64,61 +44,40 @@ abstract class UdpSink<T> {
   void close();
 }
 
-/// A [SocketSink] that converts a [T] data to send over a [SocketSink] of [S].
-class EncodedUdpSocketSink<S, T> implements UdpSink<T> {
-  final Converter<T, S> _converter;
-  final UdpSink<S> _sink;
-
-  EncodedUdpSocketSink(this._sink, this._converter);
-
-  @override
-  void add(T data, String address, int port) {
-    _sink.add(_converter.convert(data), address, port);
-  }
-
-  @override
-  void close() {
-    _sink.close();
-  }
-}
-
 /// A [UdpSocket] created by stitching together a [Stream] and [UdpSocketSink].
-class PseudoUdpSocket<T> extends StreamView<T> implements UdpSocket<T> {
-  final UdpSink<T> _sink;
+class _AdapterUdpSocket extends EventBus<List<int>>
+    implements UdpSocket<List<int>> {
+  final _UdpAdapter _adapter;
 
-  PseudoUdpSocket(Stream<T> stream, this._sink) : super(stream);
+  _AdapterUdpSocket(this._adapter) {
+    _adapter.onEvent((io.Datagram dg) {
+      emit(dg.data);
+    });
+  }
 
   @override
-  void add(T packet, String address, int port) {
-    _sink.add(packet, address, port);
+  void add(List<int> data, String address, int port) {
+    _adapter.add(data, address, port);
   }
 
   @override
   void close() {
-    _sink.close();
+    _adapter.close();
   }
 }
-
-typedef void IoDatagramHandler(io.Datagram dg);
 
 /// Wraps an [io.RawDatagramSocket].
 ///
 /// Also provides a broadcast stream of the Datagrams received on the
 /// socket via [datagrams].
-class UdpAdapter {
+class _UdpAdapter extends EventBus<io.Datagram> {
   final io.RawDatagramSocket _socket;
-  final _output = new StreamController<io.Datagram>(sync: true);
-  IoDatagramHandler _onDatagram;
 
-  UdpAdapter(this._socket, {@required IoDatagramHandler onDatagram})
-      : _onDatagram = onDatagram {
+  _UdpAdapter(this._socket) {
     _socket
       ..writeEventsEnabled = false
       ..map(_handleEvent);
   }
-
-  /// The stream of datagrams received by this adapter.
-  Stream<io.Datagram> get datagrams => _output.stream;
 
   /// The local address of this socket.
   String get localAddress => _socket.address.address;
@@ -131,13 +90,17 @@ class UdpAdapter {
     _socket.send(event, new io.InternetAddress(address), port);
   }
 
+  void close() {
+    _socket.close();
+  }
+
   void _handleEvent(io.RawSocketEvent event) {
     switch (event) {
       case io.RawSocketEvent.CLOSED:
         _socket.close();
         break;
       case io.RawSocketEvent.READ:
-        _onDatagram(_socket.receive());
+        emit(_socket.receive());
         break;
       default:
         throw new UnsupportedError('$event');
