@@ -3,12 +3,11 @@ import 'dart:async';
 import 'package:distributed.ipc/src/protocol/typed_datagram.dart';
 import 'package:distributed.ipc/src/protocol/typed_datagram_adapter.dart';
 import 'package:distributed.ipc/src/protocol/typed_datagram_codec.dart';
-import 'package:distributed.ipc/src/testing/test_udp_sink.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group(TypedDatagramAdapter, () {
-    TestSink<List<int>> testUdpSink;
+  group(DatagramSocket, () {
+    List<List<int>> testUdpSink;
     Stream<List<int>> eventStream;
     const testAddress = '127.0.0.1';
     const testPort = 9090;
@@ -20,12 +19,12 @@ void main() {
       recordedGreetDatagrams = <TypedDatagram>[];
       recordedDatagrams = <TypedDatagram>[];
 
-      testUdpSink = new TestSink<List<int>>();
+      testUdpSink = <List<int>>[];
       eventStream = new Stream<List<int>>.fromIterable(
               incomingDatagrams.map(const TypedDatagramCodec().encode))
           .asBroadcastStream();
-      new TypedDatagramAdapter(
-        testUdpSink,
+      new DatagramSocket(
+        testUdpSink.add,
         eventStream,
         onDatagram: recordedDatagrams.add,
         onGreet: recordedGreetDatagrams.add,

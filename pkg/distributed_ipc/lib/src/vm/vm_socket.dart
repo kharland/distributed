@@ -31,7 +31,7 @@ class VmSocket extends PseudoSocket<String> {
 /// enqueued messages.
 abstract class UdpSocket<T> implements UdpSink<T>, Stream<T> {
   /// Creates a new [UdpSocket] from [config].
-  static Future<UdpSocket<String>> bind(UdpSocketConfig config) async {
+  static Future<UdpSocket<List<int>>> bind(UdpSocketConfig config) async {
     switch (config.transferType) {
       case TransferType.FAST:
         throw new UnimplementedError();

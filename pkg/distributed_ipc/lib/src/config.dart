@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:distributed.ipc/ipc.dart';
 import 'package:distributed.ipc/platform/vm.dart';
 import 'package:distributed.ipc/src/socket.dart';
 

@@ -1,6 +1,8 @@
 import 'package:distributed.ipc/src/protocol/packet.dart';
 import 'package:distributed.ipc/src/encoding.dart';
 
+typedef DataPacketFactory = DataPacket Function(List<int>, int);
+
 /// Assembles and disassembles messages so they may be sent over a UDP socket.
 abstract class DataBuilder<T> {
   /// Splits [data] into [DataPacket]s small enough to send in a datagram.
@@ -13,10 +15,9 @@ abstract class DataBuilder<T> {
 /// A [DataBuilder] that assembles and disassembles strings.
 /// FIXME: Chunk size is locked at 8.  Make variable.
 class StringDataBuilder implements DataBuilder<String> {
-  final String address;
-  final int port;
+  final DataPacketFactory _createDataPacket;
 
-  StringDataBuilder(this.address, this.port);
+  StringDataBuilder(this._createDataPacket);
 
   @override
   String construct(List<DataPacket> pieces) {
@@ -32,7 +33,7 @@ class StringDataBuilder implements DataBuilder<String> {
     final packets = <Packet>[];
 
     for (int i = 0; i < encoded.length; i++) {
-      packets.add(new DataPacket(address, port, [encoded[i]], i));
+      packets.add(_createDataPacket([encoded[i]], i));
     }
 
     return packets;

@@ -1,21 +1,29 @@
-import 'dart:async';
-
 import 'package:distributed.ipc/platform/vm.dart';
 import 'package:distributed.ipc/src/encoding.dart';
 import 'package:distributed.ipc/src/protocol/packet.dart';
 import 'package:distributed.ipc/src/protocol/packet_codec.dart';
-
-typedef PacketHandler = void Function(Packet);
+import 'package:distributed.ipc/src/typedefs.dart';
+import 'package:meta/meta.dart';
 
 /// An I/O channel for transferring [Packets] between processes.
+///
+/// A [PacketChannel] consumes [Iterable]s of [Packet]s from the local client
+/// and sends them over the network.  It consumes encoded [Packet] data from the
+/// network and broadcasts the decoded [Packet]s locally.
 abstract class PacketChannel {
   static const DefaultCodec = const Utf8PacketCodec();
 
-  /// Creates a [PacketChannel] that uses the specified [transferType].
-  factory PacketChannel.fromConfig(PacketChannelConfig config) {
+  /// Creates a [PacketChannel].
+  ///
+  /// [config] is the [PacketChannelConfig] to create the channel from.
+  /// [writeData] is a callback for writing packet data to the remote peer.
+  factory PacketChannel.fromConfig(
+    PacketChannelConfig config, {
+    @required Consumer<List<int>> writeData,
+  }) {
     switch (config.transferType) {
       case TransferType.FAST:
-        throw new UnimplementedError();
+        return new FastPacketChannel.fromConfig(config, writeData);
       default:
         throw new ArgumentError(config.transferType);
     }
@@ -27,14 +35,17 @@ abstract class PacketChannel {
   /// The port of this channel's remote peer.
   int get remotePort;
 
-  /// Sends [packets] on this channel.
-  void send(Iterable<Packet> packets);
+  /// Sends [packet] on this channel.
+  void add(Packet packet);
 
-  /// Receives an encoded packet on this channel.
+  /// Sends [packets] on this channel.
+  void addAll(Iterable<Packet> packets);
+
+  /// Receives the [encodedPacket] sent from [remoteAddress] and [remotePort].
   void receive(Iterable<int> encodedPacket);
 
-  /// Adds [handler] as a handler to call when a packet is recieved.
-  void addPacketHandler(PacketHandler handler);
+  /// Registers [handler] to be called when a packet is received.
+  void onPacket(Consumer<Packet> handler);
 }
 
 /// Specifies the settings necessary to create a [PacketChannel].
@@ -63,10 +74,10 @@ class PacketChannelConfig {
 /// [Packet].
 class FastPacketChannel implements PacketChannel {
   /// Handlers for incoming packets.
-  final _packetHandlers = <PacketHandler>[];
+  final _packetHandlers = <Consumer<Packet>>[];
 
   /// Sink for outgoing data.
-  final Sink<List<int>> _sink;
+  final Consumer<List<int>> _write;
 
   @override
   final String remoteAddress;
@@ -76,24 +87,30 @@ class FastPacketChannel implements PacketChannel {
 
   final PacketCodec _codec;
 
-  FastPacketChannel.fromConfig(PacketChannelConfig config, Sink<List<int>> sink)
+  FastPacketChannel.fromConfig(
+      PacketChannelConfig config, Consumer<List<int>> write)
       : this(
           config.address,
           config.port,
-          sink,
+          write,
           new PacketCodec.fromEncoding(config.encodingType),
         );
 
   FastPacketChannel(
     this.remoteAddress,
     this.remotePort,
-    this._sink, [
+    this._write, [
     this._codec = PacketChannel.DefaultCodec,
   ]);
 
   @override
-  void send(Iterable<Packet> packets) {
-    packets.map(_codec.encode).forEach(_sink.add);
+  void add(Packet packet) {
+    _write(_codec.encode(packet));
+  }
+
+  @override
+  void addAll(Iterable<Packet> packets) {
+    packets.forEach(add);
   }
 
   @override
@@ -107,7 +124,7 @@ class FastPacketChannel implements PacketChannel {
   }
 
   @override
-  void addPacketHandler(PacketHandler handler) {
+  void onPacket(Consumer<Packet> handler) {
     _packetHandlers.add(handler);
   }
 }

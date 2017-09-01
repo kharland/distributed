@@ -1,3 +1,3 @@
 library distributed.ipc;
 
-export 'package:distributed.ipc/src/socket.dart' show Socket;
+export 'package:distributed.ipc/src/node_connection.dart' show NodeConnection;

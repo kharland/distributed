@@ -1,7 +1,6 @@
 import 'package:distributed.ipc/src/protocol/packet.dart';
 import 'package:distributed.ipc/src/protocol/packet_channel.dart';
 import 'package:distributed.ipc/src/protocol/packet_codec.dart';
-import 'package:distributed.ipc/src/testing/test_udp_sink.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -16,23 +15,23 @@ void main() {
     const partnerPort = 1;
 
     FastPacketChannel channel;
-    TestSink<List<int>> testSink;
+    List<List<int>> testSink;
 
     setUp(() {
-      testSink = new TestSink<List<int>>();
+      testSink = <List<int>>[];
     });
 
     setUp(() {
       channel = new FastPacketChannel(
         partnerAddress,
         partnerPort,
-        testSink,
+        testSink.add,
       );
     });
 
     test('send should send all packets', () {
-      channel.send(packets);
-      expect(testSink.data, []..addAll(packets.map(packetCodec.encode)));
+      channel.addAll(packets);
+      expect(testSink, []..addAll(packets.map(packetCodec.encode)));
     });
 
     test('packets should emit each packet followed by an end packet', () {
@@ -44,7 +43,7 @@ void main() {
       });
 
       final receivedPackets = <Packet>[];
-      channel.addPacketHandler(receivedPackets.add);
+      channel.onPacket(receivedPackets.add);
       packets.map(packetCodec.encode).forEach(channel.receive);
 
       expect(receivedPackets, expectedPackets);
