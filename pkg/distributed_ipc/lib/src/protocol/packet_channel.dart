@@ -1,10 +1,23 @@
 import 'package:distributed.ipc/platform/vm.dart';
 import 'package:distributed.ipc/src/encoding.dart';
-import 'package:distributed.ipc/src/protocol/packet.dart';
-import 'package:distributed.ipc/src/protocol/packet_codec.dart';
 import 'package:distributed.ipc/src/event_source.dart';
-import 'package:distributed.ipc/src/typedefs/consumer.dart';
-import 'package:meta/meta.dart';
+import 'package:distributed.ipc/src/pipe.dart';
+import 'package:distributed.ipc/src/protocol/packet.dart';
+
+/// Specifies the settings necessary to create a [PacketChannel].
+class PacketChannelConfig {
+  final TransferType transferType;
+  final EncodingType encodingType;
+  final String address;
+  final int port;
+
+  PacketChannelConfig(
+    this.address,
+    this.port, {
+    this.transferType: TransferType.FAST,
+    this.encodingType: EncodingType.UTF8,
+  });
+}
 
 /// An I/O channel for transferring [Packets] between processes.
 ///
@@ -17,12 +30,12 @@ abstract class PacketChannel implements EventSource<Packet> {
   /// [config] is the [PacketChannelConfig] to create the channel from.
   /// [writeData] is a callback for writing packet data to the remote peer.
   factory PacketChannel.fromConfig(
-    PacketChannelConfig config, {
-    @required Consumer<List<int>> writeData,
-  }) {
+    PacketChannelConfig config,
+    Pipe<Packet> pipe,
+  ) {
     switch (config.transferType) {
       case TransferType.FAST:
-        return new FastPacketChannel.fromConfig(config, writeData);
+        return new FastPacketChannel.fromConfig(config, pipe);
       default:
         throw new ArgumentError(config.transferType);
     }
@@ -40,23 +53,8 @@ abstract class PacketChannel implements EventSource<Packet> {
   /// Sends [packets] on this channel.
   void addAll(Iterable<Packet> packets);
 
-  /// Receives the [encodedPacket] sent from [remoteAddress] and [remotePort].
-  void receive(Iterable<int> encodedPacket);
-}
-
-/// Specifies the settings necessary to create a [PacketChannel].
-class PacketChannelConfig {
-  final TransferType transferType;
-  final EncodingType encodingType;
-  final String address;
-  final int port;
-
-  PacketChannelConfig(
-    this.address,
-    this.port, {
-    this.transferType: TransferType.FAST,
-    this.encodingType: EncodingType.UTF8,
-  });
+  /// Receives a [packet] sent from [remoteAddress] and [remotePort].
+  void receive(Packet packet);
 }
 
 /// A [PacketChannel] that does not wait for acknowledgement of packets.
@@ -69,8 +67,7 @@ class PacketChannelConfig {
 /// The remote is not expected to send end packets.  They are assumed after each
 /// [Packet].
 class FastPacketChannel extends EventSource<Packet> implements PacketChannel {
-  /// Sink for outgoing data.
-  final Consumer<List<int>> _write;
+  final Pipe<Packet> _pipe;
 
   @override
   final String remoteAddress;
@@ -78,27 +75,20 @@ class FastPacketChannel extends EventSource<Packet> implements PacketChannel {
   @override
   final int remotePort;
 
-  final PacketCodec _codec;
-
-  FastPacketChannel.fromConfig(
-      PacketChannelConfig config, Consumer<List<int>> write)
-      : this(
-          config.address,
-          config.port,
-          write,
-          new PacketCodec.fromEncoding(config.encodingType),
-        );
+  FastPacketChannel.fromConfig(PacketChannelConfig config, Pipe<Packet> pipe)
+      : this(config.address, config.port, pipe);
 
   FastPacketChannel(
     this.remoteAddress,
     this.remotePort,
-    this._write, [
-    this._codec = const Utf8PacketCodec(),
-  ]);
+    this._pipe,
+  ) {
+    _pipe.onEvent(receive);
+  }
 
   @override
   void add(Packet packet) {
-    _write(_codec.encode(packet));
+    _pipe.add(packet);
   }
 
   @override
@@ -107,8 +97,7 @@ class FastPacketChannel extends EventSource<Packet> implements PacketChannel {
   }
 
   @override
-  void receive(Iterable<int> encodedPacket) {
-    final packet = _codec.decode(encodedPacket);
+  void receive(Packet packet) {
     emitAll([
       packet,
       Packet.end(packet.address, packet.port),

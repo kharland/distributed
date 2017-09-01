@@ -29,7 +29,7 @@ class TransferType extends Enum {
     if (value == FAST.value) {
       return FAST;
     } else {
-      throw new ArgumentError(value);
+      throw new UnimplementedError('$value');
     }
   }
 

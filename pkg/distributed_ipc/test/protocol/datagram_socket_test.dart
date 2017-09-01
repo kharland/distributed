@@ -1,8 +1,8 @@
-import 'package:distributed.ipc/src/protocol/datagram_socket.dart';
-import 'package:distributed.ipc/src/protocol/typed_datagram_codec.dart';
 import 'package:distributed.ipc/src/event_source.dart';
-import 'package:distributed.ipc/src/vm/vm_socket.dart';
-import 'package:distributed.ipc/src/protocol/typed_datagram.dart';
+import 'package:distributed.ipc/src/protocol/datagram.dart';
+import 'package:distributed.ipc/src/protocol/datagram_codec.dart';
+import 'package:distributed.ipc/src/vm/datagram_socket.dart';
+import 'package:distributed.ipc/src/vm/raw_datagram_socket.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -36,8 +36,7 @@ void main() {
   });
 }
 
-class MockUdpSocket extends EventSource<List<int>>
-    implements UdpSocket<List<int>> {
+class MockUdpSocket extends EventSource<List<int>> implements UdpSocket {
   @override
   void emit(List<int> event) {
     super.emit(event);

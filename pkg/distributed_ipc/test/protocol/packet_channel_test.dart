@@ -1,6 +1,7 @@
+import 'package:collection/collection.dart';
+import 'package:distributed.ipc/src/pipe.dart';
 import 'package:distributed.ipc/src/protocol/packet.dart';
 import 'package:distributed.ipc/src/protocol/packet_channel.dart';
-import 'package:distributed.ipc/src/protocol/packet_codec.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -10,31 +11,31 @@ void main() {
       packetCount,
       (i) => new DataPacket('127.0.0.1', 2, [i], 1),
     ));
-    const packetCodec = const Utf8PacketCodec();
+
     const partnerAddress = '127.0.0.1';
     const partnerPort = 1;
 
     FastPacketChannel channel;
-    List<List<int>> testSink;
+    TestSink<Packet> testSink;
 
     setUp(() {
-      testSink = <List<int>>[];
+      testSink = new TestSink<Packet>();
     });
 
     setUp(() {
       channel = new FastPacketChannel(
         partnerAddress,
         partnerPort,
-        testSink.add,
+        new SinkPipe<Packet>(testSink),
       );
     });
 
-    test('send should send all packets', () {
+    test('should send all packets', () {
       channel.addAll(packets);
-      expect(testSink, []..addAll(packets.map(packetCodec.encode)));
+      expect(testSink, []..addAll(packets));
     });
 
-    test('packets should emit each packet followed by an end packet', () {
+    test('should emit each packet followed by an end packet', () {
       final expectedPackets = <Packet>[];
       packets.forEach((p) {
         expectedPackets
@@ -44,9 +45,16 @@ void main() {
 
       final receivedPackets = <Packet>[];
       channel.onEvent(receivedPackets.add);
-      packets.map(packetCodec.encode).forEach(channel.receive);
+      packets.forEach(channel.receive);
 
       expect(receivedPackets, expectedPackets);
     });
   });
+}
+
+class TestSink<T> extends DelegatingList<T> implements Sink<T> {
+  TestSink([List<T> base]) : super(base ?? []);
+
+  @override
+  void close() {}
 }

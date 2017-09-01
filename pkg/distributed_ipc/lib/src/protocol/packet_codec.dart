@@ -1,10 +1,11 @@
 import 'dart:convert';
 
 import 'package:distributed.ipc/src/encoding.dart';
+import 'package:distributed.ipc/src/protocol/datagram.dart';
 import 'package:distributed.ipc/src/protocol/packet.dart';
 import 'package:meta/meta.dart';
 
-/// A code for encoding and decoding [Packet]s.
+/// A [Codec] for converting between [Packet] and byte-data.
 @immutable
 abstract class PacketCodec extends Codec<Packet, List<int>> {
   factory PacketCodec.fromEncoding(EncodingType encodingType) {
@@ -26,12 +27,57 @@ abstract class PacketCodec extends Codec<Packet, List<int>> {
   const PacketCodec(this.encoder, this.decoder);
 }
 
+@immutable
+class PacketDatagramCodec extends Codec<Packet, Datagram> {
+  @override
+  Converter<Datagram, Packet> get decoder => const _DatagramToPacketConverter();
+
+  @override
+  Converter<Packet, Datagram> get encoder => const _PacketToDatagramEncoder();
+}
+
+@immutable
+class _PacketToDatagramEncoder extends Converter<Packet, Datagram> {
+  final PacketCodec _codec;
+
+  @literal
+  const _PacketToDatagramEncoder([this._codec = const Utf8PacketCodec()]);
+
+  @override
+  Datagram convert(Packet packet) {
+    final dgType = packet.type == PacketType.GREET
+        ? DatagramType.GREET
+        : DatagramType.DATA;
+
+    return new Datagram(
+      _codec.encode(packet),
+      packet.address,
+      packet.port,
+      dgType,
+    );
+  }
+}
+
+@immutable
+class _DatagramToPacketConverter extends Converter<Datagram, Packet> {
+  final PacketCodec _codec;
+
+  @literal
+  const _DatagramToPacketConverter([this._codec = const Utf8PacketCodec()]);
+
+  @override
+  Packet convert(Datagram datagram) => _codec.decode(datagram.data);
+}
+
 /// A [PacketCode] that uses UTF-8 encoding.
 @immutable
 class Utf8PacketCodec extends PacketCodec {
   @literal
   const Utf8PacketCodec()
-      : super(const Utf8PacketEncoder(), const Utf8PacketDecoder());
+      : super(
+          const Utf8PacketEncoder(),
+          const Utf8PacketDecoder(),
+        );
 }
 
 @immutable
