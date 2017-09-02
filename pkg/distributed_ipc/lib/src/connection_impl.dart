@@ -2,7 +2,7 @@ import 'package:distributed.ipc/ipc.dart';
 import 'package:distributed.ipc/src/internal/event_source.dart';
 import 'package:meta/meta.dart';
 
-class DatagramConnection extends EventSource<Message> implements Connection {
+class ConnectionImpl extends EventSource<Message> implements Connection {
   @override
   final String localAddress;
 
@@ -18,7 +18,7 @@ class DatagramConnection extends EventSource<Message> implements Connection {
   final EventSource<Message> _messageSource;
   final Sink<Message> _messageSink;
 
-  DatagramConnection(
+  ConnectionImpl(
     this._messageSource,
     this._messageSink, {
     @required this.localAddress,

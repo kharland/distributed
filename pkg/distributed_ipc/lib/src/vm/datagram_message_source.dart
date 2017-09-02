@@ -3,10 +3,11 @@ import 'package:distributed.ipc/src/internal/event_source.dart';
 import 'package:distributed.ipc/src/udp/data_builder.dart';
 import 'package:distributed.ipc/src/udp/datagram.dart';
 
-class MessageSource extends EventSource<Message> {
+class DatagramMessageSource extends EventSource<Message> {
   final _currentBuffer = <Datagram>[];
 
-  MessageSource(EventSource<Datagram> dgSource, DataBuilder dataBuilder) {
+  DatagramMessageSource(
+      EventSource<Datagram> dgSource, DataBuilder dataBuilder) {
     dgSource.onEvent((Datagram datagram) {
       switch (datagram.type) {
         case DatagramType.END:

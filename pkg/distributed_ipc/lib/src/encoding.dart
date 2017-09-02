@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:distributed.ipc/src/internal/enum.dart';
 import 'package:meta/meta.dart';
 
-/// Used to specify the type of encoding to use for a socket.
 @immutable
 class EncodingType extends Enum {
   static const UTF8 = const EncodingType._(10, 'utf8');
@@ -20,16 +19,14 @@ class EncodingType extends Enum {
   const EncodingType._(int value, String name) : super(name, value);
 }
 
+/// Global utf-8 encoder.
 const utf8Encoder = const Utf8Encoder();
+
+/// Global utf-8 decoder.
 const utf8Decoder = const Utf8Decoder();
 
-/// A callback that encodes [input] as a [List] of [int].
-typedef List<int> Encoder(String input);
-
-/// A callback that decodes a [String] from [input].
-typedef String Decoder(List<int> input);
-
-/* Shorthand [Encoder] and [Decoder] callbacks. */
-
+/// Global utf-8 encoding callback
 List<int> utf8Encode(String value) => utf8Encoder.convert(value);
+
+/// Global utf-8 decoding callback
 String utf8Decode(Iterable<int> bytes) => utf8Decoder.convert(bytes.toList());
