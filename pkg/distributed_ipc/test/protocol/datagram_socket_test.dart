@@ -2,7 +2,7 @@ import 'package:distributed.ipc/src/event_source.dart';
 import 'package:distributed.ipc/src/protocol/datagram.dart';
 import 'package:distributed.ipc/src/protocol/datagram_codec.dart';
 import 'package:distributed.ipc/src/vm/datagram_socket.dart';
-import 'package:distributed.ipc/src/vm/raw_datagram_socket.dart';
+import 'package:distributed.ipc/src/vm/raw_udp_socket.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -29,14 +29,20 @@ void main() {
       );
 
       commonSetUp([datagram]);
+
       socket.onEvent(recordedDatagrams.add);
-      mockUdpSocket.emit(const DatagramCodec().encode(datagram));
+      try {
+        mockUdpSocket.emit(const DatagramCodec().encode(datagram));
+      } catch (e) {
+        expect(e, new isInstanceOf<DatagramTypeException>());
+      }
+
       expect(recordedDatagrams, isEmpty);
     });
   });
 }
 
-class MockUdpSocket extends EventSource<List<int>> implements UdpSocket {
+class MockUdpSocket extends EventSource<List<int>> implements RawUdpSocket {
   @override
   void emit(List<int> event) {
     super.emit(event);

@@ -1,8 +1,9 @@
-import 'package:distributed.ipc/src/typedefs/consumer.dart';
+import 'package:distributed.ipc/src/node_message.dart';
+import 'package:distributed.ipc/src/pipe.dart';
 import 'package:meta/meta.dart';
 
 /// A connection between two [Nodes].
-abstract class NodeConnection {
+abstract class NodeConnection implements Pipe<NodeMessage> {
   /// This connection's local address.
   String get localAddress;
 
@@ -14,12 +15,6 @@ abstract class NodeConnection {
 
   /// This connection's remote port.
   int get remotePort;
-
-  /// Sends [message] over this connection.
-  void add(String message);
-
-  /// Registers [callback] to be called when this connection receives a message.
-  void onMessage(Consumer<String> callback);
 }
 
 /// Descibres how a [NodeConnection] should be created.

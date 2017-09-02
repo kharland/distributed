@@ -35,7 +35,7 @@ abstract class PacketChannel implements EventSource<Packet> {
   ) {
     switch (config.transferType) {
       case TransferType.FAST:
-        return new FastPacketChannel.fromConfig(config, pipe);
+        return new FastPacketChannel(config, pipe);
       default:
         throw new ArgumentError(config.transferType);
     }
@@ -75,10 +75,10 @@ class FastPacketChannel extends EventSource<Packet> implements PacketChannel {
   @override
   final int remotePort;
 
-  FastPacketChannel.fromConfig(PacketChannelConfig config, Pipe<Packet> pipe)
-      : this(config.address, config.port, pipe);
+  FastPacketChannel(PacketChannelConfig config, Pipe<Packet> pipe)
+      : this._(config.address, config.port, pipe);
 
-  FastPacketChannel(
+  FastPacketChannel._(
     this.remoteAddress,
     this.remotePort,
     this._pipe,

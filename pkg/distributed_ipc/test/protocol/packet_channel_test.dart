@@ -24,8 +24,10 @@ void main() {
 
     setUp(() {
       channel = new FastPacketChannel(
-        partnerAddress,
-        partnerPort,
+        new PacketChannelConfig(
+          partnerAddress,
+          partnerPort,
+        ),
         new SinkPipe<Packet>(testSink),
       );
     });
