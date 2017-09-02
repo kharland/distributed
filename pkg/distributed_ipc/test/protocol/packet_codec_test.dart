@@ -1,5 +1,5 @@
-import 'package:distributed.ipc/src/protocol/packet.dart';
-import 'package:distributed.ipc/src/protocol/packet_codec.dart';
+import 'package:distributed.ipc/src/udp/packet.dart';
+import 'package:distributed.ipc/src/udp/packet_codec.dart';
 import 'package:distributed.ipc/src/encoding.dart';
 import 'package:test/test.dart';
 

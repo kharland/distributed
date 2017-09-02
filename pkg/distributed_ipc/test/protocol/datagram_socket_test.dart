@@ -1,8 +1,8 @@
-import 'package:distributed.ipc/src/event_source.dart';
-import 'package:distributed.ipc/src/protocol/datagram.dart';
-import 'package:distributed.ipc/src/protocol/datagram_codec.dart';
-import 'package:distributed.ipc/src/vm/datagram_socket.dart';
-import 'package:distributed.ipc/src/vm/raw_udp_socket.dart';
+import 'package:distributed.ipc/src/internal/event_source.dart';
+import 'package:distributed.ipc/src/udp/datagram.dart';
+import 'package:distributed.ipc/src/udp/datagram_codec.dart';
+import 'package:distributed.ipc/src/udp/datagram_socket.dart';
+import 'package:distributed.ipc/src/udp/raw_udp_socket.dart';
 import 'package:test/test.dart';
 
 void main() {

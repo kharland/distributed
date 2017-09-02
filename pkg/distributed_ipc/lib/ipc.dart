@@ -1,5 +1,6 @@
 library distributed.ipc;
 
-export 'package:distributed.ipc/src/node_message.dart';
-export 'package:distributed.ipc/src/node_connection.dart'
-    show NodeConnection, NodeConnectionConfig;
+export 'package:distributed.ipc/src/connection.dart';
+export 'package:distributed.ipc/src/connection_config.dart';
+export 'package:distributed.ipc/src/connection_source.dart';
+export 'package:distributed.ipc/src/message.dart';

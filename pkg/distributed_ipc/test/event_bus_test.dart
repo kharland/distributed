@@ -1,4 +1,4 @@
-import 'package:distributed.ipc/src/event_source.dart';
+import 'package:distributed.ipc/src/internal/event_source.dart';
 import 'package:test/test.dart';
 
 void main() {

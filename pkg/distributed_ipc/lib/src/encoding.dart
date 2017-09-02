@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:distributed.ipc/src/enum.dart';
+import 'package:distributed.ipc/src/internal/enum.dart';
 import 'package:meta/meta.dart';
 
 /// Used to specify the type of encoding to use for a socket.

@@ -1,4 +1,4 @@
-import 'package:distributed.ipc/src/protocol/data_builder.dart';
+import 'package:distributed.ipc/src/udp/data_builder.dart';
 import 'package:test/test.dart';
 
 void main() {

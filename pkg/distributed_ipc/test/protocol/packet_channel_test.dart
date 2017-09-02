@@ -1,7 +1,7 @@
 import 'package:collection/collection.dart';
-import 'package:distributed.ipc/src/pipe.dart';
-import 'package:distributed.ipc/src/protocol/packet.dart';
-import 'package:distributed.ipc/src/protocol/packet_channel.dart';
+import 'package:distributed.ipc/src/internal/pipe.dart';
+import 'package:distributed.ipc/src/udp/packet.dart';
+import 'package:distributed.ipc/src/udp/packet_channel.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -23,13 +23,9 @@ void main() {
     });
 
     setUp(() {
+      final pipe = new SinkPipe<Packet>(testSink);
       channel = new FastPacketChannel(
-        new PacketChannelConfig(
-          partnerAddress,
-          partnerPort,
-        ),
-        new SinkPipe<Packet>(testSink),
-      );
+          new PacketChannelConfig(partnerAddress, partnerPort, pipe));
     });
 
     test('should send all packets', () {

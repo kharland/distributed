@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io' as io;
 
 import 'package:distributed.ipc/src/encoding.dart';
-import 'package:distributed.ipc/src/socket.dart';
+import 'package:distributed.ipc/src/internal/socket.dart';
 
 /// A [Socket] implementation backed by an [io.Socket].
 class VmSocket extends PseudoSocket<String> {
