@@ -1,7 +1,7 @@
 import 'package:distributed.ipc/src/encoding.dart';
 import 'package:distributed.ipc/src/udp/datagram.dart';
 import 'package:distributed.ipc/src/udp/datagram_socket.dart';
-import 'package:distributed.ipc/src/udp/transfer_type.dart';
+import 'package:distributed.ipc/src/transfer_type.dart';
 
 /// Specifies the settings necessary to create a [DatagramChannel].
 class DatagramChannelConfig {

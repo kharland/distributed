@@ -1,6 +1,6 @@
 import 'package:distributed.ipc/src/encoding.dart';
 import 'package:distributed.ipc/src/protocol.dart';
-import 'package:distributed.ipc/src/udp/transfer_type.dart';
+import 'package:distributed.ipc/src/transfer_type.dart';
 import 'package:meta/meta.dart';
 
 /// Describes how a [Connection] should be created.
