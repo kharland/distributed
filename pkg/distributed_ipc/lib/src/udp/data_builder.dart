@@ -6,36 +6,27 @@ import 'package:distributed.ipc/src/udp/datagram.dart';
 typedef DataDatagramFactory = DataDatagram Function(
     List<int> data, int position);
 
-/// Assembles and disassembles mess ages so they may be sent over a UDP socket.
-abstract class DataBuilder<T> {
+/// Assembles and disassembles [String] messages into a [List] of [Datagram].
+class DataBuilder {
+  final DataDatagramFactory _createDatagram;
+
+  DataBuilder(this._createDatagram);
+
   /// Reconstructs a [T] from its complete set of [datagrams].
-  T construct(List<DataDatagram> datagrams);
-
-  /// Splits [data] into [DataDatagram]s small enough to send in a datagram.
-  List<DataDatagram> deconstruct(T data);
-}
-
-/// A [DataBuilder] that assembles and disassembles strings.
-class StringDataBuilder implements DataBuilder<String> {
-  final DataDatagramFactory _createDataDatagram;
-
-  StringDataBuilder(this._createDataDatagram);
-
-  @override
-  String construct(List<DataDatagram> pieces) {
+  String assembleDatagrams(List<DataDatagram> pieces) {
     assert(pieces.every((p) => p.type == DatagramType.DATA));
 
     pieces.sort((a, b) => a.position.compareTo(b.position));
     return utf8Decode(pieces.map((p) => p.payload).expand((bytes) => bytes));
   }
 
-  @override
-  List<DataDatagram> deconstruct(String data) {
+  /// Splits [data] into [DataDatagram]s small enough to send in a datagram.
+  List<DataDatagram> createDatagrams(String data) {
     final List<int> encoded = utf8Encode(data);
     final datagrams = <Datagram>[];
 
     for (int i = 0; i < encoded.length; i++) {
-      datagrams.add(_createDataDatagram([encoded[i]], i));
+      datagrams.add(_createDatagram([encoded[i]], i));
     }
 
     return datagrams;

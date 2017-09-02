@@ -9,7 +9,8 @@ class DatagramType extends Enum {
   static const DATA = const DatagramType._(0x3, 'Data part');
   static const END = const DatagramType._(0x4, 'End of message parts');
   static const GREET = const DatagramType._(0x5, 'Connection request');
-  static const ERROR = const DatagramType._(100, 'Error');
+  static const CLOSE = const DatagramType._(0x6, 'Close connection');
+  static const ERROR = const DatagramType._(0xF, 'Error');
 
   static final _valueToType = <int, DatagramType>{
     ACK.value: ACK,

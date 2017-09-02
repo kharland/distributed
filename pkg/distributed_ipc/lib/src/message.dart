@@ -1,9 +1,9 @@
 import 'package:meta/meta.dart';
 
 @immutable
-class NodeMessage {
+class Message {
   final String content;
 
   @literal
-  const NodeMessage(this.content);
+  const Message(this.content);
 }

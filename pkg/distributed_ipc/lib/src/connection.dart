@@ -1,8 +1,8 @@
-import 'package:distributed.ipc/src/internal/pipe.dart';
+import 'package:distributed.ipc/src/internal/event_source.dart';
 import 'package:distributed.ipc/src/message.dart';
 
 /// A connection between two [Nodes].
-abstract class Connection implements Pipe<NodeMessage> {
+abstract class Connection implements EventSource<Message>, Sink<Message> {
   /// This connection's local address.
   String get localAddress;
 

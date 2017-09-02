@@ -1,19 +1,18 @@
 import 'package:collection/collection.dart';
-import 'package:distributed.ipc/src/internal/pipe.dart';
-import 'package:distributed.ipc/src/udp/datagram_channel.dart';
+import 'package:distributed.ipc/ipc.dart';
 import 'package:distributed.ipc/src/udp/datagram.dart';
+import 'package:distributed.ipc/src/udp/datagram_channel.dart';
+import 'package:distributed.ipc/src/udp/datagram_socket.dart';
 import 'package:test/test.dart';
 
 void main() {
   group(FastDatagramChannel, () {
+    const address = '127.0.0.1';
     const datagramCount = 3;
     final datagrams = new List<Datagram>.unmodifiable(new List.generate(
       datagramCount,
-      (i) => new DataDatagram('127.0.0.1', 2, [i], 1),
+      (i) => new DataDatagram(address, 2, [i], 1),
     ));
-
-    const partnerAddress = '127.0.0.1';
-    const partnerPort = 1;
 
     FastDatagramChannel channel;
     TestSink<Datagram> testSink;
@@ -23,9 +22,15 @@ void main() {
     });
 
     setUp(() {
-      final pipe = new SinkPipe<Datagram>(testSink);
+      final socket = new DatagramSocket(null);
       channel = new FastDatagramChannel(
-          new DatagramChannelConfig(partnerAddress, partnerPort, pipe));
+        new ConnectionConfig(
+            localAddress: address,
+            localPort: 1,
+            remoteAddress: address,
+            remotePort: 2),
+        socket,
+      );
     });
 
     test('should send all datagrams', () {

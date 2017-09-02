@@ -21,6 +21,12 @@ abstract class RawUdpSocket implements EventSource<List<int>> {
     return new _AdapterUdpSocket(adapter);
   }
 
+  /// The socket's address.
+  String get address;
+
+  /// This socket's port.
+  int get port;
+
   /// Sends [data] to [address] and [port].
   void add(List<int> data, String address, int port);
 
@@ -37,6 +43,12 @@ class _AdapterUdpSocket extends EventSource<List<int>> implements RawUdpSocket {
       emit(dg.data);
     });
   }
+
+  @override
+  String get address => _adapter.address;
+
+  @override
+  int get port => _adapter.port;
 
   @override
   void add(List<int> data, String address, int port) {
@@ -63,10 +75,10 @@ class _UdpAdapter extends EventSource<io.Datagram> {
   }
 
   /// The local address of this socket.
-  String get localAddress => _socket.address.address;
+  String get address => _socket.address.address;
 
   /// The local port of this socket.
-  int get localPort => _socket.port;
+  int get port => _socket.port;
 
   /// Sends [event] to [address] and [port].
   void add(List<int> event, String address, int port) {

@@ -45,6 +45,10 @@ void main() {
 }
 
 class MockRawUdpSocket extends EventSource<List<int>> implements RawUdpSocket {
+  String get address => null;
+
+  int get port => null;
+
   @override
   void add(List<int> data, String address, int port) {
     throw new UnimplementedError();

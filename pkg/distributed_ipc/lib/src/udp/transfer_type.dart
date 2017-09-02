@@ -11,7 +11,7 @@ class TransferType extends Enum {
   /// receives message parts and sends acknowledgement to the sender.
   ///
   /// This mode works best for decentralized networks that require redundancy.
-  static const BATCH = const TransferType._(5, 'batch');
+  static const RELIABLE = const TransferType._(5, 'reliable');
 
   /// The sender only sends and the receiver only receives.
   ///
