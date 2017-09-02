@@ -1,7 +1,8 @@
+import 'package:distributed.ipc/src/encoding.dart';
 import 'package:distributed.ipc/src/internal/event_source.dart';
-import 'package:distributed.ipc/src/udp/datagram.dart';
 import 'package:distributed.ipc/src/udp/datagram_codec.dart';
 import 'package:distributed.ipc/src/udp/datagram_socket.dart';
+import 'package:distributed.ipc/src/udp/datagram.dart';
 import 'package:distributed.ipc/src/udp/raw_udp_socket.dart';
 import 'package:test/test.dart';
 
@@ -11,28 +12,29 @@ void main() {
     const testPort = 9090;
 
     DatagramSocket socket;
-    MockUdpSocket mockUdpSocket;
+    MockRawUdpSocket mockUdpSocket;
 
-    void commonSetUp([List<Datagram> incomingDatagrams = const []]) {
-      mockUdpSocket = new MockUdpSocket();
+    void commonSetUp() {
+      mockUdpSocket = new MockRawUdpSocket();
       socket = new DatagramSocket(mockUdpSocket);
     }
 
     test('should not call any callback if a datagram has an uncrecognized type',
         () {
       final recordedDatagrams = <Datagram>[];
-      final datagram = new Datagram(
-        [1, 2, 3],
-        testAddress,
-        testPort,
-        999,
-      );
+      final invalidType = 123456789;
+      final datagramData = utf8Encode([
+            invalidType,
+            '$testAddress',
+            '$testPort',
+          ].join(':') +
+          ':');
 
-      commonSetUp([datagram]);
-
+      commonSetUp();
       socket.onEvent(recordedDatagrams.add);
+
       try {
-        mockUdpSocket.emit(const DatagramCodec().encode(datagram));
+        mockUdpSocket.emit(datagramData);
       } catch (e) {
         expect(e, new isInstanceOf<DatagramTypeException>());
       }
@@ -42,14 +44,14 @@ void main() {
   });
 }
 
-class MockUdpSocket extends EventSource<List<int>> implements RawUdpSocket {
+class MockRawUdpSocket extends EventSource<List<int>> implements RawUdpSocket {
   @override
-  void emit(List<int> event) {
-    super.emit(event);
+  void add(List<int> data, String address, int port) {
+    throw new UnimplementedError();
   }
 
   @override
-  void add(List<int> data, String address, int port) {}
-  @override
-  void close() {}
+  void close() {
+    throw new UnimplementedError();
+  }
 }
