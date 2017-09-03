@@ -67,7 +67,7 @@ class Datagram {
       }}';
 
   @override
-  bool operator ==(other) => _equality.equals(this, other);
+  bool operator ==(Object other) => _equality.equals(this, other);
 
   const Datagram(this.type, this.address, this.port, [this.data = const []]);
 }
@@ -137,17 +137,16 @@ class DatagramEquality implements Equality<Datagram> {
   @literal
   const DatagramEquality();
 
-  // FIXME: compare GREET datagram.
-  // FIXME: compare ERROR datagram.
   @override
   bool equals(Datagram a, Datagram b) {
-    if (a is DataDatagram && b is! DataDatagram ||
-        a is! DataDatagram && b is DataDatagram) {
-      return false;
-    } else if (a is DataDatagram && b is DataDatagram) {
+    if (a is DataDatagram && b is DataDatagram) {
       return _dataEq(a, b);
+    } else if (a is GreetDatagram && b is GreetDatagram) {
+      return _greetEq(a, b);
+    } else if (a is ErrorDatagram && b is ErrorDatagram) {
+      return _errorEq(a, b);
     } else {
-      return _commonEq(a, b);
+      return a.runtimeType == b.runtimeType && _commonEq(a, b);
     }
   }
 
@@ -158,6 +157,12 @@ class DatagramEquality implements Equality<Datagram> {
       _commonEq(a, b) &&
       a.position == b.position &&
       _listEq(a.payload, b.payload);
+
+  bool _greetEq(GreetDatagram a, GreetDatagram b) =>
+      throw new UnimplementedError();
+
+  bool _errorEq(ErrorDatagram a, ErrorDatagram b) =>
+      throw new UnimplementedError();
 
   @override
   int hash(Datagram p) => p.toString().hashCode;

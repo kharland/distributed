@@ -80,10 +80,10 @@ class Utf8DatagramDecoder extends Converter<List<int>, Datagram> {
 
     try {
       type = DatagramType.fromValue(int.parse(typeToken, radix: 16));
-    } on FormatException catch (_) {
-      throw new DatagramTypeException(typeToken);
-    } on ArgumentError catch (_) {
-      throw new DatagramTypeException(typeToken);
+    } on FormatException catch (error) {
+      throw new DatagramTypeException('$error');
+    } on ArgumentError catch (error) {
+      throw new DatagramTypeException('$error');
     }
 
     final address = nextToken();
