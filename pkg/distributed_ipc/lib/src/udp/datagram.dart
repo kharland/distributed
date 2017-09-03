@@ -166,7 +166,7 @@ class DatagramEquality implements Equality<Datagram> {
       throw new UnimplementedError();
 
   @override
-  int hash(Datagram p) => p.toString().hashCode;
+  int hash(Datagram dg) => dg.toString().hashCode;
 
   @override
   bool isValidKey(Object o) => o is Datagram;
