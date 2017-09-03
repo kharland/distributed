@@ -8,9 +8,6 @@ import 'package:test/test.dart';
 
 void main() {
   group(DatagramSocket, () {
-    const testAddress = '127.0.0.1';
-    const testPort = 9090;
-
     DatagramSocket localSocket;
     DatagramSocket foreignSocket;
 
@@ -18,8 +15,8 @@ void main() {
     RawUdpSocket rawForeignSocket;
 
     setUp(() async {
-      rawLocalSocket = await RawUdpSocket.bind(testAddress, 9090);
-      rawForeignSocket = await RawUdpSocket.bind(testAddress, 9091);
+      rawLocalSocket = await RawUdpSocket.bind('127.0.0.1', 9090);
+      rawForeignSocket = await RawUdpSocket.bind('127.0.0.1', 9091);
 
       localSocket = new DatagramSocket(rawLocalSocket);
       foreignSocket = new DatagramSocket(rawForeignSocket);
@@ -33,8 +30,8 @@ void main() {
     test('should emit an event when a datagram is received', () {
       localSocket.onEvent(expectAsync1((Datagram datagram) {
         expect(datagram.type, DatagramType.ACK);
-        expect(datagram.address, testAddress);
-        expect(datagram.port, testPort);
+        expect(datagram.address, foreignSocket.address);
+        expect(datagram.port, foreignSocket.port);
       }));
 
       foreignSocket.add(new Datagram(
@@ -56,8 +53,8 @@ void main() {
       try {
         testRawSocket.emit(utf8Encode([
               1234567,
-              '$testAddress',
-              '$testPort',
+              '127.0.0.1',
+              '1',
             ].join(':') +
             ':'));
       } catch (e) {

@@ -18,7 +18,12 @@ class DatagramSocket extends EventSource<Datagram> implements Sink<Datagram> {
 
   @override
   void add(Datagram dg) {
-    _socket.add(_codec.encode(dg), dg.address, dg.port);
+    // FIXME: Higher levels in the netstack shouldn't be creating the datagram.
+    // They should be passing its contents down to this level where it gets
+    // encoded with the correct address and port so that we don't have to
+    // re-write the datagram like this.
+    final datagram = new Datagram(dg.type, address, port, dg.data);
+    _socket.add(_codec.encode(datagram), dg.address, dg.port);
   }
 
   @override
