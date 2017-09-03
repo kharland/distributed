@@ -71,7 +71,7 @@ class _UdpAdapter extends EventSource<io.Datagram> {
   _UdpAdapter(this._socket) {
     _socket
       ..writeEventsEnabled = false
-      ..map(_handleEvent);
+      ..forEach(_handleEvent);
   }
 
   /// The local address of this socket.
