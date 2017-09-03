@@ -36,9 +36,6 @@ abstract class DatagramChannel
 
   /// Sends [datagrams] on this channel.
   void addAll(Iterable<Datagram> datagrams);
-
-  /// Receives a [datagram] sent from [remoteAddress] and [remotePort].
-  void receive(Datagram datagram);
 }
 
 /// A [DatagramChannel] that does not wait for acknowledgement of datagrams.
@@ -62,7 +59,7 @@ class FastDatagramChannel extends EventSource<Datagram>
       : this._(config.remoteAddress, config.remotePort, socket);
 
   FastDatagramChannel._(this.remoteAddress, this.remotePort, this._socket) {
-    _socket.onEvent(receive);
+    _socket.onEvent(emit);
   }
 
   @override
@@ -76,11 +73,11 @@ class FastDatagramChannel extends EventSource<Datagram>
   }
 
   @override
-  void receive(Datagram datagram) {
-    emitAll([
-      datagram,
+  void emit(Datagram datagram) {
+    super.emit(datagram);
+    super.emit(
       new Datagram(DatagramType.END, datagram.address, datagram.port),
-    ]);
+    );
   }
 
   @override

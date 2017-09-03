@@ -9,7 +9,6 @@ import 'package:distributed.ipc/src/udp/datagram_channel.dart';
 import 'package:distributed.ipc/src/udp/datagram_socket.dart';
 import 'package:distributed.ipc/src/vm/datagram_message_sink.dart';
 import 'package:distributed.ipc/src/vm/datagram_message_source.dart';
-import 'package:meta/meta.dart';
 
 /// A [ConnectionSource] that creates and recieves connections using [Datagram].
 class DatagramConnectionSource extends EventSource<Connection>
@@ -27,12 +26,6 @@ class DatagramConnectionSource extends EventSource<Connection>
   @override
   void open(ConnectionConfig config) {
     _createConnection(config);
-  }
-
-  @override
-  @protected
-  void emitAll(Iterable<Connection> events) {
-    throw new UnimplementedError();
   }
 
   /// Creates a connection, using a configuration derived from [greeting].

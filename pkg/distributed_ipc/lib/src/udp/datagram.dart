@@ -67,7 +67,8 @@ class Datagram {
       }}';
 
   @override
-  bool operator ==(Object other) => _equality.equals(this, other);
+  bool operator ==(Object other) =>
+      other is Datagram && _equality.equals(this, other);
 
   const Datagram(this.type, this.address, this.port, [this.data = const []]);
 }

@@ -20,9 +20,7 @@ void main() {
         expect(data, 1);
       }, count: 2));
 
-      bus
-        ..emit(1)
-        ..emitAll([1]);
+      bus..emit(1)..emit(1);
     });
   });
 }
