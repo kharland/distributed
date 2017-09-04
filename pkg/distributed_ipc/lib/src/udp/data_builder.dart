@@ -1,34 +1,31 @@
 import 'package:distributed.ipc/src/encoding.dart';
 import 'package:distributed.ipc/src/udp/datagram.dart';
+import 'package:meta/meta.dart';
 
-/// Creates a [DataDatagram] of [data] whose relative position in a sequence of
-/// [DataDatagram]s is [position].
-typedef DataDatagramFactory = DataDatagram Function(
-    List<int> data, int position);
-
-/// Assembles and disassembles [String] messages into a [List] of [Datagram].
+/// Assembles and disassembles [String] messages into chunks small enough to
+/// send in a [Datagram].
+@immutable
 class DataBuilder {
-  final DataDatagramFactory _createDatagram;
-
-  DataBuilder(this._createDatagram);
+  @literal
+  const DataBuilder();
 
   /// Reconstructs a [T] from its complete set of [datagrams].
-  String assembleDatagrams(List<DataDatagram> pieces) {
-    assert(pieces.every((p) => p.type == DatagramType.DATA));
-
-    pieces.sort((a, b) => a.position.compareTo(b.position));
-    return utf8Decode(pieces.map((p) => p.payload).expand((bytes) => bytes));
+  ///
+  /// Assumes [parts] are in sorted order.
+  String assembleParts(List<List<int>> parts) {
+    final partsCopy = parts.map((p) => new List<int>.from(p)).toList();
+    return partsCopy.map(utf8Decode).join();
   }
 
-  /// Splits [data] into [DataDatagram]s small enough to send in a datagram.
-  List<DataDatagram> createDatagrams(String data) {
+  /// Splits [data] into [DataPart]s small enough to send in a datagram.
+  List<List<int>> splitIntoParts(String data) {
     final List<int> encoded = utf8Encode(data);
-    final datagrams = <Datagram>[];
+    final parts = <List<int>>[];
 
     for (int i = 0; i < encoded.length; i++) {
-      datagrams.add(_createDatagram([encoded[i]], i));
+      parts.add([encoded[i]]);
     }
 
-    return datagrams;
+    return parts;
   }
 }

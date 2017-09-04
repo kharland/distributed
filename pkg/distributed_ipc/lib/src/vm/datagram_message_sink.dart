@@ -1,16 +1,16 @@
 import 'package:distributed.ipc/ipc.dart';
 import 'package:distributed.ipc/src/udp/data_builder.dart';
-import 'package:distributed.ipc/src/udp/datagram_channel.dart';
+import 'package:distributed.ipc/src/udp/data_channel.dart';
 
 class DatagramMessageSink implements Sink<Message> {
   final DataBuilder _dataBuilder;
-  final DatagramChannel _channel;
+  final DataChannel _channel;
 
   DatagramMessageSink(this._channel, this._dataBuilder);
 
   @override
   void add(Message message) {
-    _dataBuilder.createDatagrams(message.content).forEach(_channel.add);
+    _dataBuilder.splitIntoParts(message.content).forEach(_channel.add);
   }
 
   @override

@@ -14,7 +14,7 @@ import 'package:distributed.ipc/src/internal/event_source.dart';
 /// If a message is added to the socket while a previous message is still
 /// in-flight, the new message is added to a queue and sent after all previously
 /// enqueued messages.
-abstract class RawUdpSocket {
+abstract class RawUdpSocket implements UdpSink {
   /// Creates a new [RawUdpSocket] from [config].
   static Future<RawUdpSocket> bind(String address, int port) async {
     final rawSocket = await io.RawDatagramSocket.bind(address, port);
@@ -28,9 +28,6 @@ abstract class RawUdpSocket {
   /// This socket's port.
   int get port;
 
-  /// Sends [data] to [address] and [port].
-  void add(List<int> data, String address, int port);
-
   /// Closes this socket.
   void close();
 
@@ -39,6 +36,11 @@ abstract class RawUdpSocket {
   /// The consumer receives the [List] of [int] data that was sent, the,
   /// [String] address of the sender and the [int] port of the sender.
   void onData(Consumer3<List<int>, String, int> consumer);
+}
+
+abstract class UdpSink {
+  /// Sends [data] to [address] and [port].
+  void add(List<int> data, String address, int port);
 }
 
 /// A [RawUdpSocket] that delegates to a [_UdpAdapter].

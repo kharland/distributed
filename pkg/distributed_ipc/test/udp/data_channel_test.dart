@@ -1,6 +1,6 @@
 import 'package:distributed.ipc/ipc.dart';
+import 'package:distributed.ipc/src/udp/data_channel.dart';
 import 'package:distributed.ipc/src/udp/datagram.dart';
-import 'package:distributed.ipc/src/udp/datagram_channel.dart';
 import 'package:distributed.ipc/src/udp/datagram_rewriter.dart';
 import 'package:distributed.ipc/src/udp/datagram_socket.dart';
 import 'package:mockito/mockito.dart';
@@ -36,24 +36,18 @@ void main() {
 
     test('should send and receive a datagram', () {
       const _dgRewriter = const DatagramRewriter();
-      final datagram = new DataDatagram(
-        localChannel.remoteAddress,
-        localChannel.remotePort,
-        [1, 2, 3],
-        1,
-      );
+      final data = [1, 2, 3];
 
-      int datagramIndex = 0;
-      foreignChannel.onEvent(expectAsync1((Datagram dg) {
+      foreignChannel.onEvent(expectAsync1((Datagram datagram) {
         final expectedDg = _dgRewriter.rewrite(
-          dg,
+          datagram,
           address: address,
-          port: 9090,
+          port: foreignChannel.remotePort,
         );
-        expect(dg, expectedDg);
+        expect(datagram, expectedDg);
       }, count: 2)); // END Packet sent after DATA packet.
 
-      localChannel.add(datagram);
+      localChannel.add(data);
     });
 
     test('should emit each datagram followed by an end datagram', () {
