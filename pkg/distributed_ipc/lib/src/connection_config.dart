@@ -11,12 +11,6 @@ class ConnectionConfig {
   /// The default is [UdpConfig] with default settings.
   final ProtocolConfig protocolConfig;
 
-  /// The address to make the connection from.
-  final String localAddress;
-
-  /// The port to make the connection from.
-  final int localPort;
-
   /// The address to connect to.
   final String remoteAddress;
 
@@ -25,8 +19,6 @@ class ConnectionConfig {
 
   @literal
   const ConnectionConfig({
-    @required this.localAddress,
-    @required this.localPort,
     @required this.remoteAddress,
     @required this.remotePort,
     this.protocolConfig: const UdpConfig(),

@@ -1,2 +1,2 @@
-/// A callback that consumes a [T]
-typedef Consumer<T> = void Function(T data);
+typedef Consumer<T> = void Function(T);
+typedef Consumer3<T, U, V> = Function(T, U, V);

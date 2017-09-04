@@ -9,8 +9,22 @@ import 'package:distributed.ipc/src/udp/datagram_channel.dart';
 import 'package:distributed.ipc/src/udp/datagram_socket.dart';
 import 'package:distributed.ipc/src/vm/datagram_message_sink.dart';
 import 'package:distributed.ipc/src/vm/datagram_message_source.dart';
+import 'package:meta/meta.dart';
 
-/// A [ConnectionSource] that creates and recieves connections using [Datagram].
+/// A [ConnectionSource] that initiates connections using [Datagram]s.
+///
+/// Creating a connection remotely:
+/// --
+/// When a [Datagram] with [DatagramType.GREET] is recieved, a [Connection] is
+/// emitted locally and a confirmation is sent to the initiating peer.  It is
+/// assumed that the peer recieved acknowledgement and is ready to recieve
+/// messages.
+///
+/// Creating a connection locally.
+/// When a connection is created at this source, a [Datagram] with
+/// [DatagramType.GREET] is sent to the remote [DatagramConnectionSource]. If no
+/// confirmation of the connection is recieved, no [Connection] object is
+/// created.  Instead, a [ConnectionException] is raised.
 class DatagramConnectionSource extends EventSource<Connection>
     implements ConnectionSource {
   final DatagramSocket _socket;
@@ -31,8 +45,6 @@ class DatagramConnectionSource extends EventSource<Connection>
   /// Creates a connection, using a configuration derived from [greeting].
   void _createConnectionFromGreeting(GreetDatagram greeting) {
     final config = new ConnectionConfig(
-        localAddress: _socket.address,
-        localPort: _socket.port,
         remoteAddress: greeting.address,
         remotePort: greeting.port,
         protocolConfig: new UdpConfig(
@@ -67,4 +79,15 @@ class DatagramConnectionSource extends EventSource<Connection>
 
     emit(connection);
   }
+}
+
+@immutable
+class ConnectionException implements Exception {
+  final String message;
+
+  @literal
+  ConnectionException(this.message);
+
+  @override
+  String toString() => '$runtimeType: $message';
 }

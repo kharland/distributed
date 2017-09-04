@@ -36,6 +36,11 @@ abstract class DatagramChannel
 
   /// Sends [datagrams] on this channel.
   void addAll(Iterable<Datagram> datagrams);
+
+  @override
+  void close() {
+    throw new UnsupportedError('$DatagramChannel does not need closing');
+  }
 }
 
 /// A [DatagramChannel] that does not wait for acknowledgement of datagrams.
@@ -82,10 +87,6 @@ class FastDatagramChannel extends EventSource<Datagram>
 
   @override
   void close() {
-    _socket.add(new Datagram(
-      DatagramType.CLOSE,
-      _socket.address,
-      _socket.port,
-    ));
+    super.close();
   }
 }

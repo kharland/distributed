@@ -1,6 +1,7 @@
 import 'package:distributed.ipc/ipc.dart';
 import 'package:distributed.ipc/src/udp/datagram.dart';
 import 'package:distributed.ipc/src/udp/datagram_channel.dart';
+import 'package:distributed.ipc/src/udp/datagram_rewriter.dart';
 import 'package:distributed.ipc/src/udp/datagram_socket.dart';
 import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
@@ -8,48 +9,71 @@ import 'package:test/test.dart';
 void main() {
   group(FastDatagramChannel, () {
     const address = '127.0.0.1';
-    const datagramCount = 3;
-    final testDatagrams = new List<Datagram>.unmodifiable(new List.generate(
-      datagramCount,
-      (i) => new DataDatagram(address, 2, [i], 1),
-    ));
 
-    FastDatagramChannel channel;
+    FastDatagramChannel localChannel;
+    FastDatagramChannel foreignChannel;
+    DatagramSocket localSocket;
+    DatagramSocket foreignSocket;
 
-    commonSetUp(MockDatagramSocket socket) {
-      channel = new FastDatagramChannel(
-        new ConnectionConfig(
-            localAddress: address,
-            localPort: 1,
-            remoteAddress: address,
-            remotePort: 2),
-        socket,
+    setUp(() async {
+      localSocket = await DatagramSocket.bind(address, 9090);
+      localChannel = new FastDatagramChannel(
+        new ConnectionConfig(remoteAddress: address, remotePort: 9091),
+        localSocket,
       );
-    }
 
-    test('should send all datagrams', () {
-      final socket = new MockDatagramSocket();
-      commonSetUp(socket);
+      foreignSocket = await DatagramSocket.bind(address, 9091);
+      foreignChannel = new FastDatagramChannel(
+        new ConnectionConfig(remoteAddress: address, remotePort: 9090),
+        foreignSocket,
+      );
+    });
 
-      channel.addAll(testDatagrams);
-      for (var datagram in testDatagrams) {
-        verify(socket.add(datagram));
-      }
+    tearDown(() {
+      localSocket.close();
+      foreignSocket.close();
+    });
+
+    test('should send and receive a datagram', () {
+      const _dgRewriter = const DatagramRewriter();
+      final datagram = new DataDatagram(
+        localChannel.remoteAddress,
+        localChannel.remotePort,
+        [1, 2, 3],
+        1,
+      );
+
+      int datagramIndex = 0;
+      foreignChannel.onEvent(expectAsync1((Datagram dg) {
+        final expectedDg = _dgRewriter.rewrite(
+          dg,
+          address: address,
+          port: 9090,
+        );
+        expect(dg, expectedDg);
+      }, count: 2)); // END Packet sent after DATA packet.
+
+      localChannel.add(datagram);
     });
 
     test('should emit each datagram followed by an end datagram', () {
-      commonSetUp(new MockDatagramSocket());
-
       final expectedDatagrams = <Datagram>[];
-      testDatagrams.forEach((p) {
+      for (int i = 0; i < 2; i++) {
         expectedDatagrams
-          ..add(p)
-          ..add(new Datagram(DatagramType.END, p.address, p.port));
-      });
+          ..add(new DataDatagram(address, localChannel.remotePort, [i], 1))
+          ..add(new Datagram(
+            DatagramType.END,
+            address,
+            localChannel.remotePort,
+          ));
+      }
 
       final receivedDatagrams = <Datagram>[];
-      channel.onEvent(receivedDatagrams.add);
-      testDatagrams.forEach(channel.emit);
+      foreignChannel.onEvent(receivedDatagrams.add);
+
+      expectedDatagrams
+          .where((dg) => dg.type == DatagramType.DATA)
+          .forEach(foreignChannel.emit);
 
       expect(receivedDatagrams, expectedDatagrams);
     });

@@ -1,15 +1,23 @@
+import 'dart:async';
+
 import 'package:distributed.ipc/src/internal/event_source.dart';
 import 'package:distributed.ipc/src/udp/datagram.dart';
 import 'package:distributed.ipc/src/udp/datagram_codec.dart';
+import 'package:distributed.ipc/src/udp/datagram_rewriter.dart';
 import 'package:distributed.ipc/src/udp/raw_udp_socket.dart';
 
 /// Wraps a UDP socket as a [Sink] and [EventSource] of [Datagram].
 class DatagramSocket extends EventSource<Datagram> implements Sink<Datagram> {
   static const _codec = const Utf8DatagramCodec();
+  static const _dgRewriter = const DatagramRewriter();
+
   final RawUdpSocket _socket;
 
+  static Future<DatagramSocket> bind(String address, int port) async =>
+      new DatagramSocket(await RawUdpSocket.bind(address, port));
+
   DatagramSocket(this._socket) {
-    _socket.onEvent(_handleBytes);
+    _socket.onData(_handleData);
   }
 
   String get address => _socket.address;
@@ -18,12 +26,7 @@ class DatagramSocket extends EventSource<Datagram> implements Sink<Datagram> {
 
   @override
   void add(Datagram dg) {
-    // FIXME: Higher levels in the netstack shouldn't be creating the datagram.
-    // They should be passing its contents down to this level where it gets
-    // encoded with the correct address and port so that we don't have to
-    // re-write the datagram like this.
-    final datagram = new Datagram(dg.type, address, port, dg.data);
-    _socket.add(_codec.encode(datagram), dg.address, dg.port);
+    _socket.add(_codec.encode(dg), dg.address, dg.port);
   }
 
   @override
@@ -31,9 +34,10 @@ class DatagramSocket extends EventSource<Datagram> implements Sink<Datagram> {
     _socket.close();
   }
 
-  void _handleBytes(List<int> bytes) {
+  void _handleData(List<int> bytes, String address, int port) {
     if (bytes.isNotEmpty) {
-      emit(_codec.decode(bytes));
+      final originalDg = _codec.decode(bytes);
+      emit(_dgRewriter.rewrite(originalDg, address: address, port: port));
     }
   }
 }

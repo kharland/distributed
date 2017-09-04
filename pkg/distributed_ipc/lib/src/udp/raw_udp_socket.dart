@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io' as io;
 
+import 'package:distributed.ipc/src/internal/consumer.dart';
 import 'package:distributed.ipc/src/internal/event_source.dart';
 
 /// A socket that uses the UDP protocol.
@@ -13,7 +14,7 @@ import 'package:distributed.ipc/src/internal/event_source.dart';
 /// If a message is added to the socket while a previous message is still
 /// in-flight, the new message is added to a queue and sent after all previously
 /// enqueued messages.
-abstract class RawUdpSocket implements EventSource<List<int>> {
+abstract class RawUdpSocket {
   /// Creates a new [RawUdpSocket] from [config].
   static Future<RawUdpSocket> bind(String address, int port) async {
     final rawSocket = await io.RawDatagramSocket.bind(address, port);
@@ -32,15 +33,22 @@ abstract class RawUdpSocket implements EventSource<List<int>> {
 
   /// Closes this socket.
   void close();
+
+  /// Subscribes [consumer] to data events on this socket.
+  ///
+  /// The consumer receives the [List] of [int] data that was sent, the,
+  /// [String] address of the sender and the [int] port of the sender.
+  void onData(Consumer3<List<int>, String, int> consumer);
 }
 
 /// A [RawUdpSocket] that delegates to a [_UdpAdapter].
-class _AdapterUdpSocket extends EventSource<List<int>> implements RawUdpSocket {
+class _AdapterUdpSocket implements RawUdpSocket {
   final _UdpAdapter _adapter;
+  final _consumers = <Consumer3<List<int>, String, int>>[];
 
   _AdapterUdpSocket(this._adapter) {
     _adapter.onEvent((io.Datagram dg) {
-      emit(dg.data);
+      _emit(dg.data, dg.address.address, dg.port);
     });
   }
 
@@ -58,6 +66,17 @@ class _AdapterUdpSocket extends EventSource<List<int>> implements RawUdpSocket {
   @override
   void close() {
     _adapter.close();
+  }
+
+  @override
+  void onData(Consumer3<List<int>, String, int> consumer) {
+    _consumers.add(consumer);
+  }
+
+  void _emit(List<int> data, String senderAddress, int senderPort) {
+    _consumers.forEach((consume) {
+      consume(data, senderAddress, senderPort);
+    });
   }
 }
 
