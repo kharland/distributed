@@ -3,7 +3,7 @@ import 'package:meta/meta.dart';
 
 /// A source of events.
 ///
-/// [Consumers] can subscribe to events using [onEvent].  The [EventSource] will
+/// Consumers can subscribe to events using [onEvent].  The [EventSource] will
 /// send events to each [Consumer] when [emit] is called.
 class EventSource<T> {
   final _consumers = <Consumer<T>>[];
