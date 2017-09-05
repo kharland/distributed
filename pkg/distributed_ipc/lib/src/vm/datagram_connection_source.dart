@@ -7,20 +7,21 @@ import 'package:distributed.ipc/src/udp/data_builder.dart';
 import 'package:distributed.ipc/src/udp/data_channel.dart';
 import 'package:distributed.ipc/src/udp/datagram.dart';
 import 'package:distributed.ipc/src/udp/datagram_socket.dart';
-import 'package:distributed.ipc/src/vm/datagram_message_sink.dart';
-import 'package:distributed.ipc/src/vm/datagram_message_source.dart';
+import 'package:distributed.ipc/src/vm/message_sink.dart';
+import 'package:distributed.ipc/src/vm/message_source.dart';
 import 'package:meta/meta.dart';
 
 /// A [ConnectionSource] that initiates connections using [Datagram]s.
 ///
 /// Creating a connection remotely:
-/// --
+///
 /// When a [Datagram] with [DatagramType.GREET] is recieved, a [Connection] is
 /// emitted locally and a confirmation is sent to the initiating peer.  It is
 /// assumed that the peer recieved acknowledgement and is ready to recieve
 /// messages.
 ///
-/// Creating a connection locally.
+/// Creating a connection locally:
+///
 /// When a connection is created at this source, a [Datagram] with
 /// [DatagramType.GREET] is sent to the remote [DatagramConnectionSource]. If no
 /// confirmation of the connection is recieved, no [Connection] object is
@@ -63,8 +64,8 @@ class DatagramConnectionSource extends EventSource<Connection>
   void _emitConnection(ConnectionConfig config) {
     final channel = new DataChannel(config, _socket);
     final dataBuilder = const DataBuilder();
-    final messageSink = new DatagramMessageSink(channel, dataBuilder);
-    final messageSource = new DatagramMessageSource(channel, dataBuilder);
+    final messageSink = new MessageSink(channel, dataBuilder);
+    final messageSource = new MessageSource(channel, dataBuilder);
     final connection = new ConnectionImpl(
       messageSource,
       messageSink,
