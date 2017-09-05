@@ -29,8 +29,10 @@ class TransferType extends Enum {
   factory TransferType.fromValue(int value) {
     if (value == FAST.value) {
       return FAST;
-    } else {
+    } else if (value == RELIABLE.value) {
       throw new UnimplementedError('$value');
+    } else {
+      throw new ArgumentError('$value');
     }
   }
 
