@@ -4,7 +4,7 @@ import 'package:distributed.ipc/src/udp/data_builder.dart';
 import 'package:distributed.ipc/src/udp/datagram.dart';
 
 class MessageSource extends EventSource<Message> {
-  final _currentBuffer = <List<int>>[];
+  final _messageParts = <List<int>>[];
 
   MessageSource(
     EventSource<Datagram> dgSource,
@@ -13,10 +13,10 @@ class MessageSource extends EventSource<Message> {
     dgSource.onEvent((Datagram datagram) {
       switch (datagram.type) {
         case DatagramType.END:
-          emit(new Message(dataBuilder.assembleParts(_currentBuffer)));
+          emit(new Message(dataBuilder.assembleParts(_messageParts)));
           return;
         case DatagramType.DATA:
-          _currentBuffer.add(datagram.data);
+          _messageParts.add(datagram.data);
           return;
         default:
           throw new UnsupportedError(datagram.type.toString());
