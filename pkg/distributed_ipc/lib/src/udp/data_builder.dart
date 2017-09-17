@@ -1,4 +1,5 @@
-import 'package:distributed.ipc/src/encoding.dart';
+import 'dart:convert';
+
 import 'package:distributed.ipc/src/udp/datagram.dart';
 import 'package:meta/meta.dart';
 
@@ -6,20 +7,22 @@ import 'package:meta/meta.dart';
 /// send in a [Datagram].
 @immutable
 class DataBuilder {
-  @literal
-  const DataBuilder();
+  final Codec _codec;
 
-  /// Reconstructs a [T] from its complete set of [datagrams].
+  @literal
+  const DataBuilder([this._codec = const Utf8Codec()]);
+
+  /// Reconstructs a [String] from its complete set of [parts].
   ///
   /// Assumes [parts] are in sorted order.
   String assembleParts(List<List<int>> parts) {
     final partsCopy = parts.map((p) => new List<int>.from(p)).toList();
-    return partsCopy.map(utf8Decode).join();
+    return partsCopy.map(_codec.decode).join();
   }
 
   /// Splits [data] into [DataPart]s small enough to send in a datagram.
   List<List<int>> splitIntoParts(String data) {
-    final List<int> encoded = utf8Encode(data);
+    final encoded = _codec.encode(data);
     final parts = <List<int>>[];
 
     for (int i = 0; i < encoded.length; i++) {
