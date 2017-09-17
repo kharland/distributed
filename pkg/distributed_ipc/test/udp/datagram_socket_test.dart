@@ -8,15 +8,9 @@ void main() {
     DatagramSocket localSocket;
     DatagramSocket foreignSocket;
 
-    RawUdpSocket rawLocalSocket;
-    RawUdpSocket rawForeignSocket;
-
     setUp(() async {
-      rawLocalSocket = await RawUdpSocket.bind('127.0.0.1', 9090);
-      rawForeignSocket = await RawUdpSocket.bind('127.0.0.1', 9091);
-
-      localSocket = new DatagramSocket(rawLocalSocket);
-      foreignSocket = new DatagramSocket(rawForeignSocket);
+      localSocket = await DatagramSocket.bind('127.0.0.1', 9090);
+      foreignSocket = await DatagramSocket.bind('127.0.0.1', 9091);
     });
 
     tearDown(() async {
