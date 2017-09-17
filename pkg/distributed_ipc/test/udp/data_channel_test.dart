@@ -7,23 +7,23 @@ import 'package:mockito/mockito.dart';
 import 'package:test/test.dart';
 
 void main() {
-  group(FastDatagramChannel, () {
+  group(FastChannel, () {
     const address = '127.0.0.1';
 
-    FastDatagramChannel localChannel;
-    FastDatagramChannel foreignChannel;
+    FastChannel localChannel;
+    FastChannel foreignChannel;
     DatagramSocket localSocket;
     DatagramSocket foreignSocket;
 
     setUp(() async {
       localSocket = await DatagramSocket.bind(address, 9090);
-      localChannel = new FastDatagramChannel(
+      localChannel = new FastChannel(
         new ConnectionConfig(remoteAddress: address, remotePort: 9091),
         localSocket,
       );
 
       foreignSocket = await DatagramSocket.bind(address, 9091);
-      foreignChannel = new FastDatagramChannel(
+      foreignChannel = new FastChannel(
         new ConnectionConfig(remoteAddress: address, remotePort: 9090),
         foreignSocket,
       );

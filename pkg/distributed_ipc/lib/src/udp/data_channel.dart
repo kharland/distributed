@@ -20,7 +20,7 @@ abstract class DataChannel implements EventSource<Datagram>, Sink<List<int>> {
     final UdpConfig udpConfig = config.protocolConfig;
     switch (udpConfig.transferType) {
       case TransferType.FAST:
-        return new FastDatagramChannel(config, socket);
+        return new FastChannel(config, socket);
       default:
         throw new ArgumentError(udpConfig.transferType);
     }
@@ -45,7 +45,7 @@ abstract class DataChannel implements EventSource<Datagram>, Sink<List<int>> {
 /// best used for applications that prioritize speed over reliability, such as
 /// game-servers or streaming applications.  The remote is not expected to send
 /// end datagrams.  They are assumed after each [Datagram].
-class FastDatagramChannel extends EventSource<Datagram> implements DataChannel {
+class FastChannel extends EventSource<Datagram> implements DataChannel {
   final DatagramSocket _socket;
 
   @override
@@ -54,10 +54,10 @@ class FastDatagramChannel extends EventSource<Datagram> implements DataChannel {
   @override
   final int remotePort;
 
-  FastDatagramChannel(ConnectionConfig config, DatagramSocket socket)
+  FastChannel(ConnectionConfig config, DatagramSocket socket)
       : this._(config.remoteAddress, config.remotePort, socket);
 
-  FastDatagramChannel._(this.remoteAddress, this.remotePort, this._socket) {
+  FastChannel._(this.remoteAddress, this.remotePort, this._socket) {
     _socket.onEvent(emit);
   }
 
