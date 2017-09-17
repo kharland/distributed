@@ -1,5 +1,5 @@
 import 'package:distributed.ipc/ipc.dart';
-import 'package:distributed.ipc/src/connection_impl.dart';
+import 'package:distributed.ipc/src/connection.dart';
 import 'package:distributed.ipc/src/encoding.dart';
 import 'package:distributed.ipc/src/internal/event_source.dart';
 import 'package:distributed.ipc/src/transfer_type.dart';
@@ -63,10 +63,10 @@ class DatagramConnectionSource extends EventSource<Connection>
   /// Creates a connection from [config].
   void _emitConnection(ConnectionConfig config) {
     final channel = new DataChannel(config, _socket);
-    final dataBuilder = const DataBuilder();
+    const dataBuilder = const DataBuilder();
     final messageSink = new MessageSink(channel, dataBuilder);
     final messageSource = new MessageSource(channel, dataBuilder);
-    final connection = new ConnectionImpl(
+    final connection = new Connection(
       messageSource,
       messageSink,
       localAddress: _socket.address,
