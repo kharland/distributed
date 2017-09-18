@@ -45,22 +45,16 @@ void main() {
           port: foreignChannel.remotePort,
         );
         expect(datagram, expectedDg);
-      }, count: 2)); // END Packet sent after DATA packet.
+      }));
 
       localChannel.add(data);
     });
 
     test('should emit each datagram followed by an end datagram', () {
-      final expectedDatagrams = <Datagram>[];
-      for (int i = 0; i < 2; i++) {
-        expectedDatagrams
-          ..add(new DataDatagram(address, localChannel.remotePort, [i], 1))
-          ..add(new Datagram(
-            DatagramType.END,
-            address,
-            localChannel.remotePort,
-          ));
-      }
+      final expectedDatagrams = <Datagram>[
+        new DataDatagram(address, localChannel.remotePort, [0], 1),
+        new DataDatagram(address, localChannel.remotePort, [1], 1),
+      ];
 
       final receivedDatagrams = <Datagram>[];
       foreignChannel.onEvent(receivedDatagrams.add);

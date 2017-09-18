@@ -43,8 +43,7 @@ abstract class DataChannel implements EventSource<Datagram>, Sink<List<int>> {
 /// All datagrams are immediately sent on the channel and no attempt is made to
 /// verify whether the remote received each datagram.  This channel is lossy and
 /// best used for applications that prioritize speed over reliability, such as
-/// game-servers or streaming applications.  The remote is not expected to send
-/// end datagrams.  They are assumed after each [Datagram].
+/// game-servers or streaming applications.
 class FastChannel extends EventSource<Datagram> implements DataChannel {
   final DatagramSocket _socket;
 
@@ -69,9 +68,6 @@ class FastChannel extends EventSource<Datagram> implements DataChannel {
   @override
   void emit(Datagram datagram) {
     super.emit(datagram);
-    super.emit(
-      new Datagram(DatagramType.END, datagram.address, datagram.port),
-    );
   }
 
   @override

@@ -1,22 +1,18 @@
+import 'dart:convert';
 import 'package:distributed.ipc/ipc.dart';
+import 'package:distributed.ipc/src/encoding.dart';
 import 'package:distributed.ipc/src/internal/event_source.dart';
-import 'package:distributed.ipc/src/udp/data_builder.dart';
 import 'package:distributed.ipc/src/udp/datagram.dart';
 
 class MessageSource extends EventSource<Message> {
-  final _messageParts = <List<int>>[];
-
   MessageSource(
-    EventSource<Datagram> dgSource,
-    DataBuilder dataBuilder,
-  ) {
+    EventSource<Datagram> dgSource, [
+    Converter<List<int>, String> decoder = utf8Decoder,
+  ]) {
     dgSource.onEvent((Datagram datagram) {
       switch (datagram.type) {
-        case DatagramType.END:
-          emit(new Message(dataBuilder.assembleParts(_messageParts)));
-          return;
         case DatagramType.DATA:
-          _messageParts.add(datagram.data);
+          emit(new Message(decoder.convert(datagram.data)));
           return;
         default:
           throw new UnsupportedError(datagram.type.toString());

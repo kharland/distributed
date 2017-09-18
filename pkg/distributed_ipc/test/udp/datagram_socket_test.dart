@@ -1,6 +1,5 @@
 import 'package:distributed.ipc/src/udp/datagram.dart';
 import 'package:distributed.ipc/src/udp/datagram_socket.dart';
-import 'package:distributed.ipc/src/udp/raw_udp_socket.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -9,8 +8,8 @@ void main() {
     DatagramSocket foreignSocket;
 
     setUp(() async {
-      localSocket = await DatagramSocket.bind('127.0.0.1', 9090);
-      foreignSocket = await DatagramSocket.bind('127.0.0.1', 9091);
+      localSocket = await DatagramSocket.bind('127.0.0.1', 9000);
+      foreignSocket = await DatagramSocket.bind('127.0.0.1', 9001);
     });
 
     tearDown(() async {

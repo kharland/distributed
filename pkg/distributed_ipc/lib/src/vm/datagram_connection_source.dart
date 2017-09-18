@@ -3,7 +3,6 @@ import 'package:distributed.ipc/src/connection.dart';
 import 'package:distributed.ipc/src/encoding.dart';
 import 'package:distributed.ipc/src/internal/event_source.dart';
 import 'package:distributed.ipc/src/transfer_type.dart';
-import 'package:distributed.ipc/src/udp/data_builder.dart';
 import 'package:distributed.ipc/src/udp/data_channel.dart';
 import 'package:distributed.ipc/src/udp/datagram.dart';
 import 'package:distributed.ipc/src/udp/datagram_socket.dart';
@@ -63,9 +62,8 @@ class DatagramConnectionSource extends EventSource<Connection>
   /// Creates a connection from [config].
   void _emitConnection(ConnectionConfig config) {
     final channel = new DataChannel(config, _socket);
-    const dataBuilder = const DataBuilder();
-    final messageSink = new MessageSink(channel, dataBuilder);
-    final messageSource = new MessageSource(channel, dataBuilder);
+    final messageSink = new MessageSink(channel);
+    final messageSource = new MessageSource(channel);
     final connection = new Connection(
       messageSource,
       messageSink,

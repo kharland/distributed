@@ -7,7 +7,6 @@ class DatagramType extends Enum {
   static const ACK = const DatagramType._(0x1, 'Acknowledgement');
   static const RES = const DatagramType._(0x2, 'Resend last message');
   static const DATA = const DatagramType._(0x3, 'Data part');
-  static const END = const DatagramType._(0x4, 'End of message parts');
   static const GREET = const DatagramType._(0x5, 'Connection request');
   static const CLOSE = const DatagramType._(0x6, 'Close connection');
   static const ERROR = const DatagramType._(0xF, 'Error');
@@ -16,7 +15,6 @@ class DatagramType extends Enum {
     ACK.value: ACK,
     RES.value: RES,
     DATA.value: DATA,
-    END.value: END,
     ERROR.value: ERROR,
   };
 
@@ -42,8 +40,6 @@ class DatagramFactory {
   const DatagramFactory(this._address, this._port);
 
   Datagram ack() => new Datagram(DatagramType.ACK, _address, _port);
-
-  Datagram end() => new Datagram(DatagramType.END, _address, _port);
 
   ErrorDatagram error(String msg) => new ErrorDatagram(_address, _port, msg);
 }
